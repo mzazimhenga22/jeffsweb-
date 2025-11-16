@@ -12,6 +12,7 @@ import {
   Building2,
   Bell,
   PanelLeft,
+  Receipt,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -40,6 +41,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const adminNavItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/pos', icon: Receipt, label: 'POS' },
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/vendors', icon: Building2, label: 'Vendors' },
   { href: '/admin/products', icon: Package, label: 'Products' },

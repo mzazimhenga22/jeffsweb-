@@ -12,6 +12,7 @@ import {
   Settings,
   Bell,
   PanelLeft,
+  Receipt,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -39,6 +40,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const vendorNavItems = [
   { href: '/vendor', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/vendor/pos', icon: Receipt, label: 'POS' },
   { href: '/vendor/products', icon: Package, label: 'Products' },
   { href: '/vendor/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/vendor/analytics', icon: LineChart, label: 'Analytics' },
