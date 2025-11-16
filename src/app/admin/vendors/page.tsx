@@ -30,12 +30,14 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { vendors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminVendorsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
+  const { toast } = useToast();
 
   const filteredVendors = vendors.filter((vendor) =>
     vendor.storeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,6 +56,13 @@ export default function AdminVendorsPage() {
 
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handleAction = (message: string, isDestructive: boolean = false) => {
+    toast({
+      title: message,
+      variant: isDestructive ? 'destructive' : 'default',
+    });
   };
 
   return (
@@ -76,7 +85,7 @@ export default function AdminVendorsPage() {
                 setCurrentPage(1);
               }}
             />
-            <Button>
+            <Button onClick={() => handleAction('Add Vendor form opened.')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Vendor
             </Button>
@@ -140,9 +149,9 @@ export default function AdminVendorsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Approve</DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem onClick={() => handleAction('Vendor approved.')}>Approve</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('Vendor details viewed.')}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Vendor rejected.', true)}>
                           Reject
                         </DropdownMenuItem>
                       </DropdownMenuContent>

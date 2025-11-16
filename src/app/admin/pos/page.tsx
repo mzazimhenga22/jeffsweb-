@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -108,7 +108,7 @@ export default function AdminPosPage() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full lg:h-[calc(100vh-8rem)]">
       {/* Product List */}
       <div className="lg:col-span-2">
-        <Card className="h-full flex flex-col">
+        <Card className="h-full flex flex-col bg-card/70 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Products</CardTitle>
             <div className="relative mt-2">
@@ -155,7 +155,7 @@ export default function AdminPosPage() {
 
       {/* Cart */}
       <div className="lg:col-span-1">
-        <Card className="h-full flex flex-col">
+        <Card className="h-full flex flex-col bg-card/70 backdrop-blur-sm">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Cart</CardTitle>
             <Button variant="ghost" size="sm" onClick={clearCart} disabled={cart.length === 0}>

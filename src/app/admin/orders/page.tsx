@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -25,8 +28,18 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 import { orders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminOrdersPage() {
+  const { toast } = useToast();
+
+  const handleAction = (message: string, isDestructive: boolean = false) => {
+    toast({
+      title: message,
+      variant: isDestructive ? 'destructive' : 'default',
+    });
+  };
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -82,9 +95,9 @@ export default function AdminOrdersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Update Status</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem onClick={() => handleAction('Order details viewed.')}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('Order status updated.')}>Update Status</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Order cancelled.', true)}>
                         Cancel Order
                       </DropdownMenuItem>
                     </DropdownMenuContent>

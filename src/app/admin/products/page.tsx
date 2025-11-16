@@ -31,12 +31,14 @@ import { MoreHorizontal, PlusCircle, Star } from 'lucide-react';
 import { products, vendors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
+  const { toast } = useToast();
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,6 +58,12 @@ export default function AdminProductsPage() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const handleAction = (message: string, isDestructive: boolean = false) => {
+    toast({
+      title: message,
+      variant: isDestructive ? 'destructive' : 'default',
+    });
+  };
 
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
@@ -140,9 +148,9 @@ export default function AdminProductsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View on site</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem onClick={() => handleAction('Product edit page opened.')}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAction('Product viewed on site.')}>View on site</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Product deleted.', true)}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

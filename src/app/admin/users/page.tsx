@@ -30,12 +30,14 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
+  const { toast } = useToast();
 
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -56,6 +58,13 @@ export default function AdminUsersPage() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const handleAction = (message: string, isDestructive: boolean = false) => {
+    toast({
+      title: message,
+      variant: isDestructive ? 'destructive' : 'default',
+    });
+  };
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -74,7 +83,7 @@ export default function AdminUsersPage() {
                 setCurrentPage(1);
               }}
             />
-            <Button>
+            <Button onClick={() => handleAction('Add User form opened.')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add User
             </Button>
@@ -129,9 +138,9 @@ export default function AdminUsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem onClick={() => handleAction('User edit page opened.')}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('User details viewed.')}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleAction('User deleted.', true)}>
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>

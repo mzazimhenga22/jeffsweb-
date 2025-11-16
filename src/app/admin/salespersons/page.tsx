@@ -29,12 +29,14 @@ import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminSalespersonsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
+  const { toast } = useToast();
 
   const salespersons = users.filter(user => user.role === 'salesperson');
 
@@ -57,6 +59,13 @@ export default function AdminSalespersonsPage() {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const handleAction = (message: string, isDestructive: boolean = false) => {
+    toast({
+      title: message,
+      variant: isDestructive ? 'destructive' : 'default',
+    });
+  };
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -75,7 +84,7 @@ export default function AdminSalespersonsPage() {
                 setCurrentPage(1);
               }}
             />
-            <Button>
+            <Button onClick={() => handleAction('Add Salesperson form opened.')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Salesperson
             </Button>
@@ -116,9 +125,9 @@ export default function AdminSalespersonsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem onClick={() => handleAction('Salesperson edit page opened.')}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('Salesperson details viewed.')}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Salesperson deleted.', true)}>
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
