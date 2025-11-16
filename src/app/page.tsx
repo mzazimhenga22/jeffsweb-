@@ -1,9 +1,8 @@
-
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Gem } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Gem, Eye } from 'lucide-react';
 
 import { MainLayout } from '@/components/main-layout';
 import {
@@ -43,7 +42,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="group relative h-[550px] w-full overflow-hidden">
+                  <div className="group relative h-[450px] w-full overflow-hidden">
                     <Image
                       src={image.imageUrl}
                       alt={image.description}
