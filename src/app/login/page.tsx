@@ -1,4 +1,8 @@
+'use client';
+
+import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +16,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // This is mock authentication logic.
+    // In a real app, you would make an API call to your backend.
+    if (email === 'admin@ethereal.com') {
+      router.push('/admin');
+    } else if (email === 'maria.g@example.com') {
+      router.push('/vendor');
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
     <MainLayout>
       <div className="flex min-h-[80vh] items-center justify-center px-4">
@@ -23,7 +45,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleLogin}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -31,6 +53,8 @@ export default function LoginPage() {
                   type="email"
                   placeholder="name@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -43,7 +67,13 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
               <Button type="submit" className="w-full text-lg py-6">
                 Login
