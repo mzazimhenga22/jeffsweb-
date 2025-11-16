@@ -21,24 +21,32 @@ import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import type { Product } from '@/lib/types';
 
 
 export default function Home() {
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [activeImage, setActiveImage] = React.useState<string | null>(null);
-
-  const heroImages = PlaceHolderImages.filter((img) =>
-    ['hero watch', 'hero shoe', 'hero fashion'].includes(img.imageHint)
-  );
+  const [heroProducts, setHeroProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
-    if (!carouselApi) {
+    // Shuffle products and pick the first 3 for the hero banner
+    const shuffled = [...products].sort(() => 0.5 - Math.random());
+    setHeroProducts(shuffled.slice(0, 3));
+  }, []);
+
+  React.useEffect(() => {
+    if (!carouselApi || heroProducts.length === 0) {
       return;
     }
 
     const handleSelect = () => {
       const currentSlide = carouselApi.selectedScrollSnap();
-      setActiveImage(heroImages[currentSlide].imageUrl);
+      const product = heroProducts[currentSlide];
+      const image = PlaceHolderImages.find((p) => p.id === product.imageId);
+      if (image) {
+        setActiveImage(image.imageUrl);
+      }
     };
 
     handleSelect(); // Set initial image
@@ -47,7 +55,7 @@ export default function Home() {
     return () => {
       carouselApi.off('select', handleSelect);
     };
-  }, [carouselApi, heroImages]);
+  }, [carouselApi, heroProducts]);
 
 
   const newArrivals = products.slice(0, 4);
@@ -67,32 +75,32 @@ export default function Home() {
             className="w-full"
           >
             <CarouselContent>
-              {heroImages.map((image, index) => (
-                <CarouselItem key={index}>
+              {heroProducts.map((product, index) => {
+                const image = PlaceHolderImages.find(p => p.id === product.imageId);
+                return (
+                <CarouselItem key={product.id}>
                   <div className="group relative h-[450px] w-full overflow-hidden">
-                    <Image
-                      src={image.imageUrl}
-                      alt={image.description}
-                      fill
-                      className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                      data-ai-hint={image.imageHint}
-                      priority={index === 0}
-                    />
+                    {image && (
+                        <Image
+                        src={image.imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+                        data-ai-hint={image.imageHint}
+                        priority={index === 0}
+                        />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
                       <div className="container mx-auto">
                         <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
-                          {index === 0 && "Timeless Elegance"}
-                          {index === 1 && "Step Into Style"}
-                          {index === 2 && "Wear Your Story"}
+                          {product.name}
                         </h1>
                         <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
-                          {index === 0 && "Discover our exclusive collection of luxury watches, crafted for perfection."}
-                          {index === 1 && "Find your perfect pair from our latest arrivals in designer footwear."}
-                          {index === 2 && "Explore curated fashion that defines your unique personality."}
+                          {product.description}
                         </p>
                         <Button size="lg" asChild className="text-lg py-7">
-                          <Link href="/shop">
+                          <Link href={`/shop/${product.id}`}>
                             Shop Now <ArrowRight className="ml-2 h-5 w-5" />
                           </Link>
                         </Button>
@@ -100,7 +108,7 @@ export default function Home() {
                     </div>
                   </div>
                 </CarouselItem>
-              ))}
+              )})}
             </CarouselContent>
             <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
             <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
