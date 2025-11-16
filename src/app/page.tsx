@@ -1,9 +1,10 @@
 
 'use client';
 
+import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Gem, Eye } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Gem } from 'lucide-react';
 
 import { MainLayout } from '@/components/main-layout';
 import {
@@ -12,29 +13,54 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { categories, products, testimonials } from '@/lib/data';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+
 
 export default function Home() {
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
+  const [activeImage, setActiveImage] = React.useState<string | null>(null);
+
   const heroImages = PlaceHolderImages.filter((img) =>
     ['hero watch', 'hero shoe', 'hero fashion'].includes(img.imageHint)
   );
+
+  React.useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+
+    const handleSelect = () => {
+      const currentSlide = carouselApi.selectedScrollSnap();
+      setActiveImage(heroImages[currentSlide].imageUrl);
+    };
+
+    handleSelect(); // Set initial image
+    carouselApi.on('select', handleSelect);
+
+    return () => {
+      carouselApi.off('select', handleSelect);
+    };
+  }, [carouselApi, heroImages]);
+
 
   const newArrivals = products.slice(0, 4);
   const bestSellers = [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 4);
   const brandStoryImage = PlaceHolderImages.find(p => p.id === 'brand-story');
 
   return (
-    <MainLayout>
+    <MainLayout backgroundImage={activeImage}>
       <div className="space-y-24 pb-24">
         {/* Hero Section */}
-        <section className="-mt-16">
+        <section className="relative w-full -mt-16">
           <Carousel
+            setApi={setCarouselApi}
             opts={{
               loop: true,
             }}
@@ -50,7 +76,7 @@ export default function Home() {
                       fill
                       className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                       data-ai-hint={image.imageHint}
-                      priority
+                      priority={index === 0}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
@@ -76,8 +102,8 @@ export default function Home() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
+            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
           </Carousel>
         </section>
 
@@ -139,7 +165,7 @@ export default function Home() {
             )})}
           </div>
         </section>
-
+        
         {/* New Arrivals Section */}
         <section className="container mx-auto">
           <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
