@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -23,11 +27,35 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { users, vendors } from '@/lib/data';
+import { users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminUsersPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -37,7 +65,15 @@ export default function AdminUsersPage() {
             <CardDescription>Manage all users on the platform.</CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input placeholder="Search users..." className="w-full sm:w-64" />
+            <Input 
+              placeholder="Search users..." 
+              className="w-full sm:w-64"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add User
@@ -57,7 +93,7 @@ export default function AdminUsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => {
+            {paginatedUsers.map((user) => {
               const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId);
               return (
               <TableRow key={user.id}>
@@ -106,8 +142,8 @@ export default function AdminUsersPage() {
           </TableBody>
         </Table>
         <div className="flex items-center justify-end space-x-2 py-4">
-            <Button variant="outline" size="sm">Previous</Button>
-            <Button variant="outline" size="sm">Next</Button>
+            <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
+            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</Button>
         </div>
       </CardContent>
     </Card>

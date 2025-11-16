@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -29,7 +32,31 @@ import { products, vendors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminProductsPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -41,10 +68,20 @@ export default function AdminProductsPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input placeholder="Search products..." className="w-full sm:w-64" />
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Product
+            <Input 
+              placeholder="Search products..." 
+              className="w-full sm:w-64" 
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            <Button asChild>
+                <Link href="/vendor/products/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Product
+                </Link>
             </Button>
           </div>
         </div>
@@ -62,7 +99,7 @@ export default function AdminProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => {
+            {paginatedProducts.map((product) => {
               const image = PlaceHolderImages.find(
                 (p) => p.id === product.imageId
               );
@@ -117,10 +154,10 @@ export default function AdminProductsPage() {
           </TableBody>
         </Table>
         <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>
             Previous
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>
             Next
           </Button>
         </div>

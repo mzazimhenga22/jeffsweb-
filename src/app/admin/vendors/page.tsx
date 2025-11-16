@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -27,7 +31,31 @@ import { vendors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminVendorsPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  const filteredVendors = vendors.filter((vendor) =>
+    vendor.storeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    vendor.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredVendors.length / ITEMS_PER_PAGE);
+  const paginatedVendors = filteredVendors.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -39,7 +67,15 @@ export default function AdminVendorsPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input placeholder="Search vendors..." className="w-full sm:w-64" />
+            <Input 
+              placeholder="Search vendors..." 
+              className="w-full sm:w-64"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Vendor
@@ -60,7 +96,7 @@ export default function AdminVendorsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendors.map((vendor) => {
+            {paginatedVendors.map((vendor) => {
               const avatar = PlaceHolderImages.find(
                 (p) => p.id === vendor.avatarId
               );
@@ -118,10 +154,10 @@ export default function AdminVendorsPage() {
           </TableBody>
         </Table>
         <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>
             Previous
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>
             Next
           </Button>
         </div>
