@@ -49,7 +49,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
            <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <Button variant="secondary" className="gap-2">
+                <Button variant="outline" className="gap-2 border-white/20 bg-black/20 backdrop-blur-lg hover:bg-black/40 text-white hover:text-white">
                     <Eye className="h-4 w-4" />
                     View
                 </Button>
