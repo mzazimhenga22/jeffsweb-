@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Gem } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Gem, Loader } from 'lucide-react';
 
 import { MainLayout } from '@/components/main-layout';
 import {
@@ -22,17 +22,34 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/lib/types';
+import { generateProductStory } from '@/ai/flows/generate-product-story';
 
 
 export default function Home() {
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [activeImage, setActiveImage] = React.useState<string | null>(null);
   const [heroProducts, setHeroProducts] = React.useState<Product[]>([]);
+  const [productStories, setProductStories] = React.useState<Record<string, string>>({});
+  const [loadingStories, setLoadingStories] = React.useState<Record<string, boolean>>({});
+
 
   React.useEffect(() => {
     // Shuffle products and take a smaller slice for performance
     const shuffled = [...products].sort(() => 0.5 - Math.random());
-    setHeroProducts(shuffled.slice(0, 8));
+    const selectedProducts = shuffled.slice(0, 8);
+    setHeroProducts(selectedProducts);
+
+    selectedProducts.forEach(product => {
+      setLoadingStories(prev => ({ ...prev, [product.id]: true }));
+      generateProductStory({ productName: product.name, productCategory: product.category })
+        .then(result => {
+          setProductStories(prev => ({ ...prev, [product.id]: result.productStory }));
+        })
+        .finally(() => {
+          setLoadingStories(prev => ({ ...prev, [product.id]: false }));
+        });
+    });
+
   }, []);
 
   React.useEffect(() => {
@@ -79,6 +96,9 @@ export default function Home() {
                 const image = PlaceHolderImages.find(p => p.id === product.imageId);
                 const vendor = vendors.find(v => v.id === product.vendorId);
                 const vendorAvatar = PlaceHolderImages.find(p => p.id === vendor?.avatarId);
+                const story = productStories[product.id];
+                const isLoading = loadingStories[product.id];
+
                 return (
                 <CarouselItem key={product.id}>
                   <div className="group relative h-[550px] w-full overflow-hidden">
@@ -100,9 +120,11 @@ export default function Home() {
                             <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
                             {product.name}
                             </h1>
-                            <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
-                            {product.description}
-                            </p>
+                            <div className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl h-14">
+                              {isLoading && <div className='flex items-center gap-2'><Loader className='animate-spin h-5 w-5' /><span>Crafting story...</span></div>}
+                              {story && !isLoading && <p>{story}</p>}
+                              {!story && !isLoading && <p>{product.description}</p>}
+                            </div>
                             <Button size="lg" asChild className="text-lg py-7">
                             <Link href={`/shop/${product.id}`}>
                                 Shop Now <ArrowRight className="ml-2 h-5 w-5" />
