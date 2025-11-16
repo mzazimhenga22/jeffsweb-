@@ -23,11 +23,12 @@ import { cn } from '@/lib/utils';
 export default function ProductDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = React.use(params);
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
 
-  const product = products.find((p) => p.id === params.slug);
+  const product = products.find((p) => p.id === slug);
 
   React.useEffect(() => {
     if (product?.colors?.length) {
