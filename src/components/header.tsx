@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -51,10 +52,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full transition-colors duration-300',
-        isScrolled
-          ? 'border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80'
-          : 'bg-transparent'
+        'sticky top-0 z-50 w-full transition-colors duration-300 border-b border-border/40 bg-background/80 backdrop-blur-xl'
       )}
     >
       <div className="container flex h-16 max-w-screen-2xl items-center">
