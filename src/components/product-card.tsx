@@ -50,10 +50,8 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
            <div className="absolute bottom-4 left-4 right-4 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 z-10">
-                <Button size="sm" variant='secondary' className='shadow-md' asChild>
-                    <Link href={`/shop/${product.id}`}>
-                        <Eye className="mr-2 h-4 w-4" /> View
-                    </Link>
+                <Button size="sm" variant='secondary' className='shadow-md pointer-events-none'>
+                    <Eye className="mr-2 h-4 w-4" /> View
                 </Button>
            </div>
         </div>
