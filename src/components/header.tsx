@@ -8,8 +8,17 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCart } from '@/context/cart-context';
+import { useAuth } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navLinks = [
   { href: '/shop', label: 'Shoes' },
@@ -21,6 +30,7 @@ const navLinks = [
 export function Header() {
   const isMobile = useIsMobile();
   const { cartCount } = useCart();
+  const { user, logout } = useAuth();
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -32,6 +42,11 @@ export function Header() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+  
+  const getWelcomeMessage = () => {
+    if (!user) return '';
+    return `Welcome, ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`;
+  }
 
   return (
     <header
@@ -91,13 +106,22 @@ export function Header() {
                       </Link>
                     ))}
                   </nav>
-                  <div className="flex flex-col gap-2">
-                    <Button variant="outline" asChild>
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </Button>
+                   <div className="flex flex-col gap-2">
+                    {user ? (
+                      <>
+                        <p className='text-center text-muted-foreground mb-2'>{getWelcomeMessage()}</p>
+                        <Button onClick={logout}>Logout</Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="outline" asChild>
+                          <Link href="/login">Login</Link>
+                        </Button>
+                        <Button asChild>
+                          <Link href="/signup">Sign Up</Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>
@@ -134,14 +158,33 @@ export function Header() {
                   )}
                 </Link>
               </Button>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </div>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <User className="mr-2 h-4 w-4" />
+                      {getWelcomeMessage()}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </>
         )}

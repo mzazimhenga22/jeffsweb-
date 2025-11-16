@@ -14,9 +14,11 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
@@ -26,10 +28,13 @@ export default function LoginPage() {
     // This is mock authentication logic.
     // In a real app, you would make an API call to your backend.
     if (email === 'admin@ethereal.com') {
+      login('admin');
       router.push('/admin');
     } else if (email === 'maria.g@example.com') {
+      login('vendor');
       router.push('/vendor');
     } else {
+      login('customer');
       router.push('/');
     }
   };
