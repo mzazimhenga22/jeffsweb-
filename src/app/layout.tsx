@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Figtree } from 'next/font/google';
 import './globals.css';
@@ -5,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/cart-context';
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { WishlistProvider } from '@/context/wishlist-context';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -31,7 +33,11 @@ export default function RootLayout({
       <body className={`${figtree.className} font-body antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              <WishlistProvider>
+                {children}
+              </WishlistProvider>
+            </CartProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

@@ -1,4 +1,5 @@
-import type { Product, Category, User, Order, Vendor, Testimonial } from './types';
+
+import type { Product, Category, User, Order, Vendor, Testimonial, ProductReview } from './types';
 
 export const categories: Category[] = [
   { id: 'cat-1', name: 'Shoes', imageId: 'cat-shoes' },
@@ -7,19 +8,27 @@ export const categories: Category[] = [
   { id: 'cat-4', name: 'Accessories', imageId: 'cat-accessories' },
 ];
 
+const reviews: ProductReview[] = [
+    { id: 'rev-1', author: 'Alex Johnson', rating: 5, title: 'Masterpiece!', text: 'A masterpiece of precision and style. Worth every penny.', date: '2023-04-15', avatarId: 'avatar-1' },
+    { id: 'rev-2', author: 'Maria Garcia', rating: 4, title: 'Great Watch', text: 'Beautiful watch, a bit heavy but feels premium.', date: '2023-05-01', avatarId: 'avatar-2' },
+    { id: 'rev-3', author: 'Chen Wei', rating: 5, title: 'So Comfortable!', text: 'These are the most comfortable sneakers I have ever worn. 10/10.', date: '2023-05-10', avatarId: 'avatar-3' },
+    { id: 'rev-4', author: 'David Lee', rating: 5, title: 'Timeless Classic', text: 'This jacket is a timeless classic for any wardrobe. Great quality.', date: '2023-03-20', avatarId: 'avatar-1' },
+];
+
+
 export const products: Product[] = [
-  { id: 'prod-1', name: 'Chronograph Excellence', description: 'A masterpiece of precision and style.', price: 1250.00, rating: 4.9, reviewCount: 150, category: 'Watches', imageId: 'product-watch-1', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#C0C0C0', '#FFD700'], commission: 10 },
-  { id: 'prod-2', name: 'Urban Runner Sneakers', description: 'Experience comfort and style on the go.', price: 180.00, rating: 4.7, reviewCount: 230, category: 'Shoes', imageId: 'product-shoe-1', vendorId: 'vendor-2', sizes: ['8', '9', '10', '11', '12'], colors: ['#FFFFFF', '#000000', '#0000FF'], commission: 15 },
-  { id: 'prod-3', name: 'Denim Voyager Jacket', description: 'A timeless classic for any wardrobe.', price: 250.00, rating: 4.8, reviewCount: 95, category: 'Clothing', imageId: 'product-clothing-1', vendorId: 'vendor-3', sizes: ['S', 'M', 'L', 'XL'], colors: ['#0000FF', '#000000'], commission: 12 },
-  { id: 'prod-4', name: 'Classic Aviators', description: 'Iconic sunglasses for a sharp look.', price: 150.00, rating: 4.6, reviewCount: 300, category: 'Accessories', imageId: 'product-accessory-2', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20 },
-  { id: 'prod-5', name: 'Minimalist Timepiece', description: 'Simplicity meets elegance.', price: 800.00, rating: 4.9, reviewCount: 120, category: 'Watches', imageId: 'product-watch-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#C0C0C0', '#E6BFB1'], commission: 10 },
-  { id: 'prod-6', name: 'Trail-Ready Hikers', description: 'Durable boots for your next adventure.', price: 220.00, rating: 4.7, reviewCount: 180, category: 'Shoes', imageId: 'product-shoe-2', vendorId: 'vendor-3', sizes: ['9', '10', '11'], colors: ['#A52A2A', '#000000', '#008000'], commission: 15 },
-  { id: 'prod-7', name: 'Cozy Knit Hoodie', description: 'The perfect blend of comfort and street style.', price: 95.00, rating: 4.9, reviewCount: 450, category: 'Clothing', imageId: 'product-clothing-2', vendorId: 'vendor-1', sizes: ['S', 'M', 'L'], colors: ['#808080', '#000000', '#0000FF'], commission: 18 },
-  { id: 'prod-8', name: 'Leather Tech Backpack', description: 'Carry your essentials in style.', price: 350.00, rating: 4.8, reviewCount: 110, category: 'Accessories', imageId: 'product-accessory-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 12 },
-  { id: 'prod-9', name: 'Artisan Graphic Tee', description: 'Unique designs, premium comfort.', price: 45.00, rating: 4.5, reviewCount: 500, category: 'Clothing', imageId: 'product-clothing-3', vendorId: 'vendor-3', sizes: ['M', 'L', 'XL'], colors: ['#FFFFFF', '#000000', '#808080'], commission: 25 },
-  { id: 'prod-10', name: 'Heritage Driver Shoes', description: 'Supple leather for a luxurious feel.', price: 320.00, rating: 4.8, reviewCount: 88, category: 'Shoes', imageId: 'product-shoe-3', vendorId: 'vendor-1', sizes: ['9', '10', '10.5'], colors: ['#A52A2A', '#000000'], commission: 15 },
-  { id: 'prod-11', name: 'Digital Sport Watch', description: 'Track your fitness with precision.', price: 299.99, rating: 4.6, reviewCount: 215, category: 'Watches', imageId: 'product-watch-2', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#C0C0C0'], commission: 10 },
-  { id: 'prod-12', name: 'Slim-Fit Wallet', description: 'A minimalist wallet for the modern man.', price: 75.00, rating: 4.9, reviewCount: 320, category: 'Accessories', imageId: 'product-accessory-1', vendorId: 'vendor-3', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20 },
+  { id: 'prod-1', name: 'Chronograph Excellence', description: 'A masterpiece of precision and style.', price: 1250.00, rating: 4.9, reviewCount: 150, category: 'Watches', imageId: 'product-watch-1', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#C0C0C0', '#FFD700'], commission: 10, stock: 15, reviews: [reviews[0], reviews[1]] },
+  { id: 'prod-2', name: 'Urban Runner Sneakers', description: 'Experience comfort and style on the go.', price: 180.00, rating: 4.7, reviewCount: 230, category: 'Shoes', imageId: 'product-shoe-1', vendorId: 'vendor-2', sizes: ['8', '9', '10', '11', '12'], colors: ['#FFFFFF', '#000000', '#0000FF'], commission: 15, stock: 30, reviews: [reviews[2]] },
+  { id: 'prod-3', name: 'Denim Voyager Jacket', description: 'A timeless classic for any wardrobe.', price: 250.00, rating: 4.8, reviewCount: 95, category: 'Clothing', imageId: 'product-clothing-1', vendorId: 'vendor-3', sizes: ['S', 'M', 'L', 'XL'], colors: ['#0000FF', '#000000'], commission: 12, stock: 25, reviews: [reviews[3]] },
+  { id: 'prod-4', name: 'Classic Aviators', description: 'Iconic sunglasses for a sharp look.', price: 150.00, rating: 4.6, reviewCount: 300, category: 'Accessories', imageId: 'product-accessory-2', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20, stock: 50, reviews: [] },
+  { id: 'prod-5', name: 'Minimalist Timepiece', description: 'Simplicity meets elegance.', price: 800.00, rating: 4.9, reviewCount: 120, category: 'Watches', imageId: 'product-watch-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#C0C0C0', '#E6BFB1'], commission: 10, stock: 8, reviews: [] },
+  { id: 'prod-6', name: 'Trail-Ready Hikers', description: 'Durable boots for your next adventure.', price: 220.00, rating: 4.7, reviewCount: 180, category: 'Shoes', imageId: 'product-shoe-2', vendorId: 'vendor-3', sizes: ['9', '10', '11'], colors: ['#A52A2A', '#000000', '#008000'], commission: 15, stock: 3, reviews: [] },
+  { id: 'prod-7', name: 'Cozy Knit Hoodie', description: 'The perfect blend of comfort and street style.', price: 95.00, rating: 4.9, reviewCount: 450, category: 'Clothing', imageId: 'product-clothing-2', vendorId: 'vendor-1', sizes: ['S', 'M', 'L'], colors: ['#808080', '#000000', '#0000FF'], commission: 18, stock: 40, reviews: [] },
+  { id: 'prod-8', name: 'Leather Tech Backpack', description: 'Carry your essentials in style.', price: 350.00, rating: 4.8, reviewCount: 110, category: 'Accessories', imageId: 'product-accessory-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 12, stock: 12, reviews: [] },
+  { id: 'prod-9', name: 'Artisan Graphic Tee', description: 'Unique designs, premium comfort.', price: 45.00, rating: 4.5, reviewCount: 500, category: 'Clothing', imageId: 'product-clothing-3', vendorId: 'vendor-3', sizes: ['M', 'L', 'XL'], colors: ['#FFFFFF', '#000000', '#808080'], commission: 25, stock: 100, reviews: [] },
+  { id: 'prod-10', name: 'Heritage Driver Shoes', description: 'Supple leather for a luxurious feel.', price: 320.00, rating: 4.8, reviewCount: 88, category: 'Shoes', imageId: 'product-shoe-3', vendorId: 'vendor-1', sizes: ['9', '10', '10.5'], colors: ['#A52A2A', '#000000'], commission: 15, stock: 22, reviews: [] },
+  { id: 'prod-11', name: 'Digital Sport Watch', description: 'Track your fitness with precision.', price: 299.99, rating: 4.6, reviewCount: 215, category: 'Watches', imageId: 'product-watch-2', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#C0C0C0'], commission: 10, stock: 18, reviews: [] },
+  { id: 'prod-12', name: 'Slim-Fit Wallet', description: 'A minimalist wallet for the modern man.', price: 75.00, rating: 4.9, reviewCount: 320, category: 'Accessories', imageId: 'product-accessory-1', vendorId: 'vendor-3', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20, stock: 0, reviews: [] },
 ];
 
 export const users: User[] = [

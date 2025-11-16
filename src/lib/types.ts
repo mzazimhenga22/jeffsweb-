@@ -1,3 +1,4 @@
+
 export type Product = {
   id: string;
   name: string;
@@ -11,7 +12,19 @@ export type Product = {
   sizes: string[];
   colors: string[];
   commission?: number;
+  stock: number;
+  reviews: ProductReview[];
 };
+
+export type ProductReview = {
+  id: string;
+  author: string;
+  rating: number;
+  title: string;
+  text: string;
+  date: string;
+  avatarId: string;
+}
 
 export type CartItem = Product & {
     quantity: number;

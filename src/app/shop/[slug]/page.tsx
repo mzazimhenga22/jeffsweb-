@@ -1,7 +1,8 @@
+
 'use client';
 
 import Image from 'next/image';
-import { Star, CheckCircle, ShieldCheck, Check, Minus, Plus, Loader } from 'lucide-react';
+import { Star, Check, Minus, Plus, Loader, Heart, Facebook, Twitter, Pinterest, Share2 } from 'lucide-react';
 import * as React from 'react';
 
 import { MainLayout } from '@/components/main-layout';
@@ -29,22 +30,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { generateProductStory } from '@/ai/flows/generate-product-story';
+import { getStyleSuggestions, type GetStyleSuggestionsOutput } from '@/ai/flows/get-style-suggestions';
 import { Card } from '@/components/ui/card';
+import { useWishlist } from '@/context/wishlist-context';
+import type { Product } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 export default function ProductDetailPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const { slug } = React.use(params);
+  const { slug } = params;
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
   const [productStory, setProductStory] = React.useState<string | null>(null);
   const [loadingStory, setLoadingStory] = React.useState(true);
+  const [styleSuggestions, setStyleSuggestions] = React.useState<GetStyleSuggestionsOutput['suggestions']>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = React.useState(true);
 
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const product = products.find((p) => p.id === slug);
 
@@ -64,6 +73,16 @@ export default function ProductDetailPage({
         .finally(() => {
           setLoadingStory(false);
         });
+
+      setLoadingSuggestions(true);
+      getStyleSuggestions({ productName: product.name, productCategory: product.category, currentProductId: product.id })
+        .then(result => {
+          setStyleSuggestions(result.suggestions);
+        })
+        .finally(() => {
+          setLoadingSuggestions(false);
+        });
+
     }
   }, [product]);
 
@@ -88,13 +107,23 @@ export default function ProductDetailPage({
     });
   };
 
+  const handleWishlistToggle = () => {
+      toggleWishlist(product);
+  }
+
   const vendor = vendors.find((v) => v.id === product.vendorId);
   const image = PlaceHolderImages.find((p) => p.id === product.imageId);
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
+  const getStockMessage = () => {
+    if (product.stock === 0) return { text: 'Out of Stock', className: 'text-destructive' };
+    if (product.stock < 10) return { text: `Only ${product.stock} left!`, className: 'text-amber-600' };
+    return { text: 'In Stock', className: 'text-green-600' };
+  }
+
   return (
     <MainLayout backgroundImage={image?.imageUrl}>
-      <div className="container mx-auto max-w-screen-xl py-12">
+      <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Product Image Gallery */}
           <div className="overflow-hidden rounded-3xl h-full max-h-[800px]">
@@ -118,7 +147,7 @@ export default function ProductDetailPage({
                 {product.name}
               </h1>
               
-              <div className="mt-4 flex items-center gap-4">
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <Star
@@ -130,8 +159,10 @@ export default function ProductDetailPage({
                       }`}
                     />
                   ))}
+                   <a href="#reviews" className="ml-2 text-muted-foreground hover:underline">({product.reviewCount} reviews)</a>
                 </div>
-                <span className="text-muted-foreground">{product.reviewCount} reviews</span>
+                 <Separator orientation='vertical' className='h-4' />
+                 <div className={cn('font-medium', getStockMessage().className)}>{getStockMessage().text}</div>
               </div>
               
               <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
@@ -199,9 +230,16 @@ export default function ProductDetailPage({
             </Card>
 
             {/* Actions */}
-            <div className="mt-auto grid grid-cols-1 gap-4 sm:grid-cols-2 pt-8">
-              <Button size="lg" className="text-lg py-7" onClick={handleAddToCart}>Add to Cart</Button>
-              <Button size="lg" variant="outline" className="text-lg py-7">Buy Now</Button>
+            <div className="mt-auto grid grid-cols-1 gap-4 pt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+                    <Button size="lg" className="text-lg py-7" onClick={handleAddToCart} disabled={product.stock === 0}>
+                        {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </Button>
+                    <Button size="lg" variant="outline" className="text-lg py-7 h-auto" onClick={handleWishlistToggle}>
+                        <Heart className={cn("h-6 w-6", isInWishlist(product.id) && 'fill-red-500 text-red-500')} />
+                    </Button>
+                </div>
+              <Button size="lg" variant="secondary" className="text-lg py-7" disabled={product.stock === 0}>Buy Now</Button>
             </div>
             
              <div className="mt-8 rounded-3xl border bg-card/60 backdrop-blur-xl p-6 border-border/20">
@@ -234,8 +272,42 @@ export default function ProductDetailPage({
                 </Accordion>
             </div>
 
+            <Card className="mt-8 p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+                <div className="flex items-center gap-4">
+                    <Share2 className='text-muted-foreground' />
+                    <Button variant="ghost" size="icon"><Facebook className="h-5 w-5 text-muted-foreground hover:text-primary" /></Button>
+                    <Button variant="ghost" size="icon"><Twitter className="h-5 w-5 text-muted-foreground hover:text-primary" /></Button>
+                    <Button variant="ghost" size="icon"><Pinterest className="h-5 w-5 text-muted-foreground hover:text-primary" /></Button>
+                </div>
+            </Card>
+
           </div>
         </div>
+
+        {/* Style Suggestions */}
+        {styleSuggestions.length > 0 && (
+          <div className="mt-24">
+            <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
+              Style It With
+            </h2>
+            {loadingSuggestions ? (
+                <div className="flex justify-center"><Loader className="h-8 w-8 animate-spin" /></div>
+            ) : (
+              <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+                {styleSuggestions.map((suggestion) => {
+                    const suggestedProduct = products.find(p => p.id === suggestion.productId);
+                    if (!suggestedProduct) return null;
+                    return (
+                        <div key={suggestion.productId}>
+                            <ProductCard product={suggestedProduct} />
+                            <p className="mt-4 text-center text-sm text-muted-foreground italic">"{suggestion.reason}"</p>
+                        </div>
+                    )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Related Products */}
         <div className="mt-24">
@@ -248,6 +320,44 @@ export default function ProductDetailPage({
                 ))}
             </div>
         </div>
+
+         {/* Customer Reviews */}
+        {product.reviews.length > 0 && (
+            <div id="reviews" className="mt-24">
+                <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
+                    Customer Reviews
+                </h2>
+                <div className="space-y-8">
+                    {product.reviews.map(review => {
+                        const avatar = PlaceHolderImages.find(p => p.id === review.avatarId);
+                        return (
+                        <Card key={review.id} className="p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+                           <div className='flex items-start'>
+                                <Avatar className="h-12 w-12 mr-4">
+                                  {avatar && <AvatarImage src={avatar.imageUrl} alt={review.author} data-ai-hint={avatar.imageHint} />}
+                                  <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-semibold text-lg">{review.author}</h4>
+                                            <p className="text-sm text-muted-foreground">{review.date}</p>
+                                        </div>
+                                        <div className="flex">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className={`h-5 w-5 ${i < review.rating ? 'text-primary fill-primary' : 'text-muted-foreground/30'}`} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <h5 className="font-semibold mt-4">{review.title}</h5>
+                                    <p className="text-muted-foreground mt-1">{review.text}</p>
+                                </div>
+                           </div>
+                        </Card>
+                    )})}
+                </div>
+            </div>
+        )}
       </div>
     </MainLayout>
   );
