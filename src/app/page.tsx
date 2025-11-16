@@ -1,6 +1,9 @@
+
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Gem, MessageSquareQuote } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Gem } from 'lucide-react';
 
 import { MainLayout } from '@/components/main-layout';
 import {
@@ -16,15 +19,14 @@ import { categories, products, testimonials } from '@/lib/data';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const heroImages = PlaceHolderImages.filter((img) =>
     ['hero watch', 'hero shoe', 'hero fashion'].includes(img.imageHint)
   );
 
-  const newArrivals = products.slice(0, 3);
-  const bestSellers = [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 3);
+  const newArrivals = products.slice(0, 4);
+  const bestSellers = [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 4);
   const brandStoryImage = PlaceHolderImages.find(p => p.id === 'brand-story');
 
   return (
@@ -41,7 +43,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="group relative h-screen min-h-[700px] w-full overflow-hidden">
+                  <div className="group relative h-[550px] w-full overflow-hidden">
                     <Image
                       src={image.imageUrl}
                       alt={image.description}
@@ -52,7 +54,7 @@ export default function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-12 text-white">
-                      <h1 className="mb-4 text-6xl font-bold tracking-tight font-headline drop-shadow-2xl">
+                      <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
                         {index === 0 && "Timeless Elegance"}
                         {index === 1 && "Step Into Style"}
                         {index === 2 && "Wear Your Story"}
@@ -141,7 +143,7 @@ export default function Home() {
           <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
             New Arrivals
           </h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {newArrivals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -182,7 +184,7 @@ export default function Home() {
           <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
             Best Sellers
           </h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {bestSellers.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
