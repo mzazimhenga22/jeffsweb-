@@ -42,7 +42,7 @@ export default function ProductDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
+  const { slug } = React.use(params);
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -50,6 +50,7 @@ export default function ProductDetailPage({
   const [loadingStory, setLoadingStory] = React.useState(true);
   const [styleSuggestions, setStyleSuggestions] = React.useState<GetStyleSuggestionsOutput['suggestions']>([]);
   const [loadingSuggestions, setLoadingSuggestions] = React.useState(true);
+  const [activeImage, setActiveImage] = React.useState<string | null>(null);
 
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -64,6 +65,10 @@ export default function ProductDetailPage({
       }
       if (product.sizes?.length) {
         setSelectedSize(product.sizes[0]);
+      }
+      if (product.imageIds?.length) {
+        const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
+        if(image) setActiveImage(image.imageUrl);
       }
       setLoadingStory(true);
       generateProductStory({ productName: product.name, productCategory: product.category })
@@ -112,7 +117,6 @@ export default function ProductDetailPage({
   }
 
   const vendor = vendors.find((v) => v.id === product.vendorId);
-  const image = PlaceHolderImages.find((p) => p.id === product.imageId);
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const getStockMessage = () => {
@@ -121,22 +125,45 @@ export default function ProductDetailPage({
     return { text: 'In Stock', className: 'text-green-600' };
   }
 
+  const mainImage = activeImage;
+  const mainImageHint = PlaceHolderImages.find(p => p.imageUrl === mainImage)?.imageHint;
+
   return (
-    <MainLayout backgroundImage={image?.imageUrl}>
+    <MainLayout backgroundImage={mainImage}>
       <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Product Image Gallery */}
-          <div className="overflow-hidden rounded-3xl h-full max-h-[800px]">
-            {image && (
-              <Image
-                src={image.imageUrl}
-                alt={product.name}
-                width={800}
-                height={800}
-                className="h-full w-full object-cover"
-                data-ai-hint={image.imageHint}
-              />
-            )}
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-3xl h-full max-h-[600px] aspect-square">
+              {mainImage && (
+                <Image
+                  src={mainImage}
+                  alt={product.name}
+                  width={800}
+                  height={800}
+                  className="h-full w-full object-cover"
+                  data-ai-hint={mainImageHint}
+                />
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-4">
+              {product.imageIds.map(imageId => {
+                const image = PlaceHolderImages.find(p => p.id === imageId);
+                if (!image) return null;
+                return (
+                  <button key={imageId} onClick={() => setActiveImage(image.imageUrl)} className={cn('overflow-hidden rounded-lg aspect-square border-2 transition', activeImage === image.imageUrl ? 'border-primary' : 'border-transparent')}>
+                    <Image
+                      src={image.imageUrl}
+                      alt={`${product.name} thumbnail`}
+                      width={200}
+                      height={200}
+                      className="h-full w-full object-cover"
+                      data-ai-hint={image.imageHint}
+                    />
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Product Info */}

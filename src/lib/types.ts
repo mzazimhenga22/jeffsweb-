@@ -7,7 +7,7 @@ export type Product = {
   rating: number;
   reviewCount: number;
   category: string;
-  imageId: string;
+  imageIds: string[];
   vendorId: string;
   sizes: string[];
   colors: string[];

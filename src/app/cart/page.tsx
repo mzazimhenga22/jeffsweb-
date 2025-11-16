@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -34,7 +35,7 @@ export default function CartPage() {
                 <CardContent className="p-0">
                   <ul className="divide-y divide-border">
                     {cartItems.map((item) => {
-                      const image = PlaceHolderImages.find(p => p.id === item.imageId);
+                      const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
                       return (
                         <li key={item.id} className="flex items-center p-6">
                           <div className="w-24 h-24 relative rounded-md overflow-hidden">

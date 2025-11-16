@@ -16,7 +16,7 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
-  const image = PlaceHolderImages.find((p) => p.id === product.imageId);
+  const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
   const { addToCart } = useCart();
   const { toast } = useToast();
 
@@ -55,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 </Button>
             </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-xl border-t border-white/10 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/50 backdrop-blur-xl border-t border-white/10 text-white">
           <div className="flex items-start justify-between">
             <Badge variant="secondary" className='bg-white/20 text-white border-none'>{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">

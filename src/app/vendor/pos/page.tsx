@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -124,7 +125,7 @@ export default function VendorPosPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => {
                   const image = PlaceHolderImages.find(
-                    (p) => p.id === product.imageId
+                    (p) => p.id === product.imageIds[0]
                   );
                   return (
                     <Card

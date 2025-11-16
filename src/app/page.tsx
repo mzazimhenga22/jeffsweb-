@@ -60,7 +60,7 @@ export default function Home() {
     const handleSelect = () => {
       const currentSlide = carouselApi.selectedScrollSnap();
       const product = heroProducts[currentSlide];
-      const image = PlaceHolderImages.find((p) => p.id === product.imageId);
+      const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
       if (image) {
         setActiveImage(image.imageUrl);
       }
@@ -93,7 +93,7 @@ export default function Home() {
           >
             <CarouselContent>
               {heroProducts.map((product, index) => {
-                const image = PlaceHolderImages.find(p => p.id === product.imageId);
+                const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
                 const vendor = vendors.find(v => v.id === product.vendorId);
                 const vendorAvatar = PlaceHolderImages.find(p => p.id === vendor?.avatarId);
                 const story = productStories[product.id];

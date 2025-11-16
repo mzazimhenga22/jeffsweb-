@@ -109,7 +109,7 @@ export default function AdminProductsPage() {
           <TableBody>
             {paginatedProducts.map((product) => {
               const image = PlaceHolderImages.find(
-                (p) => p.id === product.imageId
+                (p) => p.id === product.imageIds[0]
               );
               const vendor = vendors.find(v => v.id === product.vendorId)
               return (

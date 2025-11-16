@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MainLayout } from '@/components/main-layout';
@@ -99,7 +100,7 @@ export default function CheckoutPage() {
                             <CardContent>
                                 <div className="space-y-4">
                                     {cartItems.map(item => {
-                                        const image = PlaceHolderImages.find(p => p.id === item.imageId);
+                                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
                                         return (
                                             <div key={item.id} className='flex items-center gap-4'>
                                                 <div className="w-16 h-16 relative rounded-md overflow-hidden">

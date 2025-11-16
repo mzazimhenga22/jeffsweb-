@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -66,7 +67,7 @@ export default function VendorProductsPage() {
           <TableBody>
             {vendorProducts.map((product) => {
               const image = PlaceHolderImages.find(
-                (p) => p.id === product.imageId
+                (p) => p.id === product.imageIds[0]
               );
               return (
                 <TableRow key={product.id}>
