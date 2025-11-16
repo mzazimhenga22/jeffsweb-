@@ -1,4 +1,4 @@
-import type { Product, Category, User, Order, Vendor } from './types';
+import type { Product, Category, User, Order, Vendor, Testimonial } from './types';
 
 export const categories: Category[] = [
   { id: 'cat-1', name: 'Shoes', imageId: 'cat-shoes' },
@@ -51,4 +51,28 @@ export const salesData = [
   { name: 'May', sales: 6000 },
   { name: 'Jun', sales: 5500 },
   { name: 'Jul', sales: 7000 },
+];
+
+export const testimonials: Testimonial[] = [
+  {
+    id: 'testimonial-1',
+    name: 'Sarah J.',
+    avatarId: 'avatar-1',
+    text: "The quality of the Chronograph Excellence watch I bought exceeded all my expectations. It's a true masterpiece!",
+    rating: 5,
+  },
+  {
+    id: 'testimonial-2',
+    name: 'Mike D.',
+    avatarId: 'avatar-2',
+    text: "Urban Runner Sneakers are the most comfortable shoes I've ever owned. Fast shipping and great customer service.",
+    rating: 5,
+  },
+  {
+    id: 'testimonial-3',
+    name: 'Emily R.',
+    avatarId: 'avatar-3',
+    text: "I love my Denim Voyager Jacket. It's stylish, well-made, and gets compliments everywhere I go. Will definitely shop here again.",
+    rating: 5,
+  },
 ];

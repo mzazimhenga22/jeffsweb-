@@ -55,3 +55,11 @@ export type Vendor = {
   joinedDate: string;
   status: 'Approved' | 'Pending' | 'Rejected';
 };
+
+export type Testimonial = {
+  id: string;
+  name: string;
+  avatarId: string;
+  text: string;
+  rating: number;
+};
