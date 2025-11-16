@@ -16,7 +16,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { categories, products, testimonials } from '@/lib/data';
+import { categories, products, testimonials, vendors } from '@/lib/data';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -77,9 +77,11 @@ export default function Home() {
             <CarouselContent>
               {heroProducts.map((product, index) => {
                 const image = PlaceHolderImages.find(p => p.id === product.imageId);
+                const vendor = vendors.find(v => v.id === product.vendorId);
+                const vendorAvatar = PlaceHolderImages.find(p => p.id === vendor?.avatarId);
                 return (
                 <CarouselItem key={product.id}>
-                  <div className="group relative h-[450px] w-full overflow-hidden">
+                  <div className="group relative h-[550px] w-full overflow-hidden">
                     {image && (
                         <Image
                         src={image.imageUrl}
@@ -91,19 +93,58 @@ export default function Home() {
                         />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+
                     <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
                       <div className="container mx-auto">
-                        <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
-                          {product.name}
-                        </h1>
-                        <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
-                          {product.description}
-                        </p>
-                        <Button size="lg" asChild className="text-lg py-7">
-                          <Link href={`/shop/${product.id}`}>
-                            Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                          </Link>
-                        </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 items-end">
+                            <div>
+                                <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
+                                {product.name}
+                                </h1>
+                                <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
+                                {product.description}
+                                </p>
+                                <Button size="lg" asChild className="text-lg py-7">
+                                <Link href={`/shop/${product.id}`}>
+                                    Shop Now <ArrowRight className="ml-2 h-5 w-5" />
+                                </Link>
+                                </Button>
+                            </div>
+                            <div className="hidden md:flex justify-end">
+                               <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white w-full max-w-sm">
+                                   <CardContent className='p-6'>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-sm">Price</p>
+                                                <p className="text-3xl font-bold">${product.price.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm">Rating</p>
+                                                <div className="flex items-center gap-1 text-yellow-400">
+                                                    <Star className="w-5 h-5 fill-current" />
+                                                    <span className="font-bold text-xl text-white">{product.rating.toFixed(1)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {vendor && 
+                                            <div className="mt-6 pt-4 border-t border-white/20">
+                                                <p className="text-sm">Sold by</p>
+                                                <div className="flex items-center gap-3 mt-2">
+                                                    {vendorAvatar &&
+                                                        <Avatar>
+                                                            <AvatarImage src={vendorAvatar.imageUrl} alt={vendor.name} data-ai-hint={vendorAvatar.imageHint} />
+                                                            <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    }
+                                                    <p className="font-semibold">{vendor.storeName}</p>
+                                                </div>
+                                            </div>
+                                        }
+                                   </CardContent>
+                               </Card>
+                            </div>
+                        </div>
                       </div>
                     </div>
                   </div>
