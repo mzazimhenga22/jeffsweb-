@@ -30,12 +30,12 @@ export default function AdminOrdersPage() {
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
             <div>
                 <CardTitle>Orders</CardTitle>
                 <CardDescription>View and manage all customer orders.</CardDescription>
             </div>
-            <Input placeholder="Search orders..." className="w-64" />
+            <Input placeholder="Search orders..." className="w-full sm:w-64" />
         </div>
       </CardHeader>
       <CardContent>

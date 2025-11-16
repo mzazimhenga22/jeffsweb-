@@ -105,9 +105,9 @@ export default function AdminPosPage() {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full lg:h-[calc(100vh-8rem)]">
       {/* Product List */}
-      <div className="col-span-2">
+      <div className="lg:col-span-2">
         <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle>Products</CardTitle>
@@ -154,7 +154,7 @@ export default function AdminPosPage() {
       </div>
 
       {/* Cart */}
-      <div className="col-span-1">
+      <div className="lg:col-span-1">
         <Card className="h-full flex flex-col">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Cart</CardTitle>

@@ -33,15 +33,15 @@ export default function AdminProductsPage() {
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Products</CardTitle>
             <CardDescription>
               Manage all products on the platform.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Input placeholder="Search products..." className="w-64" />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Input placeholder="Search products..." className="w-full sm:w-64" />
             <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Product
@@ -128,4 +128,3 @@ export default function AdminProductsPage() {
     </Card>
   );
 }
-

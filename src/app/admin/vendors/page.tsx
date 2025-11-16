@@ -31,15 +31,15 @@ export default function AdminVendorsPage() {
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
           <div>
             <CardTitle>Vendors</CardTitle>
             <CardDescription>
               Approve and manage vendors for the platform.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Input placeholder="Search vendors..." className="w-64" />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Input placeholder="Search vendors..." className="w-full sm:w-64" />
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Vendor
