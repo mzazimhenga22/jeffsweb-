@@ -34,7 +34,7 @@ export default function ProductDetailPage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
+  const { slug } = React.use(params);
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -76,7 +76,7 @@ export default function ProductDetailPage({
 
   const vendor = vendors.find((v) => v.id === product.vendorId);
   const image = PlaceHolderImages.find((p) => p.id === product.imageId);
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
+  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
     <MainLayout>
@@ -217,7 +217,7 @@ export default function ProductDetailPage({
             <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
                 You Might Also Like
             </h2>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 {relatedProducts.map((p) => (
                     <ProductCard key={p.id} product={p} />
                 ))}
