@@ -23,7 +23,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Shipping and Payment Info */}
                     <div className="space-y-8">
-                        <Card>
+                        <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
                             <CardHeader>
                                 <CardTitle>Shipping Information</CardTitle>
                             </CardHeader>
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
                             <CardHeader>
                                 <CardTitle>Payment Details</CardTitle>
                             </CardHeader>
@@ -92,7 +92,7 @@ export default function CheckoutPage() {
 
                     {/* Order Summary */}
                     <div className="lg:sticky lg:top-28 self-start">
-                         <Card>
+                         <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
                             <CardHeader>
                                 <CardTitle>Order Summary</CardTitle>
                                 <CardDescription>{cartItems.length} items in your cart</CardDescription>
