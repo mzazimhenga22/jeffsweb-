@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -35,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl border bg-card text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+    <div className="group relative overflow-hidden rounded-3xl bg-card/60 text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 backdrop-blur-xl border-border/20">
       <Link href={`/shop/${product.id}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden">
           {image && (
@@ -56,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
            </div>
         </div>
       </Link>
-      <div className="p-6 bg-card">
+      <div className="p-6 bg-transparent">
         <div className="flex items-start justify-between">
             <Badge variant="secondary">{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">
