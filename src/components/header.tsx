@@ -58,7 +58,7 @@ export function Header() {
                   <nav className="flex flex-col gap-4 mb-auto">
                     {navLinks.map((link) => (
                       <Link
-                        key={link.href}
+                        key={`${link.href}-${link.label}`}
                         href={link.href}
                         className="text-lg font-medium text-foreground/80 hover:text-foreground"
                       >
@@ -83,7 +83,7 @@ export function Header() {
             <nav className="flex items-center gap-6 text-sm">
               {navLinks.map((link) => (
                 <Link
-                  key={link.href}
+                  key={`${link.href}-${link.label}`}
                   href={link.href}
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
                 >
