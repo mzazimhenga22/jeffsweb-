@@ -13,6 +13,7 @@ import {
   Bell,
   PanelLeft,
   Receipt,
+  Users2
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -43,6 +44,7 @@ const adminNavItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/pos', icon: Receipt, label: 'POS' },
   { href: '/admin/users', icon: Users, label: 'Users' },
+  { href: '/admin/salespersons', icon: Users2, label: 'Salespersons' },
   { href: '/admin/vendors', icon: Building2, label: 'Vendors' },
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
@@ -92,7 +94,7 @@ export default function AdminLayout({
         </Sidebar>
 
         <SidebarInset className="flex flex-col">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
+          <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6 flex-wrap">
             <div className="flex items-center gap-2">
                <SidebarTrigger className='md:hidden' />
                <h1 className="text-lg sm:text-xl font-semibold">

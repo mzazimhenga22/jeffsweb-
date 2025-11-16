@@ -10,6 +10,7 @@ export type Product = {
   vendorId: string;
   sizes: string[];
   colors: string[];
+  commission?: number;
 };
 
 export type CartItem = Product & {
@@ -29,7 +30,7 @@ export type User = {
   name: string;
   email: string;
   avatarId: string;
-  role: 'customer' | 'vendor' | 'admin';
+  role: 'customer' | 'vendor' | 'admin' | 'salesperson';
   createdAt: string;
 };
 
@@ -38,6 +39,7 @@ export type Order = {
   userId: string;
   vendorId: string;
   productId: string;
+  salespersonId?: string;
   quantity: number;
   total: number;
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';

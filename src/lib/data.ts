@@ -8,18 +8,18 @@ export const categories: Category[] = [
 ];
 
 export const products: Product[] = [
-  { id: 'prod-1', name: 'Chronograph Excellence', description: 'A masterpiece of precision and style.', price: 1250.00, rating: 4.9, reviewCount: 150, category: 'Watches', imageId: 'product-watch-1', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#C0C0C0', '#FFD700'] },
-  { id: 'prod-2', name: 'Urban Runner Sneakers', description: 'Experience comfort and style on the go.', price: 180.00, rating: 4.7, reviewCount: 230, category: 'Shoes', imageId: 'product-shoe-1', vendorId: 'vendor-2', sizes: ['8', '9', '10', '11', '12'], colors: ['#FFFFFF', '#000000', '#0000FF'] },
-  { id: 'prod-3', name: 'Denim Voyager Jacket', description: 'A timeless classic for any wardrobe.', price: 250.00, rating: 4.8, reviewCount: 95, category: 'Clothing', imageId: 'product-clothing-1', vendorId: 'vendor-3', sizes: ['S', 'M', 'L', 'XL'], colors: ['#0000FF', '#000000'] },
-  { id: 'prod-4', name: 'Classic Aviators', description: 'Iconic sunglasses for a sharp look.', price: 150.00, rating: 4.6, reviewCount: 300, category: 'Accessories', imageId: 'product-accessory-2', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#A52A2A'] },
-  { id: 'prod-5', name: 'Minimalist Timepiece', description: 'Simplicity meets elegance.', price: 800.00, rating: 4.9, reviewCount: 120, category: 'Watches', imageId: 'product-watch-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#C0C0C0', '#E6BFB1'] },
-  { id: 'prod-6', name: 'Trail-Ready Hikers', description: 'Durable boots for your next adventure.', price: 220.00, rating: 4.7, reviewCount: 180, category: 'Shoes', imageId: 'product-shoe-2', vendorId: 'vendor-3', sizes: ['9', '10', '11'], colors: ['#A52A2A', '#000000', '#008000'] },
-  { id: 'prod-7', name: 'Cozy Knit Hoodie', description: 'The perfect blend of comfort and street style.', price: 95.00, rating: 4.9, reviewCount: 450, category: 'Clothing', imageId: 'product-clothing-2', vendorId: 'vendor-1', sizes: ['S', 'M', 'L'], colors: ['#808080', '#000000', '#0000FF'] },
-  { id: 'prod-8', name: 'Leather Tech Backpack', description: 'Carry your essentials in style.', price: 350.00, rating: 4.8, reviewCount: 110, category: 'Accessories', imageId: 'product-accessory-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#A52A2A'] },
-  { id: 'prod-9', name: 'Artisan Graphic Tee', description: 'Unique designs, premium comfort.', price: 45.00, rating: 4.5, reviewCount: 500, category: 'Clothing', imageId: 'product-clothing-3', vendorId: 'vendor-3', sizes: ['M', 'L', 'XL'], colors: ['#FFFFFF', '#000000', '#808080'] },
-  { id: 'prod-10', name: 'Heritage Driver Shoes', description: 'Supple leather for a luxurious feel.', price: 320.00, rating: 4.8, reviewCount: 88, category: 'Shoes', imageId: 'product-shoe-3', vendorId: 'vendor-1', sizes: ['9', '10', '10.5'], colors: ['#A52A2A', '#000000'] },
-  { id: 'prod-11', name: 'Digital Sport Watch', description: 'Track your fitness with precision.', price: 299.99, rating: 4.6, reviewCount: 215, category: 'Watches', imageId: 'product-watch-2', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#C0C0C0'] },
-  { id: 'prod-12', name: 'Slim-Fit Wallet', description: 'A minimalist wallet for the modern man.', price: 75.00, rating: 4.9, reviewCount: 320, category: 'Accessories', imageId: 'product-accessory-1', vendorId: 'vendor-3', sizes: ['One Size'], colors: ['#000000', '#A52A2A'] },
+  { id: 'prod-1', name: 'Chronograph Excellence', description: 'A masterpiece of precision and style.', price: 1250.00, rating: 4.9, reviewCount: 150, category: 'Watches', imageId: 'product-watch-1', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#C0C0C0', '#FFD700'], commission: 10 },
+  { id: 'prod-2', name: 'Urban Runner Sneakers', description: 'Experience comfort and style on the go.', price: 180.00, rating: 4.7, reviewCount: 230, category: 'Shoes', imageId: 'product-shoe-1', vendorId: 'vendor-2', sizes: ['8', '9', '10', '11', '12'], colors: ['#FFFFFF', '#000000', '#0000FF'], commission: 15 },
+  { id: 'prod-3', name: 'Denim Voyager Jacket', description: 'A timeless classic for any wardrobe.', price: 250.00, rating: 4.8, reviewCount: 95, category: 'Clothing', imageId: 'product-clothing-1', vendorId: 'vendor-3', sizes: ['S', 'M', 'L', 'XL'], colors: ['#0000FF', '#000000'], commission: 12 },
+  { id: 'prod-4', name: 'Classic Aviators', description: 'Iconic sunglasses for a sharp look.', price: 150.00, rating: 4.6, reviewCount: 300, category: 'Accessories', imageId: 'product-accessory-2', vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20 },
+  { id: 'prod-5', name: 'Minimalist Timepiece', description: 'Simplicity meets elegance.', price: 800.00, rating: 4.9, reviewCount: 120, category: 'Watches', imageId: 'product-watch-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#C0C0C0', '#E6BFB1'], commission: 10 },
+  { id: 'prod-6', name: 'Trail-Ready Hikers', description: 'Durable boots for your next adventure.', price: 220.00, rating: 4.7, reviewCount: 180, category: 'Shoes', imageId: 'product-shoe-2', vendorId: 'vendor-3', sizes: ['9', '10', '11'], colors: ['#A52A2A', '#000000', '#008000'], commission: 15 },
+  { id: 'prod-7', name: 'Cozy Knit Hoodie', description: 'The perfect blend of comfort and street style.', price: 95.00, rating: 4.9, reviewCount: 450, category: 'Clothing', imageId: 'product-clothing-2', vendorId: 'vendor-1', sizes: ['S', 'M', 'L'], colors: ['#808080', '#000000', '#0000FF'], commission: 18 },
+  { id: 'prod-8', name: 'Leather Tech Backpack', description: 'Carry your essentials in style.', price: 350.00, rating: 4.8, reviewCount: 110, category: 'Accessories', imageId: 'product-accessory-3', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 12 },
+  { id: 'prod-9', name: 'Artisan Graphic Tee', description: 'Unique designs, premium comfort.', price: 45.00, rating: 4.5, reviewCount: 500, category: 'Clothing', imageId: 'product-clothing-3', vendorId: 'vendor-3', sizes: ['M', 'L', 'XL'], colors: ['#FFFFFF', '#000000', '#808080'], commission: 25 },
+  { id: 'prod-10', name: 'Heritage Driver Shoes', description: 'Supple leather for a luxurious feel.', price: 320.00, rating: 4.8, reviewCount: 88, category: 'Shoes', imageId: 'product-shoe-3', vendorId: 'vendor-1', sizes: ['9', '10', '10.5'], colors: ['#A52A2A', '#000000'], commission: 15 },
+  { id: 'prod-11', name: 'Digital Sport Watch', description: 'Track your fitness with precision.', price: 299.99, rating: 4.6, reviewCount: 215, category: 'Watches', imageId: 'product-watch-2', vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#C0C0C0'], commission: 10 },
+  { id: 'prod-12', name: 'Slim-Fit Wallet', description: 'A minimalist wallet for the modern man.', price: 75.00, rating: 4.9, reviewCount: 320, category: 'Accessories', imageId: 'product-accessory-1', vendorId: 'vendor-3', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20 },
 ];
 
 export const users: User[] = [
@@ -27,6 +27,8 @@ export const users: User[] = [
     { id: 'user-2', name: 'Maria Garcia', email: 'maria.g@example.com', avatarId: 'avatar-2', role: 'vendor', createdAt: '2023-02-20' },
     { id: 'user-3', name: 'Chen Wei', email: 'chen.w@example.com', avatarId: 'avatar-3', role: 'customer', createdAt: '2023-03-10' },
     { id: 'user-4', name: 'Admin User', email: 'admin@ethereal.com', avatarId: 'avatar-1', role: 'admin', createdAt: '2023-01-01' },
+    { id: 'user-5', name: 'David Lee', email: 'david.lee@example.com', avatarId: 'avatar-1', role: 'salesperson', createdAt: '2023-04-05' },
+    { id: 'user-6', name: 'Sophia Miller', email: 'sophia.m@example.com', avatarId: 'avatar-2', role: 'salesperson', createdAt: '2023-04-12' },
 ];
 
 export const vendors: Vendor[] = [
@@ -37,9 +39,9 @@ export const vendors: Vendor[] = [
 ];
 
 export const orders: Order[] = [
-  { id: 'order-1', userId: 'user-1', vendorId: 'vendor-1', productId: 'prod-1', quantity: 1, total: 1250.00, status: 'Delivered', orderDate: '2023-05-01' },
+  { id: 'order-1', userId: 'user-1', vendorId: 'vendor-1', productId: 'prod-1', quantity: 1, total: 1250.00, status: 'Delivered', orderDate: '2023-05-01', salespersonId: 'user-5' },
   { id: 'order-2', userId: 'user-3', vendorId: 'vendor-2', productId: 'prod-2', quantity: 1, total: 180.00, status: 'Shipped', orderDate: '2023-05-03' },
-  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Pending', orderDate: '2023-05-04' },
+  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Pending', orderDate: '2023-05-04', salespersonId: 'user-6' },
   { id: 'order-4', userId: 'user-2', vendorId: 'vendor-1', productId: 'prod-4', quantity: 2, total: 300.00, status: 'Delivered', orderDate: '2023-04-28' },
 ];
 
