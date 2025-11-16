@@ -49,26 +49,26 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
            <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <Button variant="outline" className="gap-2 border-white/20 bg-black/20 backdrop-blur-lg hover:bg-black/40 text-white hover:text-white">
+                <Button variant="outline" className="gap-2 border-white/20 bg-black/40 backdrop-blur-lg hover:bg-black/50 text-white hover:text-white">
                     <Eye className="h-4 w-4" />
                     View
                 </Button>
             </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-background/30 backdrop-blur-xl border-t border-white/10">
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/40 backdrop-blur-xl border-t border-white/10 text-white">
           <div className="flex items-start justify-between">
-            <Badge variant="secondary">{product.category}</Badge>
+            <Badge variant="secondary" className='bg-white/20 text-white border-none'>{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">
               <Star className="h-5 w-5 fill-primary" />
-              <span className="font-bold">{product.rating.toFixed(1)}</span>
+              <span className="font-bold text-white">{product.rating.toFixed(1)}</span>
             </div>
           </div>
-          <h3 className="mt-2 text-xl font-semibold leading-tight font-headline text-foreground">
+          <h3 className="mt-2 text-xl font-semibold leading-tight font-headline text-white">
             {product.name}
           </h3>
           <div className="mt-4 flex items-center justify-between">
-            <p className="text-2xl font-bold text-foreground">${product.price.toFixed(2)}</p>
-            <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart">
+            <p className="text-2xl font-bold text-white">${product.price.toFixed(2)}</p>
+            <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart" className='bg-white/20 border-white/30 hover:bg-white/30 text-white hover:text-white'>
               <ShoppingCart className="h-5 w-5" />
             </Button>
           </div>
