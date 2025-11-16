@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,7 +22,7 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { salesData } from '@/lib/data';
+import { salesData, orders, users } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -30,7 +31,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { orders } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 
 const chartConfig = {
@@ -123,15 +123,20 @@ export default function AdminDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentOrders.map((order) => (
+                {recentOrders.map((order) => {
+                  const user = users.find(u => u.id === order.userId);
+                  return (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>
+                        <div className='font-medium'>{user?.name || 'Unknown'}</div>
+                        <div className='text-sm text-muted-foreground'>{user?.email}</div>
+                    </TableCell>
                     <TableCell>${order.total.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge
@@ -150,7 +155,7 @@ export default function AdminDashboardPage() {
                       </Badge>
                     </TableCell>
                   </TableRow>
-                ))}
+                )})}
               </TableBody>
             </Table>
           </CardContent>
