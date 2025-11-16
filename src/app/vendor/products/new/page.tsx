@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -69,7 +70,7 @@ export default function AddProductPage() {
                                 <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
                                 <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
                             </div>
-                            <input id="dropzone-file" type="file" className="hidden" />
+                            <input id="dropzone-file" type="file" className="hidden" multiple />
                         </label>
                     </div> 
                   </CardContent>
@@ -78,12 +79,16 @@ export default function AddProductPage() {
               <div className="space-y-6">
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Pricing</CardTitle>
+                        <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="price">Price</Label>
                             <Input id="price" type="number" placeholder="0.00" />
+                        </div>
+                        <div>
+                            <Label htmlFor="stock">Stock Quantity</Label>
+                            <Input id="stock" type="number" placeholder="e.g., 50" />
                         </div>
                     </CardContent>
                  </Card>
@@ -100,7 +105,7 @@ export default function AddProductPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map(cat => (
-                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -108,6 +113,10 @@ export default function AddProductPage() {
                          <div>
                             <Label htmlFor="sizes">Sizes (comma-separated)</Label>
                             <Input id="sizes" placeholder="e.g., S, M, L, XL" />
+                        </div>
+                         <div>
+                            <Label htmlFor="colors">Colors (comma-separated)</Label>
+                            <Input id="colors" placeholder="e.g., Black, White, Blue" />
                         </div>
                     </CardContent>
                  </Card>
