@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,6 +14,7 @@ import {
   Bell,
   PanelLeft,
   Receipt,
+  Users2,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -42,6 +44,7 @@ const vendorNavItems = [
   { href: '/vendor', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/vendor/pos', icon: Receipt, label: 'POS' },
   { href: '/vendor/products', icon: Package, label: 'Products' },
+  { href: '/vendor/salespersons', icon: Users2, label: 'Salespersons' },
   { href: '/vendor/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/vendor/analytics', icon: LineChart, label: 'Analytics' },
   { href: '/vendor/payouts', icon: Wallet, label: 'Payouts' },
