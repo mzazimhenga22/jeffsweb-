@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, CheckCircle, ShieldCheck, Check, Minus, Plus } from 'lucide-react';
+import { Star, CheckCircle, ShieldCheck, Check, Minus, Plus, Loader } from 'lucide-react';
 import * as React from 'react';
 
 import { MainLayout } from '@/components/main-layout';
@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { generateProductStory } from '@/ai/flows/generate-product-story';
+import { Card } from '@/components/ui/card';
 
 export default function ProductDetailPage({
   params,
@@ -38,6 +40,8 @@ export default function ProductDetailPage({
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
+  const [productStory, setProductStory] = React.useState<string | null>(null);
+  const [loadingStory, setLoadingStory] = React.useState(true);
 
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -45,11 +49,21 @@ export default function ProductDetailPage({
   const product = products.find((p) => p.id === slug);
 
   React.useEffect(() => {
-    if (product?.colors?.length) {
-      setSelectedColor(product.colors[0]);
-    }
-    if (product?.sizes?.length) {
-      setSelectedSize(product.sizes[0]);
+    if (product) {
+      if (product.colors?.length) {
+        setSelectedColor(product.colors[0]);
+      }
+      if (product.sizes?.length) {
+        setSelectedSize(product.sizes[0]);
+      }
+      setLoadingStory(true);
+      generateProductStory({ productName: product.name, productCategory: product.category })
+        .then(result => {
+          setProductStory(result.productStory);
+        })
+        .finally(() => {
+          setLoadingStory(false);
+        });
     }
   }, [product]);
 
@@ -79,11 +93,11 @@ export default function ProductDetailPage({
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
-    <MainLayout>
+    <MainLayout backgroundImage={image?.imageUrl}>
       <div className="container mx-auto max-w-screen-xl py-12">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Product Image Gallery */}
-          <div className="overflow-hidden rounded-3xl">
+          <div className="overflow-hidden rounded-3xl h-full max-h-[800px]">
             {image && (
               <Image
                 src={image.imageUrl}
@@ -98,100 +112,111 @@ export default function ProductDetailPage({
 
           {/* Product Info */}
           <div className="flex flex-col">
-            <Badge variant="secondary" className="w-fit">{product.category}</Badge>
-            <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground font-headline">
-              {product.name}
-            </h1>
-            
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.round(product.rating)
-                        ? 'text-primary fill-primary'
-                        : 'text-muted-foreground/50'
-                    }`}
-                  />
-                ))}
+            <Card className="p-8 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+              <Badge variant="secondary" className="w-fit">{product.category}</Badge>
+              <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground font-headline">
+                {product.name}
+              </h1>
+              
+              <div className="mt-4 flex items-center gap-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < Math.round(product.rating)
+                          ? 'text-primary fill-primary'
+                          : 'text-muted-foreground/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-muted-foreground">{product.reviewCount} reviews</span>
               </div>
-              <span className="text-muted-foreground">{product.reviewCount} reviews</span>
-            </div>
-            
-            <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
+              
+              <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
+            </Card>
 
             <Separator className="my-8" />
 
-            {/* Color Selector */}
-            {product.colors && product.colors.length > 0 && (
-              <div className='mb-8'>
-                <h3 className="text-sm font-medium">Color: <span className='text-muted-foreground'>{selectedColor}</span></h3>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {product.colors.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className={cn(
-                        "h-8 w-8 rounded-full border-2 transition-transform duration-200 ease-in-out",
-                        selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'ring-1 ring-border'
-                      )}
-                      style={{ backgroundColor: color }}
-                      onClick={() => setSelectedColor(color)}
-                      aria-label={`Select color ${color}`}
-                    >
-                      {selectedColor === color && (
-                        <Check className="h-5 w-5 text-white mix-blend-difference" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Size Selector */}
-             {product.sizes && product.sizes.length > 0 && (
+            <Card className="p-8 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+              {/* Color Selector */}
+              {product.colors && product.colors.length > 0 && (
                 <div className='mb-8'>
-                    <h3 className="text-sm font-medium">Size</h3>
-                     <Select onValueChange={setSelectedSize} defaultValue={selectedSize || undefined}>
-                        <SelectTrigger className="w-[180px] mt-2">
-                            <SelectValue placeholder="Select a size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {product.sizes.map((size) => (
-                                <SelectItem key={size} value={size}>{size}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                  <h3 className="text-sm font-medium">Color: <span className='text-muted-foreground'>{selectedColor}</span></h3>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {product.colors.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={cn(
+                          "h-8 w-8 rounded-full border-2 transition-transform duration-200 ease-in-out",
+                          selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'ring-1 ring-border'
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setSelectedColor(color)}
+                        aria-label={`Select color ${color}`}
+                      >
+                        {selectedColor === color && (
+                          <Check className="h-5 w-5 text-white mix-blend-difference" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-             )}
+              )}
+              
+              {/* Size Selector */}
+              {product.sizes && product.sizes.length > 0 && (
+                  <div className='mb-8'>
+                      <h3 className="text-sm font-medium">Size</h3>
+                      <Select onValueChange={setSelectedSize} defaultValue={selectedSize || undefined}>
+                          <SelectTrigger className="w-[180px] mt-2">
+                              <SelectValue placeholder="Select a size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {product.sizes.map((size) => (
+                                  <SelectItem key={size} value={size}>{size}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </div>
+              )}
 
-            {/* Quantity Selector */}
-            <div className="mb-8">
-              <h3 className="text-sm font-medium">Quantity</h3>
-              <div className="mt-2 flex items-center gap-4">
-                <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="font-bold text-lg">{quantity}</span>
-                <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+              {/* Quantity Selector */}
+              <div className="mb-8">
+                <h3 className="text-sm font-medium">Quantity</h3>
+                <div className="mt-2 flex items-center gap-4">
+                  <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="font-bold text-lg">{quantity}</span>
+                  <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            </Card>
 
             {/* Actions */}
-            <div className="mt-auto grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-auto grid grid-cols-1 gap-4 sm:grid-cols-2 pt-8">
               <Button size="lg" className="text-lg py-7" onClick={handleAddToCart}>Add to Cart</Button>
               <Button size="lg" variant="outline" className="text-lg py-7">Buy Now</Button>
             </div>
             
-             <div className="mt-8 rounded-2xl border bg-background/50 p-6">
+             <div className="mt-8 rounded-3xl border bg-card/60 backdrop-blur-xl p-6 border-border/20">
                 <Accordion type="single" collapsible defaultValue="description">
                     <AccordionItem value="description">
                         <AccordionTrigger className='text-lg font-medium'>Description</AccordionTrigger>
-                        <AccordionContent className='text-base text-muted-foreground'>
-                        {product.description}
+                        <AccordionContent className='text-base text-muted-foreground min-h-[4rem]'>
+                          {loadingStory ? (
+                            <div className="flex items-center gap-2">
+                              <Loader className="h-4 w-4 animate-spin" />
+                              <span>Crafting a story for you...</span>
+                            </div>
+                          ) : (
+                            productStory || product.description
+                          )}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="vendor">
