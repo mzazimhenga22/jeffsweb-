@@ -24,21 +24,38 @@ export function useWishlist() {
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [wishlistItems, setWishlistItems] = React.useState<Product[]>([]);
   const { toast } = useToast();
+  
+  const prevWishlistItemsRef = React.useRef<Product[]>([]);
+
+  React.useEffect(() => {
+    const prevItems = prevWishlistItemsRef.current;
+    if (wishlistItems.length > prevItems.length) {
+      const newItem = wishlistItems.find(item => !prevItems.some(prevItem => prevItem.id === item.id));
+      if (newItem) {
+        toast({
+          title: 'Added to wishlist!',
+          description: `${newItem.name} has been added to your wishlist.`,
+        });
+      }
+    } else if (wishlistItems.length < prevItems.length) {
+      const removedItem = prevItems.find(prevItem => !wishlistItems.some(item => item.id === prevItem.id));
+       if (removedItem) {
+        toast({
+          title: 'Removed from wishlist',
+          description: `${removedItem.name} has been removed from your wishlist.`,
+        });
+      }
+    }
+    prevWishlistItemsRef.current = wishlistItems;
+  }, [wishlistItems, toast]);
+
 
   const toggleWishlist = (item: Product) => {
     setWishlistItems((prevItems) => {
       const existingItem = prevItems.find((i) => i.id === item.id);
       if (existingItem) {
-        toast({
-          title: 'Removed from wishlist',
-          description: `${item.name} has been removed from your wishlist.`,
-        });
         return prevItems.filter((i) => i.id !== item.id);
       } else {
-        toast({
-          title: 'Added to wishlist!',
-          description: `${item.name} has been added to your wishlist.`,
-        });
         return [...prevItems, item];
       }
     });
