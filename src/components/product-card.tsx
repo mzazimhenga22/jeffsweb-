@@ -36,7 +36,7 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl bg-card/60 text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 backdrop-blur-xl border-border/20">
+    <div className="group relative overflow-hidden rounded-3xl bg-card/30 text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 backdrop-blur-xl border border-white/10">
       <Link href={`/shop/${product.id}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden">
           {image && (
