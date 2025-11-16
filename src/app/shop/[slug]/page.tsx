@@ -1,0 +1,137 @@
+import Image from 'next/image';
+import { Star, CheckCircle, ShieldCheck } from 'lucide-react';
+
+import { MainLayout } from '@/components/main-layout';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { products, vendors } from '@/lib/data';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { notFound } from 'next/navigation';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { ProductCard } from '@/components/product-card';
+
+export default function ProductDetailPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const product = products.find((p) => p.id === params.slug);
+
+  if (!product) {
+    notFound();
+  }
+
+  const vendor = vendors.find((v) => v.id === product.vendorId);
+  const image = PlaceHolderImages.find((p) => p.id === product.imageId);
+  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
+
+  return (
+    <MainLayout>
+      <div className="container mx-auto max-w-screen-xl py-12">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+          {/* Product Image Gallery */}
+          <div className="overflow-hidden rounded-3xl">
+            {image && (
+              <Image
+                src={image.imageUrl}
+                alt={product.name}
+                width={800}
+                height={800}
+                className="h-full w-full object-cover"
+                data-ai-hint={image.imageHint}
+              />
+            )}
+          </div>
+
+          {/* Product Info */}
+          <div className="flex flex-col">
+            <Badge variant="secondary" className="w-fit">{product.category}</Badge>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground font-headline">
+              {product.name}
+            </h1>
+            
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-5 w-5 ${
+                      i < Math.round(product.rating)
+                        ? 'text-primary fill-primary'
+                        : 'text-muted-foreground/50'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-muted-foreground">{product.reviewCount} reviews</span>
+            </div>
+            
+            <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
+
+            <Separator className="my-8" />
+            
+            {/* Size Selector */}
+            <div>
+              <h3 className="text-sm font-medium">Size</h3>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {product.sizes.map((size) => (
+                  <Button key={size} variant="outline" className='min-w-12'>
+                    {size}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Button size="lg" className="text-lg py-7">Add to Cart</Button>
+              <Button size="lg" variant="outline" className="text-lg py-7">Buy Now</Button>
+            </div>
+            
+             <div className="mt-8 rounded-2xl border bg-background/50 p-6">
+                <Accordion type="single" collapsible defaultValue="description">
+                    <AccordionItem value="description">
+                        <AccordionTrigger className='text-lg font-medium'>Description</AccordionTrigger>
+                        <AccordionContent className='text-base text-muted-foreground'>
+                        {product.description}
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="vendor">
+                        <AccordionTrigger className='text-lg font-medium'>Vendor Information</AccordionTrigger>
+                        <AccordionContent className='text-base text-muted-foreground'>
+                        Sold by <span className='text-foreground font-semibold'>{vendor?.storeName || 'Unknown'}</span>. A trusted partner on Ethereal Commerce.
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="shipping" className='border-b-0'>
+                        <AccordionTrigger className='text-lg font-medium'>Shipping & Returns</AccordionTrigger>
+                        <AccordionContent className='text-base text-muted-foreground'>
+                        Free shipping on orders over $50. Easy returns within 30 days.
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Related Products */}
+        <div className="mt-24">
+            <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
+                You Might Also Like
+            </h2>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {relatedProducts.map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                ))}
+            </div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}

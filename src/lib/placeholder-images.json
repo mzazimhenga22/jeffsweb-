@@ -1,3 +1,136 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-watch-1",
+      "description": "A close-up of a luxury watch on a dark background.",
+      "imageUrl": "https://images.unsplash.com/photo-1724936885465-2ae03cd26381?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxoZXJvJTIwd2F0Y2h8ZW58MHx8fHwxNzYzMzE4NTM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hero watch"
+    },
+    {
+      "id": "hero-shoe-1",
+      "description": "A stylish sneaker on a minimalist background.",
+      "imageUrl": "https://images.unsplash.com/photo-1559198166-ce40ecdb7c25?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxoZXJvJTIwc2hvZXxlbnwwfHx8fDE3NjMzMTg1MzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hero shoe"
+    },
+    {
+      "id": "hero-fashion-1",
+      "description": "A person wearing a fashionable outfit.",
+      "imageUrl": "https://images.unsplash.com/photo-1615791966451-9edd04b9297c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxoZXJvJTIwZmFzaGlvbnxlbnwwfHx8fDE3NjMzMTg1MzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hero fashion"
+    },
+    {
+      "id": "cat-shoes",
+      "description": "A collection of different shoes.",
+      "imageUrl": "https://images.unsplash.com/photo-1518112390430-f4ab02e9c2c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjYXRlZ29yeSUyMHNob2VzfGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "category shoes"
+    },
+    {
+      "id": "cat-watches",
+      "description": "A luxury watch displayed elegantly.",
+      "imageUrl": "https://images.unsplash.com/photo-1612976290171-544862fa87e1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYXRlZ29yeSUyMHdhdGNofGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "category watch"
+    },
+    {
+      "id": "cat-clothing",
+      "description": "Stylish clothes on hangers.",
+      "imageUrl": "https://images.unsplash.com/photo-1705253920249-bddd2006f018?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXRlZ29yeSUyMGNsb3RoaW5nfGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "category clothing"
+    },
+    {
+      "id": "cat-accessories",
+      "description": "A collection of fashion accessories.",
+      "imageUrl": "https://images.unsplash.com/photo-1597737175203-3b86b744081a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYXRlZ29yeSUyMGFjY2Vzc29yaWVzfGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "category accessories"
+    },
+    {
+      "id": "product-watch-1",
+      "description": "A sleek, modern smartwatch.",
+      "imageUrl": "https://images.unsplash.com/photo-1714218707756-173966d250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9kdWN0JTIwd2F0Y2h8ZW58MHx8fHwxNzYzMzE4NTM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product watch"
+    },
+    {
+      "id": "product-watch-2",
+      "description": "A classic analog watch with a leather strap.",
+      "imageUrl": "https://images.unsplash.com/photo-1714218707578-92465ec6fa8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcm9kdWN0JTIwd2F0Y2h8ZW58MHx8fHwxNzYzMzE4NTM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product watch"
+    },
+    {
+      "id": "product-watch-3",
+      "description": "A minimalist silver watch.",
+      "imageUrl": "https://images.unsplash.com/photo-1714218707756-173966d250b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9kdWN0JTIwd2F0Y2h8ZW58MHx8fHwxNzYzMzE4NTM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product watch"
+    },
+    {
+      "id": "product-shoe-1",
+      "description": "High-top basketball sneakers.",
+      "imageUrl": "https://images.unsplash.com/photo-1683563313829-923466fc495d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwcm9kdWN0JTIwc2hvZXxlbnwwfHx8fDE3NjMxOTEwMzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product shoe"
+    },
+    {
+      "id": "product-shoe-2",
+      "description": "Comfortable running shoes.",
+      "imageUrl": "https://images.unsplash.com/photo-1560343090-f0409e92791a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwcm9kdWN0JTIwc2hvZXxlbnwwfHx8fDE3NjMxOTEwMzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product shoe"
+    },
+    {
+      "id": "product-shoe-3",
+      "description": "Elegant leather dress shoes.",
+      "imageUrl": "https://images.unsplash.com/photo-1726133731483-d4b8bcabeb43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwcm9kdWN0JTIwc2hvZXxlbnwwfHx8fDE3NjMxOTEwMzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product shoe"
+    },
+    {
+      "id": "product-clothing-1",
+      "description": "A stylish denim jacket.",
+      "imageUrl": "https://images.unsplash.com/photo-1693275542358-29602edf6088?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwcm9kdWN0JTIwY2xvdGhpbmd8ZW58MHx8fHwxNzYzMzE4NTM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product clothing"
+    },
+    {
+      "id": "product-clothing-2",
+      "description": "A comfortable hoodie.",
+      "imageUrl": "https://images.unsplash.com/photo-1709417596263-a7a965e73314?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9kdWN0JTIwY2xvdGhpbmd8ZW58MHx8fHwxNzYzMzE4NTM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product clothing"
+    },
+    {
+      "id": "product-clothing-3",
+      "description": "A graphic t-shirt.",
+      "imageUrl": "https://images.unsplash.com/photo-1761682719763-a35758bbe4a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9kdWN0JTIwY2xvdGhpbmd8ZW58MHx8fHwxNzYzMzE4NTM3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product clothing"
+    },
+    {
+      "id": "product-accessory-1",
+      "description": "A leather wallet.",
+      "imageUrl": "https://images.unsplash.com/photo-1758297679787-12524226e30f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwcm9kdWN0JTIwYWNjZXNzb3J5fGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product accessory"
+    },
+    {
+      "id": "product-accessory-2",
+      "description": "A pair of sunglasses.",
+      "imageUrl": "https://images.unsplash.com/photo-1617229649830-3c949e1fabbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwcm9kdWN0JTIwYWNjZXNzb3J5fGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product accessory"
+    },
+    {
+      "id": "product-accessory-3",
+      "description": "A stylish backpack.",
+      "imageUrl": "https://images.unsplash.com/photo-1601057836844-a8a336439a27?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwcm9kdWN0JTIwYWNjZXNzb3J5fGVufDB8fHx8MTc2MzMxODUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "product accessory"
+    },
+    {
+      "id": "avatar-1",
+      "description": "User avatar 1",
+      "imageUrl": "https://images.unsplash.com/photo-1750535135451-7c20e24b60c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBhdmF0YXJ8ZW58MHx8fHwxNzYzMjY3NDQxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person avatar"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User avatar 2",
+      "imageUrl": "https://images.unsplash.com/photo-1750535135451-7c20e24b60c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBhdmF0YXJ8ZW58MHx8fHwxNzYzMjY3NDQxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person avatar"
+    },
+    {
+      "id": "avatar-3",
+      "description": "User avatar 3",
+      "imageUrl": "https://images.unsplash.com/photo-1639149888905-fb39731f2e6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBhdmF0YXJ8ZW58MHx8fHwxNzYzMjY3NDQxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person avatar"
+    }
+  ]
 }
