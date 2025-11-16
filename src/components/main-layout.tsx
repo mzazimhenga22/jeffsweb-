@@ -22,9 +22,9 @@ export function MainLayout({
             src={backgroundImage}
             alt="Dynamic background"
             fill
-            className="object-cover opacity-20 blur-2xl grayscale transition-all duration-1000"
+            className="object-cover opacity-20 blur-2xl transition-all duration-1000"
           />
-           <div className="absolute inset-0 bg-background/50" />
+           <div className="absolute inset-0 bg-background/80" />
         </div>
       )}
       <Header />
