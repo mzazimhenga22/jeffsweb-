@@ -273,7 +273,7 @@ export default function Home() {
             {testimonials.map((testimonial) => {
               const avatar = PlaceHolderImages.find(p => p.id === testimonial.avatarId);
               return (
-              <Card key={testimonial.id} className="bg-secondary/30 border-0">
+              <Card key={testimonial.id} className="bg-secondary/30 border-0 rounded-3xl">
                 <CardContent className="p-8">
                   <div className="flex items-center mb-4">
                     <Avatar className="h-12 w-12 mr-4">
