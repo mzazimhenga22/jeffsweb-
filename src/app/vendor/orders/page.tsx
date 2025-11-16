@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -25,19 +28,57 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 import { orders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function VendorOrdersPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const { toast } = useToast();
+
   const vendorOrders = orders.filter(o => o.vendorId === 'vendor-2');
+
+  const filteredOrders = vendorOrders.filter((order) =>
+    order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    users.find(u => u.id === order.userId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handleAction = (message: string) => {
+    toast({ title: message });
+  };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
             <div>
                 <CardTitle>Your Orders</CardTitle>
                 <CardDescription>View and manage your incoming orders.</CardDescription>
             </div>
-            <Input placeholder="Search orders..." className="w-64" />
+            <Input 
+              placeholder="Search orders..." 
+              className="w-full sm:w-64"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
         </div>
       </CardHeader>
       <CardContent>
@@ -53,7 +94,7 @@ export default function VendorOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendorOrders.map((order) => {
+            {paginatedOrders.map((order) => {
                 const user = users.find(u => u.id === order.userId);
                 return (
               <TableRow key={order.id}>
@@ -82,9 +123,9 @@ export default function VendorOrdersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Mark as Shipped</DropdownMenuItem>
-                      <DropdownMenuItem>Print Packing Slip</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('Order details viewed.')}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('Order status marked as shipped.')}>Mark as Shipped</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAction('Packing slip printed.')}>Print Packing Slip</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -93,8 +134,8 @@ export default function VendorOrdersPage() {
           </TableBody>
         </Table>
         <div className="flex items-center justify-end space-x-2 py-4">
-            <Button variant="outline" size="sm">Previous</Button>
-            <Button variant="outline" size="sm">Next</Button>
+            <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
+            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</Button>
         </div>
       </CardContent>
     </Card>

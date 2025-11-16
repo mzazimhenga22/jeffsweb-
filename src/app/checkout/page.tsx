@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +12,25 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage() {
-    const { cartItems, cartTotal } = useCart();
+    const { cartItems, cartTotal, clearCart } = useCart();
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const handlePlaceOrder = () => {
+        // In a real app, you would process the payment here.
+        // For this demo, we'll just show a success message, clear the cart,
+        // and redirect to a confirmation page.
+        toast({
+            title: "Order Placed!",
+            description: "Thank you for your purchase.",
+        });
+        clearCart();
+        router.push('/order-confirmation');
+    }
     
     return (
         <MainLayout>
@@ -138,7 +155,7 @@ export default function CheckoutPage() {
                                     </div>
                                 </div>
 
-                                <Button size="lg" className="w-full mt-6 text-lg py-6">
+                                <Button size="lg" className="w-full mt-6 text-lg py-6" onClick={handlePlaceOrder}>
                                     Place Order
                                 </Button>
                                 <p className='text-center text-xs text-muted-foreground mt-4'>By placing your order, you agree to our <Link href="#" className='underline'>Terms & Conditions</Link>.</p>
