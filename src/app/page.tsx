@@ -30,9 +30,9 @@ export default function Home() {
   const [heroProducts, setHeroProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
-    // Shuffle products for the hero banner
+    // Shuffle products and take a smaller slice for performance
     const shuffled = [...products].sort(() => 0.5 - Math.random());
-    setHeroProducts(shuffled);
+    setHeroProducts(shuffled.slice(0, 8));
   }, []);
 
   React.useEffect(() => {
@@ -299,5 +299,3 @@ export default function Home() {
     </MainLayout>
   );
 }
-
-    
