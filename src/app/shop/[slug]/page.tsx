@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
-import { Star, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Star, CheckCircle, ShieldCheck, Check } from 'lucide-react';
+import * as React from 'react';
 
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
@@ -15,13 +18,22 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ProductCard } from '@/components/product-card';
+import { cn } from '@/lib/utils';
 
 export default function ProductDetailPage({
   params,
 }: {
   params: { slug: string };
 }) {
+  const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
+
   const product = products.find((p) => p.id === params.slug);
+
+  React.useEffect(() => {
+    if (product?.colors?.length) {
+      setSelectedColor(product.colors[0]);
+    }
+  }, [product]);
 
   if (!product) {
     notFound();
@@ -75,6 +87,32 @@ export default function ProductDetailPage({
             <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
 
             <Separator className="my-8" />
+
+            {/* Color Selector */}
+            {product.colors && product.colors.length > 0 && (
+              <div className='mb-8'>
+                <h3 className="text-sm font-medium">Color</h3>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={cn(
+                        "h-8 w-8 rounded-full border-2 transition-transform duration-200 ease-in-out",
+                        selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'ring-1 ring-border'
+                      )}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setSelectedColor(color)}
+                      aria-label={`Select color ${color}`}
+                    >
+                      {selectedColor === color && (
+                        <Check className="h-5 w-5 text-white mix-blend-difference" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* Size Selector */}
             <div>

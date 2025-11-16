@@ -9,6 +9,7 @@ export type Product = {
   imageId: string;
   vendorId: string;
   sizes: string[];
+  colors: string[];
 };
 
 export type Category = {
