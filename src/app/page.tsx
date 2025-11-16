@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -32,7 +33,7 @@ export default function Home() {
     <MainLayout>
       <div className="space-y-24 pb-24">
         {/* Hero Section */}
-        <section className="container mx-auto -mt-16">
+        <section className="-mt-16">
           <Carousel
             opts={{
               loop: true,
@@ -42,7 +43,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="group relative h-[450px] w-full overflow-hidden rounded-3xl">
+                  <div className="group relative h-[450px] w-full overflow-hidden">
                     <Image
                       src={image.imageUrl}
                       alt={image.description}
@@ -52,22 +53,24 @@ export default function Home() {
                       priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-12 text-white">
-                      <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
-                        {index === 0 && "Timeless Elegance"}
-                        {index === 1 && "Step Into Style"}
-                        {index === 2 && "Wear Your Story"}
-                      </h1>
-                      <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
-                        {index === 0 && "Discover our exclusive collection of luxury watches, crafted for perfection."}
-                        {index === 1 && "Find your perfect pair from our latest arrivals in designer footwear."}
-                        {index === 2 && "Explore curated fashion that defines your unique personality."}
-                      </p>
-                      <Button size="lg" asChild className="text-lg py-7">
-                        <Link href="/shop">
-                          Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                      </Button>
+                    <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
+                      <div className="container mx-auto">
+                        <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
+                          {index === 0 && "Timeless Elegance"}
+                          {index === 1 && "Step Into Style"}
+                          {index === 2 && "Wear Your Story"}
+                        </h1>
+                        <p className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl">
+                          {index === 0 && "Discover our exclusive collection of luxury watches, crafted for perfection."}
+                          {index === 1 && "Find your perfect pair from our latest arrivals in designer footwear."}
+                          {index === 2 && "Explore curated fashion that defines your unique personality."}
+                        </p>
+                        <Button size="lg" asChild className="text-lg py-7">
+                          <Link href="/shop">
+                            Shop Now <ArrowRight className="ml-2 h-5 w-5" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CarouselItem>
