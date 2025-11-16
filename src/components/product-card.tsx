@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart, Eye } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
@@ -47,6 +47,13 @@ export function ProductCard({ product }: ProductCardProps) {
               data-ai-hint={image.imageHint}
             />
           )}
+           <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <Button variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View
+                </Button>
+            </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-background/30 backdrop-blur-xl border-t border-white/10">
           <div className="flex items-start justify-between">
