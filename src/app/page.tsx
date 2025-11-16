@@ -149,6 +149,18 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Best Sellers Section */}
+        <section className="container mx-auto">
+          <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
+            Best Sellers
+          </h2>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+        
         {/* Brand Story Section */}
         <section className="container mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-secondary/30 rounded-3xl p-12">
@@ -175,18 +187,6 @@ export default function Home() {
                     />
                 )}
             </div>
-          </div>
-        </section>
-        
-        {/* Best Sellers Section */}
-        <section className="container mx-auto">
-          <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
-            Best Sellers
-          </h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {bestSellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
           </div>
         </section>
 
