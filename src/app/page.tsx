@@ -42,7 +42,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="group relative h-[450px] w-full overflow-hidden">
+                  <div className="group relative h-[450px] w-full overflow-hidden rounded-3xl">
                     <Image
                       src={image.imageUrl}
                       alt={image.description}
