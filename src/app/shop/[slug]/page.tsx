@@ -127,6 +127,15 @@ export default function ProductDetailPage({
 
   const mainImage = activeImage;
   const mainImageHint = PlaceHolderImages.find(p => p.imageUrl === mainImage)?.imageHint;
+  
+  const averageRating = React.useMemo(() => {
+    if (!product.reviews || product.reviews.length === 0) {
+      return 0;
+    }
+    const totalRating = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+    return totalRating / product.reviews.length;
+  }, [product.reviews]);
+
 
   return (
     <MainLayout backgroundImage={mainImage}>
@@ -180,7 +189,7 @@ export default function ProductDetailPage({
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.round(product.rating)
+                        i < Math.round(averageRating)
                           ? 'text-primary fill-primary'
                           : 'text-muted-foreground/50'
                       }`}

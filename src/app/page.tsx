@@ -74,6 +74,11 @@ export default function Home() {
     };
   }, [carouselApi, heroProducts]);
 
+  const getAverageRating = (reviews: any[]) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const total = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return total / reviews.length;
+  }
 
   const newArrivals = products.slice(0, 4);
   const bestSellers = [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 4);
@@ -98,6 +103,7 @@ export default function Home() {
                 const vendorAvatar = PlaceHolderImages.find(p => p.id === vendor?.avatarId);
                 const story = productStories[product.id];
                 const isLoading = loadingStories[product.id];
+                const rating = getAverageRating(product.reviews);
 
                 return (
                 <CarouselItem key={product.id}>
@@ -144,7 +150,7 @@ export default function Home() {
                                         <p className="text-sm">Rating</p>
                                         <div className="flex items-center gap-1 text-yellow-400">
                                             <Star className="w-5 h-5 fill-current" />
-                                            <span className="font-bold text-xl text-white">{product.rating.toFixed(1)}</span>
+                                            <span className="font-bold text-xl text-white">{rating.toFixed(1)}</span>
                                         </div>
                                     </div>
                                 </div>

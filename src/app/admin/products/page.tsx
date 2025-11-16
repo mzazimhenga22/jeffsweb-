@@ -65,6 +65,12 @@ export default function AdminProductsPage() {
     });
   };
 
+  const getAverageRating = (reviews: any[]) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const total = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return total / reviews.length;
+  }
+
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
       <CardHeader>
@@ -112,6 +118,7 @@ export default function AdminProductsPage() {
                 (p) => p.id === product.imageIds[0]
               );
               const vendor = vendors.find(v => v.id === product.vendorId)
+              const rating = getAverageRating(product.reviews);
               return (
                 <TableRow key={product.id}>
                   <TableCell>
@@ -137,7 +144,7 @@ export default function AdminProductsPage() {
                   <TableCell>
                     <div className='flex items-center gap-1'>
                         <Star className='w-4 h-4 text-primary fill-primary' />
-                        {product.rating.toFixed(1)}
+                        {rating.toFixed(1)}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

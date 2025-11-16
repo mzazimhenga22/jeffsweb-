@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, ShoppingCart, Eye } from 'lucide-react';
@@ -34,6 +35,15 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
+  const averageRating = React.useMemo(() => {
+    if (!product.reviews || product.reviews.length === 0) {
+      return 0;
+    }
+    const totalRating = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+    return totalRating / product.reviews.length;
+  }, [product.reviews]);
+
+
   return (
     <div className="group relative overflow-hidden rounded-3xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
       <Link href={`/shop/${product.id}`} className="block">
@@ -60,7 +70,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <Badge variant="secondary" className='bg-white/20 text-white border-none'>{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">
               <Star className="h-5 w-5 fill-primary" />
-              <span className="font-bold text-white">{product.rating.toFixed(1)}</span>
+              <span className="font-bold text-white">{averageRating.toFixed(1)}</span>
             </div>
           </div>
           <h3 className="mt-2 text-xl font-semibold leading-tight font-headline text-white">
