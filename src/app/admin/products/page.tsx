@@ -32,6 +32,7 @@ import { products, vendors } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -39,6 +40,7 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
+  const router = useRouter();
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -64,6 +66,10 @@ export default function AdminProductsPage() {
       variant: isDestructive ? 'destructive' : 'default',
     });
   };
+  
+  const handleEdit = (productId: string) => {
+    router.push(`/admin/products/${productId}/edit`);
+  }
 
   const getAverageRating = (reviews: any[]) => {
     if (!reviews || reviews.length === 0) return 0;
@@ -155,7 +161,7 @@ export default function AdminProductsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAction('Product edit page opened.')}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(product.id)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleAction('Product viewed on site.')}>View on site</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Product deleted.', true)}>
                           Delete

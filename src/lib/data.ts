@@ -41,10 +41,10 @@ export const users: User[] = [
 ];
 
 export const vendors: Vendor[] = [
-  { id: 'vendor-1', name: 'Chrono Lux', email: 'contact@chronolux.com', avatarId: 'avatar-1', storeName: 'Chrono Lux', rating: 4.9, products: 15, joinedDate: '2022-08-10', status: 'Approved' },
-  { id: 'vendor-2', name: 'Urban Step', email: 'support@urbanstep.com', avatarId: 'avatar-2', storeName: 'Urban Step', rating: 4.7, products: 32, joinedDate: '2022-09-01', status: 'Approved' },
-  { id: 'vendor-3', name: 'The Apparel Co.', email: 'hello@apparelco.com', avatarId: 'avatar-3', storeName: 'The Apparel Co.', rating: 4.8, products: 50, joinedDate: '2023-01-20', status: 'Approved' },
-  { id: 'vendor-4', name: 'Future Gadgets', email: 'info@futuregadgets.com', avatarId: 'avatar-1', storeName: 'Future Gadgets', rating: 0, products: 0, joinedDate: '2023-05-01', status: 'Pending' },
+  { id: 'vendor-1', name: 'Chrono Lux', email: 'contact@chronolux.com', avatarId: 'avatar-1', storeName: 'Chrono Lux', products: 15, joinedDate: '2022-08-10', status: 'Approved' },
+  { id: 'vendor-2', name: 'Urban Step', email: 'support@urbanstep.com', avatarId: 'avatar-2', storeName: 'Urban Step', products: 32, joinedDate: '2022-09-01', status: 'Approved' },
+  { id: 'vendor-3', name: 'The Apparel Co.', email: 'hello@apparelco.com', avatarId: 'avatar-3', storeName: 'The Apparel Co.', products: 50, joinedDate: '2023-01-20', status: 'Approved' },
+  { id: 'vendor-4', name: 'Future Gadgets', email: 'info@futuregadgets.com', avatarId: 'avatar-1', storeName: 'Future Gadgets', products: 0, joinedDate: '2023-05-01', status: 'Pending' },
 ];
 
 export const orders: Order[] = [

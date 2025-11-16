@@ -64,7 +64,6 @@ export type Vendor = {
   email: string;
   avatarId: string;
   storeName: string;
-  rating: number;
   products: number;
   joinedDate: string;
   status: 'Approved' | 'Pending' | 'Rejected';

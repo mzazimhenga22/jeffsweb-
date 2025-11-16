@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { vendors } from '@/lib/data';
+import { vendors, products } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,23 @@ export default function AdminVendorsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
+
+  const getAverageRatingForVendor = (vendorId: string) => {
+    const vendorProducts = products.filter(p => p.vendorId === vendorId);
+    if (vendorProducts.length === 0) return 0;
+
+    let totalRating = 0;
+    let reviewCount = 0;
+
+    vendorProducts.forEach(product => {
+      if (product.reviews && product.reviews.length > 0) {
+        totalRating += product.reviews.reduce((acc, review) => acc + review.rating, 0);
+        reviewCount += product.reviews.length;
+      }
+    });
+
+    return reviewCount > 0 ? totalRating / reviewCount : 0;
+  }
 
   const filteredVendors = vendors.filter((vendor) =>
     vendor.storeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -109,6 +126,7 @@ export default function AdminVendorsPage() {
               const avatar = PlaceHolderImages.find(
                 (p) => p.id === vendor.avatarId
               );
+              const rating = getAverageRatingForVendor(vendor.id);
               return (
                 <TableRow key={vendor.id}>
                   <TableCell>
@@ -127,7 +145,7 @@ export default function AdminVendorsPage() {
                   </TableCell>
                   <TableCell>{vendor.email}</TableCell>
                   <TableCell>{vendor.products}</TableCell>
-                  <TableCell>{vendor.rating.toFixed(1)}</TableCell>
+                  <TableCell>{rating.toFixed(1)}</TableCell>
                   <TableCell>
                     <Badge
                       variant={

@@ -1,6 +1,9 @@
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -28,14 +31,20 @@ import { MoreHorizontal, PlusCircle, Star } from 'lucide-react';
 import { products } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 export default function VendorProductsPage() {
+    const router = useRouter();
     const vendorProducts = products.filter(p => p.vendorId === 'vendor-2');
 
     const getAverageRating = (reviews: any[]) => {
       if (!reviews || reviews.length === 0) return 0;
       const total = reviews.reduce((acc, review) => acc + review.rating, 0);
       return total / reviews.length;
+    }
+    
+    const handleEdit = (productId: string) => {
+        router.push(`/vendor/products/${productId}/edit`);
     }
 
   return (
@@ -111,7 +120,7 @@ export default function VendorProductsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(product.id)}>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View on site</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           Delete
