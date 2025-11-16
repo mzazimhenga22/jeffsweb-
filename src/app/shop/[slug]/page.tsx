@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, CheckCircle, ShieldCheck, Check } from 'lucide-react';
+import { Star, CheckCircle, ShieldCheck, Check, Minus, Plus } from 'lucide-react';
 import * as React from 'react';
 
 import { MainLayout } from '@/components/main-layout';
@@ -19,14 +19,28 @@ import {
 } from '@/components/ui/accordion';
 import { ProductCard } from '@/components/product-card';
 import { cn } from '@/lib/utils';
+import { useCart } from '@/context/cart-context';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = React.use(params);
+  const { slug } = params;
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
+  const [quantity, setQuantity] = React.useState(1);
+
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const product = products.find((p) => p.id === slug);
 
@@ -34,11 +48,31 @@ export default function ProductDetailPage({
     if (product?.colors?.length) {
       setSelectedColor(product.colors[0]);
     }
+    if (product?.sizes?.length) {
+      setSelectedSize(product.sizes[0]);
+    }
   }, [product]);
 
   if (!product) {
     notFound();
   }
+  
+  const handleAddToCart = () => {
+    if (!product) return;
+    if (product.sizes.length > 0 && !selectedSize) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Please select a size.",
+        });
+        return;
+    }
+    addToCart({ ...product, quantity, size: selectedSize, color: selectedColor });
+    toast({
+        title: "Added to cart!",
+        description: `${product.name} has been added to your cart.`,
+    });
+  };
 
   const vendor = vendors.find((v) => v.id === product.vendorId);
   const image = PlaceHolderImages.find((p) => p.id === product.imageId);
@@ -92,7 +126,7 @@ export default function ProductDetailPage({
             {/* Color Selector */}
             {product.colors && product.colors.length > 0 && (
               <div className='mb-8'>
-                <h3 className="text-sm font-medium">Color</h3>
+                <h3 className="text-sm font-medium">Color: <span className='text-muted-foreground'>{selectedColor}</span></h3>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {product.colors.map((color) => (
                     <button
@@ -116,20 +150,39 @@ export default function ProductDetailPage({
             )}
             
             {/* Size Selector */}
-            <div>
-              <h3 className="text-sm font-medium">Size</h3>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {product.sizes.map((size) => (
-                  <Button key={size} variant="outline" className='min-w-12'>
-                    {size}
-                  </Button>
-                ))}
+             {product.sizes && product.sizes.length > 0 && (
+                <div className='mb-8'>
+                    <h3 className="text-sm font-medium">Size</h3>
+                     <Select onValueChange={setSelectedSize} defaultValue={selectedSize || undefined}>
+                        <SelectTrigger className="w-[180px] mt-2">
+                            <SelectValue placeholder="Select a size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {product.sizes.map((size) => (
+                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+             )}
+
+            {/* Quantity Selector */}
+            <div className="mb-8">
+              <h3 className="text-sm font-medium">Quantity</h3>
+              <div className="mt-2 flex items-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="font-bold text-lg">{quantity}</span>
+                <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Button size="lg" className="text-lg py-7">Add to Cart</Button>
+            <div className="mt-auto grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Button size="lg" className="text-lg py-7" onClick={handleAddToCart}>Add to Cart</Button>
               <Button size="lg" variant="outline" className="text-lg py-7">Buy Now</Button>
             </div>
             

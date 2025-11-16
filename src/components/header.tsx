@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCart } from '@/context/cart-context';
+import { Badge } from '@/components/ui/badge';
 
 const navLinks = [
   { href: '/shop', label: 'Shoes' },
@@ -22,6 +24,7 @@ const navLinks = [
 
 export function Header() {
   const isMobile = useIsMobile();
+  const { cartCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
@@ -40,6 +43,9 @@ export function Header() {
             <Button variant="ghost" size="icon" asChild>
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
+                 {cartCount > 0 && (
+                    <Badge variant="destructive" className="absolute top-0 right-0 h-5 w-5 justify-center p-0">{cartCount}</Badge>
+                )}
               </Link>
             </Button>
             <Sheet>
@@ -56,9 +62,9 @@ export function Header() {
                     <span className="font-bold">Ethereal Commerce</span>
                   </Link>
                   <nav className="flex flex-col gap-4 mb-auto">
-                    {navLinks.map((link) => (
+                    {navLinks.map((link, index) => (
                       <Link
-                        key={`${link.href}-${link.label}`}
+                        key={`${link.href}-${link.label}-${index}`}
                         href={link.href}
                         className="text-lg font-medium text-foreground/80 hover:text-foreground"
                       >
@@ -81,9 +87,9 @@ export function Header() {
         ) : (
           <>
             <nav className="flex items-center gap-6 text-sm">
-              {navLinks.map((link) => (
+              {navLinks.map((link, index) => (
                 <Link
-                  key={`${link.href}-${link.label}`}
+                  key={`${link.href}-${link.label}-${index}`}
                   href={link.href}
                   className="transition-colors hover:text-foreground/80 text-foreground/60"
                 >
@@ -97,8 +103,11 @@ export function Header() {
                 <Input placeholder="Search products..." className="pl-9" />
               </div>
               <Button variant="ghost" size="icon" asChild>
-                <Link href="/cart">
+                <Link href="/cart" className="relative">
                   <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{cartCount}</Badge>
+                  )}
                 </Link>
               </Button>
               <div className="flex items-center gap-2">

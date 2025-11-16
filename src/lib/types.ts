@@ -12,6 +12,12 @@ export type Product = {
   colors: string[];
 };
 
+export type CartItem = Product & {
+    quantity: number;
+    size: string | null;
+    color: string | null;
+}
+
 export type Category = {
   id: string;
   name: string;
