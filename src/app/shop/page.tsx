@@ -12,15 +12,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { ListFilter, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
+type SortOption = 'newest' | 'price-asc' | 'price-desc';
+
 export default function ShopPage() {
   const [filteredProducts, setFilteredProducts] = React.useState(products);
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
+  const [sortOption, setSortOption] = React.useState<SortOption>('newest');
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategories((prev) =>
@@ -31,14 +36,30 @@ export default function ShopPage() {
   };
 
   React.useEffect(() => {
-    if (selectedCategories.length === 0) {
-      setFilteredProducts(products);
-    } else {
-      setFilteredProducts(
-        products.filter((p) => selectedCategories.includes(p.category))
-      );
+    let tempProducts = [...products];
+
+    // Filter by category
+    if (selectedCategories.length > 0) {
+      tempProducts = tempProducts.filter((p) => selectedCategories.includes(p.category));
     }
-  }, [selectedCategories]);
+    
+    // Sort products
+    switch (sortOption) {
+        case 'price-asc':
+            tempProducts.sort((a, b) => a.price - b.price);
+            break;
+        case 'price-desc':
+            tempProducts.sort((a, b) => b.price - a.price);
+            break;
+        case 'newest':
+            tempProducts.sort((a, b) => parseInt(b.id.split('-')[1]) - parseInt(a.id.split('-')[1]));
+            break;
+        default:
+            break;
+    }
+
+    setFilteredProducts(tempProducts);
+  }, [selectedCategories, sortOption]);
 
   return (
     <MainLayout>
@@ -85,10 +106,11 @@ export default function ShopPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Trending</DropdownMenuItem>
-                <DropdownMenuItem>Price: Low to High</DropdownMenuItem>
-                <DropdownMenuItem>Price: High to Low</DropdownMenuItem>
-                <DropdownMenuItem>Newest</DropdownMenuItem>
+                <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                    <DropdownMenuRadioItem value="newest">Newest</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
