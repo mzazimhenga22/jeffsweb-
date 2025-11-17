@@ -24,6 +24,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/lib/types';
 import { generateProductStory } from '@/ai/flows/generate-product-story';
 import { PromoBanners } from '@/components/promo-banners';
+import { PromoBannerTriple } from '@/components/promo-banner-triple';
+import { PromoBannerSingle } from '@/components/promo-banner-single';
 
 
 export default function Home() {
@@ -266,6 +268,8 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        <PromoBannerTriple />
         
         {/* Brand Story Section */}
         <section className="container mx-auto">
@@ -295,6 +299,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+        
+        <PromoBannerSingle />
 
         {/* Testimonials Section */}
         <section className="container mx-auto">
@@ -331,3 +337,5 @@ export default function Home() {
     </MainLayout>
   );
 }
+
+    

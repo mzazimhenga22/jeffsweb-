@@ -149,6 +149,30 @@
       "description": "Promotional banner for a summer clothing sale",
       "imageUrl": "https://images.unsplash.com/photo-1572804013427-4d7ca726b655?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "imageHint": "summer sale"
+    },
+    {
+      "id": "promo-banner-3",
+      "description": "Full-width banner for a new collection",
+      "imageUrl": "https://images.unsplash.com/photo-1551489186-cf8726f5142e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "new collection"
+    },
+    {
+      "id": "promo-banner-4",
+      "description": "Small banner for accessories",
+      "imageUrl": "https://images.unsplash.com/photo-1588117269595-1f95306d1564?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "fashion accessories"
+    },
+    {
+      "id": "promo-banner-5",
+      "description": "Small banner for shoes",
+      "imageUrl": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "stylish shoes"
+    },
+    {
+      "id": "promo-banner-6",
+      "description": "Small banner for a gift guide",
+      "imageUrl": "https://images.unsplash.com/photo-1513201099705-4874684e20d7?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "gift guide"
     }
   ]
 }
