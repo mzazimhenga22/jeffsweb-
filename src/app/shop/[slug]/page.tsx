@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { products, vendors, users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { notFound, useSearchParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import {
   Accordion,
   AccordionContent,
@@ -33,12 +33,12 @@ import { generateProductStory } from '@/ai/flows/generate-product-story';
 import { getStyleSuggestions, type GetStyleSuggestionsOutput } from '@/ai/flows/get-style-suggestions';
 import { Card } from '@/components/ui/card';
 import { useWishlist } from '@/context/wishlist-context';
-import type { Product } from '@/lib/types';
+import type { Product, Vendor, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuickView } from '@/context/quick-view-context';
 
 
-function ProductDetailContent({ product, vendor, salesperson }: { product: Product, vendor: (typeof vendors)[0] | null, salesperson: (typeof users)[0] | null }) {
+function ProductDetailContent({ product, vendor, salesperson }: { product: Product, vendor: Vendor | null, salesperson: User | null }) {
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -407,27 +407,28 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
   );
 }
 
-function ProductDetailPageContentWrapper({ params }: { params: { slug: string } }) {
-  const searchParams = useSearchParams();
-  const salespersonId = searchParams.get('sp');
-  
+export default function ProductDetailPage({ 
+    params, 
+    searchParams 
+}: { 
+    params: { slug: string };
+    searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const product = products.find((p) => p.id === params.slug);
   
   if (!product) {
     notFound();
   }
+  
+  const salespersonId = searchParams?.sp;
+  const vendor = vendors.find((v) => v.id === product.vendorId) || null;
+  const salesperson = (salespersonId && typeof salespersonId === 'string') 
+    ? users.find(u => u.id === salespersonId && u.role === 'salesperson') || null
+    : null;
 
-  const vendor = product ? vendors.find((v) => v.id === product.vendorId) : null;
-  const salesperson = salespersonId ? users.find(u => u.id === salespersonId && u.role === 'salesperson') : null;
-
-  return <ProductDetailContent product={product} vendor={vendor} salesperson={salesperson} />;
-}
-
-
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   return (
     <React.Suspense fallback={<div>Loading...</div>}>
-      <ProductDetailPageContentWrapper params={params} />
+      <ProductDetailContent product={product} vendor={vendor} salesperson={salesperson} />
     </React.Suspense>
   )
 }
