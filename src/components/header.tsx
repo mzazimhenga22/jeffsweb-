@@ -5,7 +5,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Menu, Search, ShoppingCart, User, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCart } from '@/context/cart-context';
@@ -20,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SearchModal } from './search-modal';
 
 const navLinks = [
   { href: '/shop', label: 'Shoes' },
@@ -67,6 +67,12 @@ export function Header() {
 
         {isMobile ? (
           <div className="flex flex-1 items-center justify-end">
+             <SearchModal>
+                <Button variant="ghost" size="icon">
+                  <Search className="h-5 w-5" />
+                  <span className="sr-only">Search</span>
+                </Button>
+            </SearchModal>
             <Button variant="ghost" size="icon" asChild>
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
@@ -127,7 +133,7 @@ export function Header() {
           </div>
         ) : (
           <>
-            <nav className="flex items-center gap-6 text-sm">
+            <nav className="flex items-center gap-8 text-sm">
               {navLinks.map((link, index) => (
                 <Link
                   key={`${link.href}-${link.label}-${index}`}
@@ -139,10 +145,12 @@ export function Header() {
               ))}
             </nav>
             <div className="flex flex-1 items-center justify-end gap-4">
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search products..." className="pl-9" />
-              </div>
+              <SearchModal>
+                <Button variant="ghost" size="icon">
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Search</span>
+                </Button>
+              </SearchModal>
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/cart" className="relative">
                   <ShoppingCart className="h-5 w-5" />
