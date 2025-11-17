@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useQuickView } from '@/context/quick-view-context';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
@@ -57,6 +57,7 @@ export function QuickView() {
   return (
     <Dialog open={isOpen} onOpenChange={closeQuickView}>
       <DialogContent className="max-w-4xl p-0">
+        <DialogTitle className="sr-only">{product.name}</DialogTitle>
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Image Gallery */}
           <div className="p-6 space-y-4">
@@ -146,7 +147,7 @@ export function QuickView() {
                 </Button>
               </div>
                <Button variant="link" asChild className='w-full'>
-                <Link href={`/shop/${product.id}`}>View Full Product Details</Link>
+                <Link href={`/shop/${product.id}`} onClick={closeQuickView}>View Full Product Details</Link>
               </Button>
             </div>
           </div>

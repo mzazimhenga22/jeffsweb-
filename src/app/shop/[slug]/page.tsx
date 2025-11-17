@@ -35,6 +35,7 @@ import { Card } from '@/components/ui/card';
 import { useWishlist } from '@/context/wishlist-context';
 import type { Product } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useQuickView } from '@/context/quick-view-context';
 
 
 function ProductDetailContent({ slug }: { slug: string }) {
@@ -50,6 +51,7 @@ function ProductDetailContent({ slug }: { slug: string }) {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { closeQuickView } = useQuickView();
   const searchParams = useSearchParams();
 
   const product = products.find((p) => p.id === slug);
