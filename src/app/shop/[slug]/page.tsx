@@ -414,7 +414,8 @@ export default function ProductDetailPage({
     params: { slug: string };
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const product = products.find((p) => p.id === params.slug);
+  const resolvedParams = React.use(params);
+  const product = products.find((p) => p.id === resolvedParams.slug);
   
   if (!product) {
     notFound();
@@ -432,3 +433,5 @@ export default function ProductDetailPage({
     </React.Suspense>
   )
 }
+
+    
