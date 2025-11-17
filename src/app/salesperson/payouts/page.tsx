@@ -26,14 +26,16 @@ export default function SalespersonPayoutsPage() {
   return (
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className='flex flex-col'>
+            <Card>
                 <CardHeader>
                     <CardTitle>Commission Available</CardTitle>
                     <CardDescription>This is your earned commission ready for the next payout cycle.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4">
-                    <p className="text-4xl font-bold">$620.50</p>
-                    <Button onClick={handleRequestPayout} className='w-full sm:w-auto mt-auto'>Request Payout</Button>
+                <CardContent className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+                    <div>
+                        <p className="text-4xl font-bold">$620.50</p>
+                    </div>
+                    <Button onClick={handleRequestPayout} className='w-full sm:w-auto mt-4 sm:mt-0'>Request Payout</Button>
                 </CardContent>
             </Card>
              <Card>

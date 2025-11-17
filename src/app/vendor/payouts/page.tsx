@@ -17,14 +17,16 @@ export default function VendorPayoutsPage() {
   return (
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className='flex flex-col'>
+            <Card>
                 <CardHeader>
                     <CardTitle>Available for Payout</CardTitle>
                     <CardDescription>This is the amount ready to be transferred to your bank.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4">
-                    <p className="text-4xl font-bold">$1,580.20</p>
-                    <Button className='w-full sm:w-auto mt-auto'>Request Payout</Button>
+                <CardContent className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+                    <div>
+                        <p className="text-4xl font-bold">$1,580.20</p>
+                    </div>
+                    <Button className='w-full sm:w-auto mt-4 sm:mt-0'>Request Payout</Button>
                 </CardContent>
             </Card>
              <Card>
