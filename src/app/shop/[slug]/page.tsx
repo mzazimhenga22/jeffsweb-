@@ -71,7 +71,7 @@ export default function ProductDetailPage({
         if(image) setActiveImage(image.imageUrl);
       }
       setLoadingStory(true);
-      generateProductStory({ productName: product.name, productCategory: product.category })
+      generateProductStory({ productName: product.name, productCategory: product.category, productDescription: product.description })
         .then(result => {
           setProductStory(result.productStory);
         })

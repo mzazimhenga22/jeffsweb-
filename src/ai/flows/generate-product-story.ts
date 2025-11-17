@@ -13,6 +13,7 @@ import {z} from 'genkit';
 const GenerateProductStoryInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
   productCategory: z.string().describe('The category of the product.'),
+  productDescription: z.string().describe('The default description of the product.')
 });
 export type GenerateProductStoryInput = z.infer<typeof GenerateProductStoryInputSchema>;
 
@@ -48,7 +49,13 @@ const generateProductStoryFlow = ai.defineFlow(
     outputSchema: GenerateProductStoryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      return output!;
+    } catch (error) {
+      console.error('Error generating product story:', error);
+      // Fallback to the original description if AI fails
+      return { productStory: input.productDescription };
+    }
   }
 );

@@ -39,31 +39,37 @@ const getStyleSuggestionsFlow = ai.defineFlow(
     inputSchema: GetStyleSuggestionsInputSchema,
     outputSchema: GetStyleSuggestionsOutputSchema,
   },
-  async input => {
-    const allProducts = products
-      .map(p => ({id: p.id, name: p.name, category: p.category}))
-      .filter(p => p.id !== input.currentProductId);
+  async (input) => {
+    try {
+      const allProducts = products
+        .map(p => ({id: p.id, name: p.name, category: p.category}))
+        .filter(p => p.id !== input.currentProductId);
 
-    const prompt = ai.definePrompt({
-      name: 'getStyleSuggestionsPrompt',
-      input: {schema: GetStyleSuggestionsInputSchema},
-      output: {schema: GetStyleSuggestionsOutputSchema},
-      prompt: `You are an expert fashion stylist for a luxury e-commerce brand.
+      const prompt = ai.definePrompt({
+        name: 'getStyleSuggestionsPrompt',
+        input: {schema: GetStyleSuggestionsInputSchema},
+        output: {schema: GetStyleSuggestionsOutputSchema},
+        prompt: `You are an expert fashion stylist for a luxury e-commerce brand.
 
-      Your task is to suggest 2-3 products that would complement the given product to create a stylish outfit.
-      
-      Current Product Name: {{{productName}}}
-      Current Product Category: {{{productCategory}}}
-      
-      Here is a list of available products with their ID, name, and category:
-      ${JSON.stringify(allProducts)}
-      
-      Suggest products from the list above. Provide a short, compelling reason for each suggestion.
-      Do not suggest the product itself.
-      `,
-    });
+        Your task is to suggest 2-3 products that would complement the given product to create a stylish outfit.
+        
+        Current Product Name: {{{productName}}}
+        Current Product Category: {{{productCategory}}}
+        
+        Here is a list of available products with their ID, name, and category:
+        ${JSON.stringify(allProducts)}
+        
+        Suggest products from the list above. Provide a short, compelling reason for each suggestion.
+        Do not suggest the product itself.
+        `,
+      });
 
-    const {output} = await prompt(input);
-    return output!;
+      const {output} = await prompt(input);
+      return output!;
+    } catch (error) {
+      console.error('Error generating style suggestions:', error);
+      // Fallback to an empty array if AI fails
+      return { suggestions: [] };
+    }
   }
 );

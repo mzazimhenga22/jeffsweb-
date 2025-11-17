@@ -41,7 +41,7 @@ export default function Home() {
 
     selectedProducts.forEach(product => {
       setLoadingStories(prev => ({ ...prev, [product.id]: true }));
-      generateProductStory({ productName: product.name, productCategory: product.category })
+      generateProductStory({ productName: product.name, productCategory: product.category, productDescription: product.description })
         .then(result => {
           setProductStories(prev => ({ ...prev, [product.id]: result.productStory }));
         })
