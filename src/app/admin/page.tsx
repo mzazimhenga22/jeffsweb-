@@ -14,6 +14,9 @@ import {
   CreditCard,
   Activity,
   Building2,
+  Eye,
+  PackageCheck,
+  Star,
 } from 'lucide-react';
 import {
   ChartContainer,
@@ -22,7 +25,7 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { salesData, orders, users } from '@/lib/data';
+import { salesData, orders, users as allUsers, products } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -42,6 +45,18 @@ const chartConfig = {
 
 export default function AdminDashboardPage() {
   const recentOrders = orders.slice(0, 5);
+  
+  const getAverageRating = () => {
+    let totalRating = 0;
+    let reviewCount = 0;
+    products.forEach(product => {
+      if (product.reviews && product.reviews.length > 0) {
+        totalRating += product.reviews.reduce((acc, review) => acc + review.rating, 0);
+        reviewCount += product.reviews.length;
+      }
+    });
+    return reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : 'N/A';
+  }
 
   return (
     <div className="space-y-6">
@@ -59,22 +74,52 @@ export default function AdminDashboardPage() {
         </Card>
         <Card className="bg-card/70 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+            <div className="text-2xl font-bold">+{orders.length}</div>
+            <p className="text-xs text-muted-foreground">+19% from last month</p>
           </CardContent>
         </Card>
         <Card className="bg-card/70 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Product Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
-            <p className="text-xs text-muted-foreground">+19% from last month</p>
+            <div className="text-2xl font-bold">1M+</div>
+            <p className="text-xs text-muted-foreground">+30% from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Reached Checkout</CardTitle>
+            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">21,345</div>
+            <p className="text-xs text-muted-foreground">+22% from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Product Rating</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{getAverageRating()}</div>
+            <p className="text-xs text-muted-foreground">Across all products</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{allUsers.length}</div>
+            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
           </CardContent>
         </Card>
         <Card className="bg-card/70 backdrop-blur-sm">
@@ -85,6 +130,16 @@ export default function AdminDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">+573</div>
             <p className="text-xs text-muted-foreground">+2 from last month</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+21</div>
+            <p className="text-xs text-muted-foreground">Users on site</p>
           </CardContent>
         </Card>
       </div>
@@ -130,7 +185,7 @@ export default function AdminDashboardPage() {
               </TableHeader>
               <TableBody>
                 {recentOrders.map((order) => {
-                  const user = users.find(u => u.id === order.userId);
+                  const user = allUsers.find(u => u.id === order.userId);
                   return (
                   <TableRow key={order.id}>
                     <TableCell>
