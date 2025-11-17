@@ -23,13 +23,19 @@ export default function CheckoutPage() {
     const handlePlaceOrder = () => {
         // In a real app, you would process the payment here.
         // For this demo, we'll just show a success message, clear the cart,
-        // and redirect to a confirmation page.
+        // and redirect to a confirmation page with the order details.
+        
+        // Serialize cart items to pass in URL
+        const orderData = encodeURIComponent(JSON.stringify(cartItems));
+        
         toast({
             title: "Order Placed!",
             description: "Thank you for your purchase.",
         });
+        
+        const href = `/order-confirmation?order=${orderData}`;
         clearCart();
-        router.push('/order-confirmation');
+        router.push(href);
     }
     
     return (
