@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/lib/types';
 import { generateProductStory } from '@/ai/flows/generate-product-story';
+import { PromoBanners } from '@/components/promo-banners';
 
 
 export default function Home() {
@@ -250,6 +251,9 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {/* Promotional Banners */}
+        <PromoBanners />
 
         {/* Best Sellers Section */}
         <section className="container mx-auto">
