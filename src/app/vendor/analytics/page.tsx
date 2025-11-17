@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { salesData, products } from '@/lib/data';
-import { DollarSign, ShoppingCart, Users, Star } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Star, Eye, PackageCheck } from 'lucide-react';
 
 const chartConfig = {
   sales: { label: 'Sales', color: 'hsl(var(--primary))' },
@@ -33,7 +33,7 @@ export default function VendorAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -56,22 +56,42 @@ export default function VendorAnalyticsPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">New Customers</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">+132</div>
-                    <p className="text-xs text-muted-foreground">+8% from last month</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
                     <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">4.7</div>
                     <p className="text-xs text-muted-foreground">Maintained from last month</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Product Views</CardTitle>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">12,408</div>
+                    <p className="text-xs text-muted-foreground">+25% from last month</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Reached Checkout</CardTitle>
+                    <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">956</div>
+                    <p className="text-xs text-muted-foreground">+18% from last month</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">+132</div>
+                    <p className="text-xs text-muted-foreground">+8% from last month</p>
                 </CardContent>
             </Card>
         </div>
