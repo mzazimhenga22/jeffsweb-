@@ -101,7 +101,7 @@ export function Header() {
                   <Link
                     key={`${link.href}-${link.label}-${index}`}
                     href={link.href}
-                    className="transition-colors hover:text-foreground/80 text-foreground/60"
+                    className="px-3 py-1.5 rounded-md transition-colors hover:bg-foreground/5 hover:text-foreground text-foreground/60"
                   >
                     {link.label}
                   </Link>
@@ -180,7 +180,7 @@ export function Header() {
             <div className="relative flex items-center">
                 <div
                     className={cn(
-                    'absolute right-0 top-1/2 -translate-y-1/2 w-full transition-all duration-300 ease-in-out',
+                    'absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out',
                     isSearchOpen ? 'opacity-100 w-96' : 'opacity-0 w-0'
                     )}
                 >
@@ -192,7 +192,7 @@ export function Header() {
                         onBlur={() => setIsSearchOpen(false)}
                     />
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)}>
                     <Search className="h-5 w-5" />
                     <span className="sr-only">Search</span>
                 </Button>
