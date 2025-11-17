@@ -56,7 +56,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
 
   return (
-    <div className="group relative overflow-hidden rounded-3xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+    <div className="group relative overflow-hidden rounded-2xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
       <Link href={`/shop/${product.id}`} className="block">
         <div className="relative aspect-[4/5] w-full">
           {image && (
@@ -70,27 +70,27 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
            <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 gap-2">
-                <Button variant="outline" onClick={handleQuickView} className="gap-2 border-white/20 bg-black/40 backdrop-blur-lg hover:bg-black/50 text-white hover:text-white">
-                    <Maximize className="h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={handleQuickView} className="gap-1 border-white/20 bg-black/40 backdrop-blur-lg hover:bg-black/50 text-white hover:text-white">
+                    <Maximize className="h-3 w-3" />
                     Quick View
                 </Button>
             </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/50 backdrop-blur-xl border-t border-white/10 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-xl border-t border-white/10 text-white">
           <div className="flex items-start justify-between">
-            <Badge variant="secondary" className='bg-white/20 text-white border-none'>{product.category}</Badge>
+            <Badge variant="secondary" className='bg-white/20 text-white border-none text-xs'>{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">
-              <Star className="h-5 w-5 fill-primary" />
-              <span className="font-bold text-white">{averageRating.toFixed(1)}</span>
+              <Star className="h-4 w-4 fill-primary" />
+              <span className="font-bold text-white text-sm">{averageRating.toFixed(1)}</span>
             </div>
           </div>
-          <h3 className="mt-2 text-xl font-semibold leading-tight font-headline text-white">
+          <h3 className="mt-1 text-md font-semibold leading-tight font-headline text-white truncate">
             {product.name}
           </h3>
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-2xl font-bold text-white">${product.price.toFixed(2)}</p>
-            <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart" className='bg-white/20 border-white/30 hover:bg-white/30 text-white hover:text-white'>
-              <ShoppingCart className="h-5 w-5" />
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-xl font-bold text-white">${product.price.toFixed(2)}</p>
+            <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart" className='h-8 w-8 bg-white/20 border-white/30 hover:bg-white/30 text-white hover:text-white'>
+              <ShoppingCart className="h-4 w-4" />
             </Button>
           </div>
         </div>
