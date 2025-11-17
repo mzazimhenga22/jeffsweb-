@@ -84,7 +84,7 @@ export function Header() {
             </span>
           </Link>
           {!isMobile && (
-             <nav className="flex items-center gap-8 text-sm">
+             <nav className="flex items-center gap-10 text-sm">
                 {navLinks.map((link, index) => (
                   <Link
                     key={`${link.href}-${link.label}-${index}`}
