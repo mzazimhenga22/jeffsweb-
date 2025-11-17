@@ -33,7 +33,11 @@ export default function LoginPage() {
     } else if (email === 'maria.g@example.com') {
       login('vendor');
       router.push('/vendor');
-    } else {
+    } else if (email === 'david.lee@example.com') {
+      login('salesperson');
+      router.push('/salesperson');
+    }
+     else {
       login('customer');
       router.push('/');
     }
