@@ -71,6 +71,10 @@ export default function AdminProductsPage() {
     router.push(`/admin/products/${productId}/edit`);
   }
 
+  const handleViewOnSite = (productId: string) => {
+    window.open(`/shop/${productId}`, '_blank');
+  }
+
   const getAverageRating = (reviews: any[]) => {
     if (!reviews || reviews.length === 0) return 0;
     const total = reviews.reduce((acc, review) => acc + review.rating, 0);
@@ -162,7 +166,7 @@ export default function AdminProductsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(product.id)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAction('Product viewed on site.')}>View on site</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewOnSite(product.id)}>View on site</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Product deleted.', true)}>
                           Delete
                         </DropdownMenuItem>
