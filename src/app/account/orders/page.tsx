@@ -54,7 +54,7 @@ export default function MyOrdersPage() {
                         <Badge variant={order.status === 'Delivered' ? 'default' : 'secondary'}>{order.status}</Badge>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-start gap-4">
                       {image && (
                         <div className="w-24 h-24 relative rounded-md overflow-hidden">
                            <Image src={image.imageUrl} alt={product?.name || 'Product'} fill className="object-cover" />
@@ -62,6 +62,13 @@ export default function MyOrdersPage() {
                       )}
                       <div className="flex-1">
                           <p className='font-semibold'>{product?.name || 'Product not found'}</p>
+                          {(order.size || order.color) && (
+                            <p className="text-sm text-muted-foreground">
+                                {order.color && `Color: ${order.color}`}
+                                {order.size && order.color && ' / '}
+                                {order.size && `Size: ${order.size}`}
+                            </p>
+                          )}
                           <p className='text-sm text-muted-foreground'>Qty: {order.quantity}</p>
                           <p className='text-lg font-bold mt-1'>${order.total.toFixed(2)}</p>
                       </div>

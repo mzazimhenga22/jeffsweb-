@@ -61,6 +61,8 @@ export type Order = {
   total: number;
   status: OrderStatus;
   orderDate: string;
+  size?: string | null;
+  color?: string | null;
 };
 
 export type Vendor = {
