@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function AdminUserDetailPage({ params }: { params: { userId: string } }) {
-  const user = users.find(u => u.id === params.userId);
+  const resolvedParams = React.use(params);
+  const user = users.find(u => u.id === resolvedParams.userId);
 
   if (!user) {
     notFound();
