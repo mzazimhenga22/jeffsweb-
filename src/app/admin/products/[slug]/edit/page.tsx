@@ -25,7 +25,8 @@ import { Upload } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 export default function EditProductPage({ params }: { params: { slug: string } }) {
-  const product = products.find(p => p.id === params.slug);
+  const resolvedParams = React.use(params);
+  const product = products.find(p => p.id === resolvedParams.slug);
 
   if (!product) {
     notFound();
