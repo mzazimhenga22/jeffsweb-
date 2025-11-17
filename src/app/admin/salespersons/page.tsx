@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { AddEditSalespersonDialog } from '@/components/add-edit-salesperson-dialog';
 import { DeleteSalespersonDialog } from '@/components/delete-salesperson-dialog';
+import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -41,6 +42,7 @@ export default function AdminSalespersonsPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
+  const router = useRouter();
 
   const [isAddEditDialogOpen, setAddEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -151,7 +153,7 @@ export default function AdminSalespersonsPage() {
               {paginatedSalespersons.map((user) => {
                 const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId);
                 return (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className="cursor-pointer" onClick={() => router.push(`/admin/salespersons/${user.id}`)}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -165,15 +167,15 @@ export default function AdminSalespersonsPage() {
                   <TableCell>{user.createdAt}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(user)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast({title: 'Details page coming soon!'})}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user)}>
+                        <DropdownMenuItem onClick={() => router.push(`/admin/salespersons/${user.id}`)}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(user); }}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(user); }}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -206,4 +208,3 @@ export default function AdminSalespersonsPage() {
     </>
   );
 }
-
