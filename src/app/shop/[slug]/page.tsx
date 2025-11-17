@@ -38,7 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useQuickView } from '@/context/quick-view-context';
 
 
-function ProductDetailContent({ slug }: { slug: string }) {
+function ProductDetailContent({ product, vendor, salesperson }: { product: Product, vendor: (typeof vendors)[0] | null, salesperson: (typeof users)[0] | null }) {
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -52,13 +52,6 @@ function ProductDetailContent({ slug }: { slug: string }) {
   const { toast } = useToast();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { closeQuickView } = useQuickView();
-  const searchParams = useSearchParams();
-
-  const product = products.find((p) => p.id === slug);
-  const vendor = product ? vendors.find((v) => v.id === product.vendorId) : null;
-  const salespersonId = searchParams.get('sp');
-  const salesperson = salespersonId ? users.find(u => u.id === salespersonId && u.role === 'salesperson') : null;
-
 
   React.useEffect(() => {
     if (product) {
@@ -92,10 +85,6 @@ function ProductDetailContent({ slug }: { slug: string }) {
 
     }
   }, [product]);
-
-  if (!product) {
-    notFound();
-  }
   
   const handleAddToCart = () => {
     if (!product) return;
@@ -418,11 +407,27 @@ function ProductDetailContent({ slug }: { slug: string }) {
   );
 }
 
+function ProductDetailPageContentWrapper({ params }: { params: { slug: string } }) {
+  const searchParams = useSearchParams();
+  const salespersonId = searchParams.get('sp');
+  
+  const product = products.find((p) => p.id === params.slug);
+  
+  if (!product) {
+    notFound();
+  }
+
+  const vendor = product ? vendors.find((v) => v.id === product.vendorId) : null;
+  const salesperson = salespersonId ? users.find(u => u.id === salespersonId && u.role === 'salesperson') : null;
+
+  return <ProductDetailContent product={product} vendor={vendor} salesperson={salesperson} />;
+}
+
 
 export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   return (
     <React.Suspense fallback={<div>Loading...</div>}>
-      <ProductDetailContent slug={params.slug} />
+      <ProductDetailPageContentWrapper params={params} />
     </React.Suspense>
   )
 }
