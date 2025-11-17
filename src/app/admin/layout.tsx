@@ -14,7 +14,8 @@ import {
   Bell,
   PanelLeft,
   Receipt,
-  Users2
+  Users2,
+  Wallet,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -49,6 +50,7 @@ const adminNavItems = [
   { href: '/admin/vendors', icon: Building2, label: 'Vendors' },
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/admin/payouts', icon: Wallet, label: 'Payouts' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
