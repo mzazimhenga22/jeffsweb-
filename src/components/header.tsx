@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Package } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Package, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SearchModal } from './search-modal';
+import { Input } from './ui/input';
 
 const navLinks = [
   { href: '/shop', label: 'Shoes' },
@@ -33,6 +33,8 @@ export function Header() {
   const { cartCount } = useCart();
   const { user, logout } = useAuth();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +45,25 @@ export function Header() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
   
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const getWelcomeMessage = () => {
     if (!user) return '';
     return `Welcome, ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`;
@@ -67,12 +87,10 @@ export function Header() {
 
         {isMobile ? (
           <div className="flex flex-1 items-center justify-end">
-             <SearchModal>
-                <Button variant="ghost" size="icon">
-                  <Search className="h-5 w-5" />
-                  <span className="sr-only">Search</span>
-                </Button>
-            </SearchModal>
+             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
@@ -145,12 +163,24 @@ export function Header() {
               ))}
             </nav>
             <div className="flex flex-1 items-center justify-end gap-4">
-              <SearchModal>
-                <Button variant="ghost" size="icon">
+              <div className={cn("relative transition-all duration-300", isSearchOpen ? 'w-64' : 'w-10')}>
+                {isSearchOpen ? (
+                  <>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      ref={searchInputRef}
+                      placeholder="Search products..."
+                      className="pl-9"
+                      onBlur={() => setIsSearchOpen(false)}
+                    />
+                  </>
+                ) : (
+                  <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
                     <Search className="h-5 w-5" />
                     <span className="sr-only">Search</span>
-                </Button>
-              </SearchModal>
+                  </Button>
+                )}
+              </div>
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/cart" className="relative">
                   <ShoppingCart className="h-5 w-5" />
