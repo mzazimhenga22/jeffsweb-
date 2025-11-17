@@ -14,12 +14,10 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/context/auth-context';
 import { supabase } from '@/lib/supabase-client';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
@@ -36,11 +34,8 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      // For the purpose of this example, we'll just log the user in as a generic 'customer'
-      // In a real app, you would fetch the user's role from your database
-      // and use that to determine where to redirect them.
-      login('customer');
       router.push('/');
+      router.refresh();
     }
   };
 
