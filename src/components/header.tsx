@@ -66,8 +66,20 @@ export function Header() {
 
   const getWelcomeMessage = () => {
     if (!user) return '';
+    if (user.role === 'customer') return 'My Account';
     return `Welcome, ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}`;
   }
+  
+  const getAccountHomePage = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'admin': return '/admin';
+      case 'vendor': return '/vendor';
+      case 'salesperson': return '/salesperson';
+      default: return '/account/orders';
+    }
+  }
+
 
   return (
     <header
@@ -211,7 +223,13 @@ export function Header() {
                 <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href={getAccountHomePage()}>Dashboard</Link></DropdownMenuItem>
+                {user.role === 'customer' && (
+                  <>
+                    <DropdownMenuItem asChild><Link href="/account/orders">My Orders</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/account/wishlist">My Wishlist</Link></DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
