@@ -19,19 +19,16 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
-import { orders, users } from '@/lib/data';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { orders as initialOrders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { OrderStatusUpdater } from '@/components/order-status-updater';
+import type { Order, OrderStatus } from '@/lib/types';
 
 export default function AdminOrdersPage() {
   const { toast } = useToast();
+  const [orders, setOrders] = React.useState<Order[]>(initialOrders);
 
   const handleAction = (message: string, isDestructive: boolean = false) => {
     toast({
@@ -39,6 +36,16 @@ export default function AdminOrdersPage() {
       variant: isDestructive ? 'destructive' : 'default',
     });
   };
+
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderId ? {...o, status: newStatus} : o)
+    );
+    toast({
+        title: "Order Status Updated",
+        description: `Order ${orderId} has been updated to "${newStatus}".`
+    })
+  }
 
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
@@ -77,7 +84,9 @@ export default function AdminOrdersPage() {
                     variant={
                       order.status === 'Delivered'
                         ? 'default'
-                        : order.status === 'Shipped'
+                        : order.status === 'On Transit'
+                        ? 'secondary'
+                        : order.status === 'Processing'
                         ? 'secondary'
                         : order.status === 'Pending'
                         ? 'outline'
@@ -88,20 +97,12 @@ export default function AdminOrdersPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                  <OrderStatusUpdater order={order} onStatusChange={handleStatusChange}>
                       <DropdownMenuItem onClick={() => handleAction('Order details viewed.')}>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('Order status updated.')}>Update Status</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Order cancelled.', true)}>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleStatusChange(order.id, 'Cancelled')}>
                         Cancel Order
                       </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  </OrderStatusUpdater>
                 </TableCell>
               </TableRow>
             )})}

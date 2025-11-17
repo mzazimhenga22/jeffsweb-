@@ -19,16 +19,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
-import { orders, users } from '@/lib/data';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { orders as initialOrders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { OrderStatusUpdater } from '@/components/order-status-updater';
+import type { Order, OrderStatus } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -37,9 +33,9 @@ export default function VendorOrdersPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
 
-  const vendorOrders = orders.filter(o => o.vendorId === 'vendor-2');
+  const [orders, setOrders] = React.useState<Order[]>(initialOrders.filter(o => o.vendorId === 'vendor-2'));
 
-  const filteredOrders = vendorOrders.filter((order) =>
+  const filteredOrders = orders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     users.find(u => u.id === order.userId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -61,6 +57,16 @@ export default function VendorOrdersPage() {
   const handleAction = (message: string) => {
     toast({ title: message });
   };
+  
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderId ? {...o, status: newStatus} : o)
+    );
+    toast({
+        title: "Order Status Updated",
+        description: `Order ${orderId} has been updated to "${newStatus}".`
+    })
+  }
 
   return (
     <Card>
@@ -107,27 +113,23 @@ export default function VendorOrdersPage() {
                     variant={
                       order.status === 'Delivered'
                         ? 'default'
-                        : order.status === 'Shipped'
+                        : order.status === 'On Transit'
                         ? 'secondary'
-                        : 'outline'
+                        : order.status === 'Processing'
+                        ? 'secondary'
+                        : order.status === 'Pending'
+                        ? 'outline'
+                        : 'destructive'
                     }
                   >
                     {order.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                  <OrderStatusUpdater order={order} onStatusChange={handleStatusChange}>
                       <DropdownMenuItem onClick={() => handleAction('Order details viewed.')}>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('Order status marked as shipped.')}>Mark as Shipped</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleAction('Packing slip printed.')}>Print Packing Slip</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  </OrderStatusUpdater>
                 </TableCell>
               </TableRow>
             )})}

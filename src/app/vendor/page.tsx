@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -133,9 +134,13 @@ export default function VendorDashboardPage() {
                         variant={
                           order.status === 'Delivered'
                             ? 'default'
-                            : order.status === 'Shipped'
+                            : order.status === 'On Transit'
                             ? 'secondary'
-                            : 'outline'
+                            : order.status === 'Processing'
+                            ? 'secondary'
+                            : order.status === 'Pending'
+                            ? 'outline'
+                            : 'destructive'
                         }
                       >
                         {order.status}

@@ -1,11 +1,11 @@
 
-import type { Product, Category, User, Order, Vendor, Testimonial, ProductReview } from './types';
+import type { Product, Category, User, Order, Vendor, Testimonial, ProductReview, OrderStatus } from './types';
 
 export const categories: Category[] = [
-  { id: 'cat-1', name: 'Shoes', imageId: 'cat-shoes' },
-  { id: 'cat-2', name: 'Watches', imageId: 'cat-watches' },
-  { id: 'cat-3', name: 'Clothing', imageId: 'cat-clothing' },
-  { id: 'cat-4', name: 'Accessories', imageId: 'cat-accessories' },
+  { id: 'cat-1', name: 'Shoes', imageId: 'product-shoe-1' },
+  { id: 'cat-2', name: 'Watches', imageId: 'product-watch-1' },
+  { id: 'cat-3', name: 'Clothing', imageId: 'product-clothing-1' },
+  { id: 'cat-4', name: 'Accessories', imageId: 'product-accessory-1' },
 ];
 
 const reviews: ProductReview[] = [
@@ -49,8 +49,8 @@ export const vendors: Vendor[] = [
 
 export const orders: Order[] = [
   { id: 'order-1', userId: 'user-1', vendorId: 'vendor-1', productId: 'prod-1', quantity: 1, total: 1250.00, status: 'Delivered', orderDate: '2023-05-01', salespersonId: 'user-5' },
-  { id: 'order-2', userId: 'user-3', vendorId: 'vendor-2', productId: 'prod-2', quantity: 1, total: 180.00, status: 'Shipped', orderDate: '2023-05-03' },
-  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Pending', orderDate: '2023-05-04', salespersonId: 'user-6' },
+  { id: 'order-2', userId: 'user-3', vendorId: 'vendor-2', productId: 'prod-2', quantity: 1, total: 180.00, status: 'On Transit', orderDate: '2023-05-03' },
+  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Processing', orderDate: '2023-05-04', salespersonId: 'user-6' },
   { id: 'order-4', userId: 'user-2', vendorId: 'vendor-1', productId: 'prod-4', quantity: 2, total: 300.00, status: 'Delivered', orderDate: '2023-04-28' },
 ];
 

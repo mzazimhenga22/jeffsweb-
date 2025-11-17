@@ -35,6 +35,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import type { Product } from '@/lib/types';
+import * as React from 'react';
 
 const chartConfig = {
   sales: {
@@ -46,16 +48,18 @@ const chartConfig = {
 export default function AdminDashboardPage() {
   const recentOrders = orders.slice(0, 5);
   
-  const getAverageRating = () => {
-    let totalRating = 0;
-    let reviewCount = 0;
-    products.forEach(product => {
-      if (product.reviews && product.reviews.length > 0) {
-        totalRating += product.reviews.reduce((acc, review) => acc + review.rating, 0);
-        reviewCount += product.reviews.length;
-      }
-    });
-    return reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : 'N/A';
+  const getAverageRating = React.useCallback((product: Product) => {
+    if (!product.reviews || product.reviews.length === 0) return 0;
+    const total = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+    return total / product.reviews.length;
+  }, []);
+
+  const getOverallAverageRating = () => {
+    if (products.length === 0) return 'N/A';
+    const allRatings = products.map(p => getAverageRating(p)).filter(r => r > 0);
+    if (allRatings.length === 0) return 'N/A';
+    const total = allRatings.reduce((acc, rating) => acc + rating, 0);
+    return (total / allRatings.length).toFixed(1);
   }
 
   return (
@@ -108,7 +112,7 @@ export default function AdminDashboardPage() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{getAverageRating()}</div>
+            <div className="text-2xl font-bold">{getOverallAverageRating()}</div>
             <p className="text-xs text-muted-foreground">Across all products</p>
           </CardContent>
         </Card>
@@ -198,7 +202,9 @@ export default function AdminDashboardPage() {
                         variant={
                           order.status === 'Delivered'
                             ? 'default'
-                            : order.status === 'Shipped'
+                            : order.status === 'On Transit'
+                            ? 'secondary'
+                            : order.status === 'Processing'
                             ? 'secondary'
                             : order.status === 'Pending'
                             ? 'outline'

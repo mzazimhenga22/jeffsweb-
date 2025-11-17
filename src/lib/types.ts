@@ -46,6 +46,8 @@ export type User = {
   createdAt: string;
 };
 
+export type OrderStatus = 'Pending' | 'Processing' | 'On Transit' | 'Delivered' | 'Cancelled';
+
 export type Order = {
   id: string;
   userId: string;
@@ -54,7 +56,7 @@ export type Order = {
   salespersonId?: string;
   quantity: number;
   total: number;
-  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: OrderStatus;
   orderDate: string;
 };
 

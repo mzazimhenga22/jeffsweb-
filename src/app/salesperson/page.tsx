@@ -156,9 +156,13 @@ export default function SalespersonDashboardPage() {
                         variant={
                           order.status === 'Delivered'
                             ? 'default'
-                            : order.status === 'Shipped'
+                            : order.status === 'On Transit'
                             ? 'secondary'
-                            : 'outline'
+                            : order.status === 'Processing'
+                            ? 'secondary'
+                            : order.status === 'Pending'
+                            ? 'outline'
+                            : 'destructive'
                         }
                         className='bg-opacity-50'
                       >
