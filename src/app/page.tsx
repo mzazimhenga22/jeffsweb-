@@ -1,186 +1,100 @@
-
 'use client';
 
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Star, Truck, ShieldCheck, Gem, Loader } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Gem } from 'lucide-react';
 
 import { MainLayout } from '@/components/main-layout';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { categories, products, testimonials, vendors } from '@/lib/data';
 import { ProductCard } from '@/components/product-card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Product } from '@/lib/types';
-import { generateProductStory } from '@/ai/flows/generate-product-story';
+import type { Product, Category, Testimonial } from '@/lib/types';
 import { PromoBanners } from '@/components/promo-banners';
 import { PromoBannerTriple } from '@/components/promo-banner-triple';
 import { PromoBannerSingle } from '@/components/promo-banner-single';
+import { HeroCarousel } from '@/components/hero-carousel';
+import { supabase } from '@/lib/supabase-client';
 
+async function getFeaturedProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .limit(8);
+  if (error) {
+    console.error('Error fetching featured products:', error);
+    return [];
+  }
+  return data as Product[];
+}
 
-export default function Home() {
-  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
-  const [activeImage, setActiveImage] = React.useState<string | null>(null);
-  const [heroProducts, setHeroProducts] = React.useState<Product[]>([]);
-  const [productStories, setProductStories] = React.useState<Record<string, string>>({});
-  const [loadingStories, setLoadingStories] = React.useState<Record<string, boolean>>({});
+async function getNewArrivals(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(4);
+  if (error) {
+    console.error('Error fetching new arrivals:', error);
+    return [];
+  }
+  return data as Product[];
+}
 
+async function getBestSellers(): Promise<Product[]> {
+    // Bestsellers are hardcoded for now
+    const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .limit(4);
+  if (error) {
+    console.error('Error fetching bestsellers:', error);
+    return [];
+  }
+  return data as Product[];
+}
+
+async function getCategories(): Promise<Category[]> {
+    const { data, error } = await supabase.from('categories').select('*').limit(4);
+    if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+    return data as Category[];
+}
+
+async function getTestimonials(): Promise<Testimonial[]> {
+    const { data, error } = await supabase.from('testimonials').select('*').limit(3);
+    if (error) {
+        console.error('Error fetching testimonials:', error);
+        return [];
+    }
+    return data as Testimonial[];
+}
+
+export default function HomePage() {
+  const [backgroundImage, setBackgroundImage] = React.useState<string | null>(null);
+  const [featuredProducts, setFeaturedProducts] = React.useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = React.useState<Product[]>([]);
+  const [bestSellers, setBestSellers] = React.useState<Product[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [testimonials, setTestimonials] = React.useState<Testimonial[]>([]);
 
   React.useEffect(() => {
-    // Shuffle products and take a smaller slice for performance
-    const shuffled = [...products].sort(() => 0.5 - Math.random());
-    const selectedProducts = shuffled.slice(0, 8);
-    setHeroProducts(selectedProducts);
-
-    selectedProducts.forEach(product => {
-      setLoadingStories(prev => ({ ...prev, [product.id]: true }));
-      generateProductStory({ productName: product.name, productCategory: product.category, productDescription: product.description })
-        .then(result => {
-          setProductStories(prev => ({ ...prev, [product.id]: result.productStory }));
-        })
-        .finally(() => {
-          setLoadingStories(prev => ({ ...prev, [product.id]: false }));
-        });
-    });
-
+    getFeaturedProducts().then(setFeaturedProducts);
+    getNewArrivals().then(setNewArrivals);
+    getBestSellers().then(setBestSellers);
+    getCategories().then(setCategories);
+    getTestimonials().then(setTestimonials);
   }, []);
 
-  React.useEffect(() => {
-    if (!carouselApi || heroProducts.length === 0) {
-      return;
-    }
-
-    const handleSelect = () => {
-      const currentSlide = carouselApi.selectedScrollSnap();
-      const product = heroProducts[currentSlide];
-      const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
-      if (image) {
-        setActiveImage(image.imageUrl);
-      }
-    };
-
-    handleSelect(); // Set initial image
-    carouselApi.on('select', handleSelect);
-
-    return () => {
-      carouselApi.off('select', handleSelect);
-    };
-  }, [carouselApi, heroProducts]);
-
-  const getAverageRating = (reviews: any[]) => {
-    if (!reviews || reviews.length === 0) return 0;
-    const total = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return total / reviews.length;
-  }
-
-  const newArrivals = products.slice(0, 4);
-  const bestSellers = [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 4);
-  const brandStoryImage = PlaceHolderImages.find(p => p.id === 'brand-story');
-
   return (
-    <MainLayout backgroundImage={activeImage}>
+    <MainLayout backgroundImage={backgroundImage}>
       <div className="space-y-24 pb-24">
         {/* Hero Section */}
         <section className="relative w-full -mt-16">
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent>
-              {heroProducts.map((product, index) => {
-                const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
-                const vendor = vendors.find(v => v.id === product.vendorId);
-                const vendorAvatar = PlaceHolderImages.find(p => p.id === vendor?.avatarId);
-                const story = productStories[product.id];
-                const isLoading = loadingStories[product.id];
-                const rating = getAverageRating(product.reviews);
-
-                return (
-                <CarouselItem key={product.id}>
-                  <div className="group relative h-[550px] w-full overflow-hidden">
-                    {image && (
-                        <Image
-                        src={image.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                        data-ai-hint={image.imageHint}
-                        priority={index === 0}
-                        />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-
-                    <div className="absolute bottom-12 left-12 right-12 text-white">
-                        <div className='max-w-xl'>
-                            <h1 className="mb-4 text-5xl font-bold tracking-tight font-headline drop-shadow-2xl">
-                            {product.name}
-                            </h1>
-                            <div className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl h-14">
-                              {isLoading && <div className='flex items-center gap-2'><Loader className='animate-spin h-5 w-5' /><span>Crafting story...</span></div>}
-                              {story && !isLoading && <p>{story}</p>}
-                              {!story && !isLoading && <p>{product.description}</p>}
-                            </div>
-                            <Button size="lg" asChild className="text-lg py-7">
-                            <Link href={`/shop/${product.id}`}>
-                                Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                            </Link>
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="absolute bottom-12 right-12 hidden md:block">
-                       <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white w-full max-w-sm">
-                           <CardContent className='p-6'>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm">Price</p>
-                                        <p className="text-3xl font-bold">${product.price.toFixed(2)}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm">Rating</p>
-                                        <div className="flex items-center gap-1 text-yellow-400">
-                                            <Star className="w-5 h-5 fill-current" />
-                                            <span className="font-bold text-xl text-white">{rating.toFixed(1)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {vendor && 
-                                    <div className="mt-6 pt-4 border-t border-white/20">
-                                        <p className="text-sm">Sold by</p>
-                                        <div className="flex items-center gap-3 mt-2">
-                                            {vendorAvatar &&
-                                                <Avatar>
-                                                    <AvatarImage src={vendorAvatar.imageUrl} alt={vendor.name} data-ai-hint={vendorAvatar.imageHint} />
-                                                    <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                            }
-                                            <p className="font-semibold">{vendor.storeName}</p>
-                                        </div>
-                                    </div>
-                                }
-                           </CardContent>
-                       </Card>
-                    </div>
-                  </div>
-                </CarouselItem>
-              )})}
-            </CarouselContent>
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10" />
-          </Carousel>
+          <HeroCarousel products={featuredProducts} setBackgroundImage={setBackgroundImage} />
         </section>
 
         {/* Value Propositions */}
@@ -216,20 +130,15 @@ export default function Home() {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {categories.map((category) => {
-              const image = PlaceHolderImages.find(p => p.id === category.imageId);
-              return (
+            {categories.map((category) => (
               <Link href="/shop" key={category.id} className="group">
                 <div className="relative h-96 w-full overflow-hidden rounded-3xl transition-transform duration-300 group-hover:scale-105">
-                  {image && (
-                    <Image
-                      src={image.imageUrl}
-                      alt={category.name}
-                      fill
-                      className="object-cover"
-                      data-ai-hint={image.imageHint}
-                    />
-                  )}
+                  <Image
+                    src={category.image_url}
+                    alt={category.name}
+                    fill
+                    className="object-cover"
+                  />
                   <div className="absolute inset-0 bg-black/40" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <h3 className="text-3xl font-bold text-white font-headline">
@@ -238,7 +147,7 @@ export default function Home() {
                   </div>
                 </div>
               </Link>
-            )})}
+            ))}
           </div>
         </section>
         
@@ -287,15 +196,12 @@ export default function Home() {
               </Button>
             </div>
              <div className="relative h-96 w-full overflow-hidden rounded-2xl order-1 lg:order-2">
-                {brandStoryImage && (
-                    <Image
-                    src={brandStoryImage.imageUrl}
+                <Image
+                    src="/placeholder.svg"
                     alt="Our Story"
                     fill
                     className="object-cover"
-                    data-ai-hint={brandStoryImage.imageHint}
                     />
-                )}
             </div>
           </div>
         </section>
@@ -308,14 +214,12 @@ export default function Home() {
             What Our Customers Say
           </h2>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            {testimonials.map((testimonial) => {
-              const avatar = PlaceHolderImages.find(p => p.id === testimonial.avatarId);
-              return (
+            {testimonials.map((testimonial) => (
               <Card key={testimonial.id} className="bg-secondary/30 border-0 rounded-3xl">
                 <CardContent className="p-8">
                   <div className="flex items-center mb-4">
                     <Avatar className="h-12 w-12 mr-4">
-                      {avatar && <AvatarImage src={avatar.imageUrl} alt={testimonial.name} data-ai-hint={avatar.imageHint} />}
+                      <AvatarImage src={testimonial.avatar_url} alt={testimonial.name} />
                       <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -330,12 +234,10 @@ export default function Home() {
                   <p className="text-muted-foreground italic">"{testimonial.text}"</p>
                 </CardContent>
               </Card>
-            )})}
+            ))}
           </div>
         </section>
       </div>
     </MainLayout>
   );
 }
-
-    

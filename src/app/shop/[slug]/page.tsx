@@ -1,17 +1,13 @@
-
 'use client';
 
 import Image from 'next/image';
-import { Star, Check, Minus, Plus, Loader, Heart, Facebook, Twitter, Share2 } from 'lucide-react';
+import { Star, Check, Minus, Plus, Heart, Facebook, Twitter, Share2 } from 'lucide-react';
 import * as React from 'react';
 
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { products, vendors, users } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { notFound } from 'next/navigation';
 import {
   Accordion,
   AccordionContent,
@@ -29,29 +25,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { generateProductStory } from '@/ai/flows/generate-product-story';
-import { getStyleSuggestions, type GetStyleSuggestionsOutput } from '@/ai/flows/get-style-suggestions';
 import { Card } from '@/components/ui/card';
 import { useWishlist } from '@/context/wishlist-context';
-import type { Product, Vendor, User } from '@/lib/types';
+import type { Product } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useQuickView } from '@/context/quick-view-context';
 
 
-function ProductDetailContent({ product, vendor, salesperson }: { product: Product, vendor: Vendor | null, salesperson: User | null }) {
+function ProductDetailContent({ product, relatedProducts }: { product: Product, relatedProducts: Product[] }) {
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
-  const [productStory, setProductStory] = React.useState<string | null>(null);
-  const [loadingStory, setLoadingStory] = React.useState(true);
-  const [styleSuggestions, setStyleSuggestions] = React.useState<GetStyleSuggestionsOutput['suggestions']>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = React.useState(true);
   const [activeImage, setActiveImage] = React.useState<string | null>(null);
 
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { closeQuickView } = useQuickView();
 
   React.useEffect(() => {
     if (product) {
@@ -61,28 +49,9 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
       if (product.sizes?.length) {
         setSelectedSize(product.sizes[0]);
       }
-      if (product.imageIds?.length) {
-        const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
-        if(image) setActiveImage(image.imageUrl);
+      if (product.image_url) {
+        setActiveImage(product.image_url);
       }
-      setLoadingStory(true);
-      generateProductStory({ productName: product.name, productCategory: product.category, productDescription: product.description })
-        .then(result => {
-          setProductStory(result.productStory);
-        })
-        .finally(() => {
-          setLoadingStory(false);
-        });
-
-      setLoadingSuggestions(true);
-      getStyleSuggestions({ productName: product.name, productCategory: product.category, currentProductId: product.id })
-        .then(result => {
-          setStyleSuggestions(result.suggestions);
-        })
-        .finally(() => {
-          setLoadingSuggestions(false);
-        });
-
     }
   }, [product]);
   
@@ -102,8 +71,6 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
       quantity, 
       size: selectedSize, 
       color: selectedColor,
-      vendorName: vendor?.storeName,
-      salespersonName: salesperson?.name,
     });
     
     toast({
@@ -116,8 +83,6 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
       toggleWishlist(product);
   }
 
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
-
   const getStockMessage = () => {
     if (product.stock === 0) return { text: 'Out of Stock', className: 'text-destructive' };
     if (product.stock < 10) return { text: `Only ${product.stock} left!`, className: 'text-amber-600' };
@@ -125,25 +90,10 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
   }
 
   const mainImage = activeImage;
-  const mainImageHint = PlaceHolderImages.find(p => p.imageUrl === mainImage)?.imageHint;
-  
-  const averageRating = React.useMemo(() => {
-    if (!product.reviews || product.reviews.length === 0) {
-      return 0;
-    }
-    const totalRating = product.reviews.reduce((acc, review) => acc + review.rating, 0);
-    return totalRating / product.reviews.length;
-  }, [product.reviews]);
-
 
   return (
-    <MainLayout backgroundImage={mainImage}>
+    <MainLayout backgroundImage={mainImage || undefined}>
       <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
-        {salesperson && (
-          <div className='mb-8 p-4 rounded-xl bg-primary/10 border border-primary/20 text-center'>
-            <p className='text-sm text-primary-foreground'>You are shopping with <span className='font-bold'>{salesperson.name}</span>.</p>
-          </div>
-        )}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Product Image Gallery */}
           <div className="space-y-4">
@@ -155,27 +105,8 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
                   width={800}
                   height={800}
                   className="h-full w-full object-cover"
-                  data-ai-hint={mainImageHint}
                 />
               )}
-            </div>
-            <div className="grid grid-cols-5 gap-4">
-              {product.imageIds.map(imageId => {
-                const image = PlaceHolderImages.find(p => p.id === imageId);
-                if (!image) return null;
-                return (
-                  <button key={imageId} onClick={() => setActiveImage(image.imageUrl)} className={cn('overflow-hidden rounded-lg aspect-square border-2 transition', activeImage === image.imageUrl ? 'border-primary' : 'border-transparent')}>
-                    <Image
-                      src={image.imageUrl}
-                      alt={`${product.name} thumbnail`}
-                      width={200}
-                      height={200}
-                      className="h-full w-full object-cover"
-                      data-ai-hint={image.imageHint}
-                    />
-                  </button>
-                )
-              })}
             </div>
           </div>
 
@@ -188,20 +119,6 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
               </h1>
               
               <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.round(averageRating)
-                          ? 'text-primary fill-primary'
-                          : 'text-muted-foreground/50'
-                      }`}
-                    />
-                  ))}
-                   <a href="#reviews" className="ml-2 text-muted-foreground hover:underline">({product.reviewCount} reviews)</a>
-                </div>
-                 <Separator orientation='vertical' className='h-4' />
                  <div className={cn('font-medium', getStockMessage().className)}>{getStockMessage().text}</div>
               </div>
               
@@ -287,20 +204,7 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
                     <AccordionItem value="description">
                         <AccordionTrigger className='text-lg font-medium'>Description</AccordionTrigger>
                         <AccordionContent className='text-base text-muted-foreground min-h-[4rem]'>
-                          {loadingStory ? (
-                            <div className="flex items-center gap-2">
-                              <Loader className="h-4 w-4 animate-spin" />
-                              <span>Crafting a story for you...</span>
-                            </div>
-                          ) : (
-                            productStory || product.description
-                          )}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="vendor">
-                        <AccordionTrigger className='text-lg font-medium'>Vendor Information</AccordionTrigger>
-                        <AccordionContent className='text-base text-muted-foreground'>
-                        Sold by <span className='text-foreground font-semibold'>{vendor?.storeName || 'Ethereal Commerce'}</span>. A trusted partner on our platform.
+                            {product.description}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="shipping" className='border-b-0'>
@@ -328,31 +232,6 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
           </div>
         </div>
 
-        {/* Style Suggestions */}
-        {styleSuggestions.length > 0 && (
-          <div className="mt-24">
-            <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
-              Style It With
-            </h2>
-            {loadingSuggestions ? (
-                <div className="flex justify-center"><Loader className="h-8 w-8 animate-spin" /></div>
-            ) : (
-              <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                {styleSuggestions.map((suggestion) => {
-                    const suggestedProduct = products.find(p => p.id === suggestion.productId);
-                    if (!suggestedProduct) return null;
-                    return (
-                        <div key={suggestion.productId}>
-                            <ProductCard product={suggestedProduct} />
-                            <p className="mt-4 text-center text-sm text-muted-foreground italic">"{suggestion.reason}"</p>
-                        </div>
-                    )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Related Products */}
         <div className="mt-24">
             <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
@@ -365,73 +244,51 @@ function ProductDetailContent({ product, vendor, salesperson }: { product: Produ
             </div>
         </div>
 
-         {/* Customer Reviews */}
-        {product.reviews.length > 0 && (
-            <div id="reviews" className="mt-24">
-                <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
-                    Customer Reviews
-                </h2>
-                <div className="space-y-8">
-                    {product.reviews.map(review => {
-                        const avatar = PlaceHolderImages.find(p => p.id === review.avatarId);
-                        return (
-                        <Card key={review.id} className="p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
-                           <div className='flex items-start'>
-                                <Avatar className="h-12 w-12 mr-4">
-                                  {avatar && <AvatarImage src={avatar.imageUrl} alt={review.author} data-ai-hint={avatar.imageHint} />}
-                                  <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h4 className="font-semibold text-lg">{review.author}</h4>
-                                            <p className="text-sm text-muted-foreground">{review.date}</p>
-                                        </div>
-                                        <div className="flex">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} className={`h-5 w-5 ${i < review.rating ? 'text-primary fill-primary' : 'text-muted-foreground/30'}`} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <h5 className="font-semibold mt-4">{review.title}</h5>
-                                    <p className="text-muted-foreground mt-1">{review.text}</p>
-                                </div>
-                           </div>
-                        </Card>
-                    )})}
-                </div>
-            </div>
-        )}
       </div>
     </MainLayout>
   );
 }
 
-export default function ProductDetailPage({ 
-    params, 
-    searchParams 
-}: { 
-    params: { slug: string };
-    searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const resolvedParams = React.use(params);
-  const product = products.find((p) => p.id === resolvedParams.slug);
+import { supabase } from '@/lib/supabase-client';
+import { notFound } from 'next/navigation';
+
+async function getProduct(slug: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', slug)
+    .single();
+
+  if (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+  return data as Product;
+}
+
+async function getRelatedProducts(category: string, currentProductId: string): Promise<Product[]> {
+    const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', category)
+        .not('id', 'eq', currentProductId)
+        .limit(4);
+
+    if (error) {
+        console.error('Error fetching related products:', error);
+        return [];
+    }
+    return data as Product[];
+}
+
+export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const product = await getProduct(params.slug);
   
   if (!product) {
     notFound();
   }
-  
-  const salespersonId = searchParams?.sp;
-  const vendor = vendors.find((v) => v.id === product.vendorId) || null;
-  const salesperson = (salespersonId && typeof salespersonId === 'string') 
-    ? users.find(u => u.id === salespersonId && u.role === 'salesperson') || null
-    : null;
 
-  return (
-    <React.Suspense fallback={<div>Loading...</div>}>
-      <ProductDetailContent product={product} vendor={vendor} salesperson={salesperson} />
-    </React.Suspense>
-  )
+  const relatedProducts = await getRelatedProducts(product.category, product.id);
+
+  return <ProductDetailContent product={product} relatedProducts={relatedProducts} />;
 }
-
-    

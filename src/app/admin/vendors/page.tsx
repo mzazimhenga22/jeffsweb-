@@ -27,36 +27,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { vendors as initialVendors, products } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Vendor } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 10;
 
+const initialVendors: Vendor[] = [
+    { id: '1', name: 'John Doe', storeName: 'Artisan Creations', email: 'john.doe@example.com', products: 25, status: 'Approved', avatarId: '' },
+    { id: '2', name: 'Jane Smith', storeName: 'Modern Designs', email: 'jane.smith@example.com', products: 15, status: 'Pending', avatarId: '' },
+    { id: '3', name: 'Robert Johnson', storeName: 'Vintage Finds', email: 'robert.j@example.com', products: 40, status: 'Approved', avatarId: '' },
+    { id: '4', name: 'Emily White', storeName: 'Home Comforts', email: 'emily.w@example.com', products: 10, status: 'Rejected', avatarId: '' },
+];
+
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = React.useState<Vendor[]>(initialVendors);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
-
-  const getAverageRatingForVendor = (vendorId: string) => {
-    const vendorProducts = products.filter(p => p.vendorId === vendorId);
-    if (vendorProducts.length === 0) return 0;
-
-    let totalRating = 0;
-    let reviewCount = 0;
-
-    vendorProducts.forEach(product => {
-      if (product.reviews && product.reviews.length > 0) {
-        totalRating += product.reviews.reduce((acc, review) => acc + review.rating, 0);
-        reviewCount += product.reviews.length;
-      }
-    });
-
-    return reviewCount > 0 ? totalRating / reviewCount : 0;
-  }
 
   const filteredVendors = vendors.filter((vendor) =>
     vendor.storeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,21 +120,12 @@ export default function AdminVendorsPage() {
           </TableHeader>
           <TableBody>
             {paginatedVendors.map((vendor) => {
-              const avatar = PlaceHolderImages.find(
-                (p) => p.id === vendor.avatarId
-              );
-              const rating = getAverageRatingForVendor(vendor.id);
               return (
                 <TableRow key={vendor.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        {avatar && (
-                          <AvatarImage
-                            src={avatar.imageUrl}
-                            data-ai-hint={avatar.imageHint}
-                          />
-                        )}
+                          <AvatarImage src='/placeholder.svg' />
                         <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="font-medium">{vendor.storeName}</span>
@@ -154,7 +133,7 @@ export default function AdminVendorsPage() {
                   </TableCell>
                   <TableCell>{vendor.email}</TableCell>
                   <TableCell>{vendor.products}</TableCell>
-                  <TableCell>{rating.toFixed(1)}</TableCell>
+                  <TableCell>4.5</TableCell>
                   <TableCell>
                     <Badge
                       variant={

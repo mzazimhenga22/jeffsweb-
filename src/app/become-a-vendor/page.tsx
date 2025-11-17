@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { categories } from '@/lib/data';
 import {
   Select,
   SelectContent,
@@ -24,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+const categories = [
+    { id: '1', name: 'Electronics' },
+    { id: '2', name: 'Apparel' },
+    { id: '3', name: 'Footwear' },
+    { id: '4', name: 'Accessories' },
+    { id: '5', name: 'Home Goods' },
+];
 
 export default function BecomeAVendorPage() {
   const { toast } = useToast();

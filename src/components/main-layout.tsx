@@ -1,10 +1,5 @@
-
-'use client';
-
 import type React from 'react';
 import Image from 'next/image';
-import { Header } from './header';
-import { Footer } from './footer';
 import { cn } from '@/lib/utils';
 
 export function MainLayout({
@@ -27,9 +22,7 @@ export function MainLayout({
            <div className="absolute inset-0 bg-background/80" />
         </div>
       )}
-      <Header />
       <main className="flex-1">{children}</main>
-      <Footer />
     </div>
   );
 }

@@ -1,41 +1,50 @@
 'use client';
 
-import * as React from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Session, SupabaseClient } from '@supabase/auth-helpers-nextjs';
 
-type User = {
-  role: 'customer' | 'vendor' | 'admin' | 'salesperson';
-};
-
-type AuthContextType = {
-  user: User | null;
-  login: (role: User['role']) => void;
+const AuthContext = createContext<{
+  supabase: SupabaseClient;
+  session: Session | null;
   logout: () => void;
-};
+}>({ 
+  supabase: createClientComponentClient() as unknown as SupabaseClient, 
+  session: null, 
+  logout: () => {}
+});
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
-
-export function useAuth() {
-  const context = React.useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(null);
-
-  const login = (role: User['role']) => {
-    setUser({ role });
-  };
+export const AuthProvider = ({
+  session: serverSession,
+  children,
+}: {
+  session: Session | null;
+  children: React.ReactNode;
+}) => {
+  const supabase = createClientComponentClient();
+  const [session, setSession] = useState<Session | null>(serverSession);
 
   const logout = () => {
-    setUser(null);
+    supabase.auth.signOut();
   };
 
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ supabase, session, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export const useAuth = () => useContext(AuthContext);

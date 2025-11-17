@@ -4,25 +4,19 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowRight } from 'lucide-react';
 
 export function PromoBanners() {
-  const banner1Image = PlaceHolderImages.find(p => p.id === 'promo-banner-1');
-  const banner2Image = PlaceHolderImages.find(p => p.id === 'promo-banner-2');
-
   return (
     <section className="container mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {banner1Image && (
           <Link href="/shop" className="group">
             <div className="relative h-80 w-full overflow-hidden rounded-3xl">
               <Image
-                src={banner1Image.imageUrl}
+                src="/placeholder.svg"
                 alt="Timeless Watches"
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
-                data-ai-hint={banner1Image.imageHint}
               />
               <div className="absolute inset-0 bg-black/40" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8 text-center">
@@ -34,16 +28,13 @@ export function PromoBanners() {
               </div>
             </div>
           </Link>
-        )}
-        {banner2Image && (
             <Link href="/shop" className="group">
             <div className="relative h-80 w-full overflow-hidden rounded-3xl">
               <Image
-                src={banner2Image.imageUrl}
+                src="/placeholder.svg"
                 alt="Summer Sale"
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
-                data-ai-hint={banner2Image.imageHint}
               />
               <div className="absolute inset-0 bg-black/40" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8 text-center">
@@ -55,7 +46,6 @@ export function PromoBanners() {
               </div>
             </div>
           </Link>
-        )}
       </div>
     </section>
   );

@@ -21,7 +21,6 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { salesData } from '@/lib/data';
 import {
   Table,
   TableBody,
@@ -30,8 +29,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { orders } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
+import { Order } from '@/lib/types';
+import React from 'react';
+import { supabase } from '@/lib/supabase-client';
 
 const chartConfig = {
   sales: {
@@ -40,8 +41,30 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const salesData = [
+    { name: 'Jan', sales: 4000 },
+    { name: 'Feb', sales: 3000 },
+    { name: 'Mar', sales: 5000 },
+    { name: 'Apr', sales: 4500 },
+    { name: 'May', sales: 6000 },
+    { name: 'Jun', sales: 7000 },
+    { name: 'Jul', sales: 6500 },
+  ];
+
 export default function VendorDashboardPage() {
-  const vendorOrders = orders.filter(o => o.vendorId === 'vendor-2').slice(0, 5);
+  const [orders, setOrders] = React.useState<Order[]>([]);
+
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      const { data, error } = await supabase.from('orders').select('*');
+      if (error) {
+        console.error('Error fetching orders:', error);
+      } else {
+        setOrders(data as Order[]);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -125,7 +148,7 @@ export default function VendorDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vendorOrders.map((order) => (
+                {orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>${order.total.toFixed(2)}</TableCell>

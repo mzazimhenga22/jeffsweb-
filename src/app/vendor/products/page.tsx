@@ -28,21 +28,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Star } from 'lucide-react';
-import { products } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import { Product } from '@/lib/types';
 
 export default function VendorProductsPage() {
     const router = useRouter();
-    const vendorProducts = products.filter(p => p.vendorId === 'vendor-2');
+    const [products, setProducts] = React.useState<Product[]>([]);
 
-    const getAverageRating = (reviews: any[]) => {
-      if (!reviews || reviews.length === 0) return 0;
-      const total = reviews.reduce((acc, review) => acc + review.rating, 0);
-      return total / reviews.length;
-    }
-    
+    React.useEffect(() => {
+        const fetchProducts = async () => {
+            const { data, error } = await supabase.from('products').select('*');
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else {
+                setProducts(data as Product[]);
+            }
+        };
+        fetchProducts();
+    }, []);
+
     const handleEdit = (productId: string) => {
         router.push(`/vendor/products/${productId}/edit`);
     }
@@ -80,23 +86,18 @@ export default function VendorProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendorProducts.map((product) => {
-              const image = PlaceHolderImages.find(
-                (p) => p.id === product.imageIds[0]
-              );
-              const rating = getAverageRating(product.reviews);
+            {products.map((product) => {
               return (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                        {image && 
+                        {product.image_url && 
                             <Image
-                                src={image.imageUrl}
+                                src={product.image_url}
                                 alt={product.name}
                                 width={40}
                                 height={40}
                                 className="rounded-md object-cover"
-                                data-ai-hint={image.imageHint}
                             />
                         }
                       <span className="font-medium">{product.name}</span>
@@ -109,7 +110,7 @@ export default function VendorProductsPage() {
                   <TableCell>
                     <div className='flex items-center gap-1'>
                         <Star className='w-4 h-4 text-primary fill-primary' />
-                        {rating.toFixed(1)}
+                        4.5
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

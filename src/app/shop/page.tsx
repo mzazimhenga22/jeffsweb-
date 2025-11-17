@@ -1,10 +1,8 @@
-
 'use client';
 
 import * as React from 'react';
 import { MainLayout } from '@/components/main-layout';
 import { ProductCard } from '@/components/product-card';
-import { products, categories } from '@/lib/data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +17,38 @@ import { Button } from '@/components/ui/button';
 import { ListFilter, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase-client';
+import { Product } from '@/lib/types';
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
 
+const categories = [
+    { id: '1', name: 'Electronics' },
+    { id: '2', name: 'Apparel' },
+    { id: '3', name: 'Footwear' },
+    { id: '4', name: 'Accessories' },
+    { id: '5', name: 'Home Goods' },
+];
+
 export default function ShopPage() {
-  const [filteredProducts, setFilteredProducts] = React.useState(products);
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = React.useState<Product[]>([]);
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
   const [sortOption, setSortOption] = React.useState<SortOption>('newest');
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data as Product[]);
+        setFilteredProducts(data as Product[]);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategories((prev) =>
@@ -42,24 +65,24 @@ export default function ShopPage() {
     if (selectedCategories.length > 0) {
       tempProducts = tempProducts.filter((p) => selectedCategories.includes(p.category));
     }
-    
+
     // Sort products
     switch (sortOption) {
-        case 'price-asc':
-            tempProducts.sort((a, b) => a.price - b.price);
-            break;
-        case 'price-desc':
-            tempProducts.sort((a, b) => b.price - a.price);
-            break;
-        case 'newest':
-            tempProducts.sort((a, b) => parseInt(b.id.split('-')[1]) - parseInt(a.id.split('-')[1]));
-            break;
-        default:
-            break;
+      case 'price-asc':
+        tempProducts.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        tempProducts.sort((a, b) => b.price - a.price);
+        break;
+      case 'newest':
+        tempProducts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      default:
+        break;
     }
 
     setFilteredProducts(tempProducts);
-  }, [selectedCategories, sortOption]);
+  }, [selectedCategories, sortOption, products]);
 
   return (
     <MainLayout>
@@ -84,8 +107,8 @@ export default function ShopPage() {
               <DropdownMenuContent className="w-56">
                 <DropdownMenuLabel>Categories</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {categories.map(cat => (
-                   <DropdownMenuItem key={cat.id} onSelect={(e) => e.preventDefault()}>
+                {categories.map((cat) => (
+                  <DropdownMenuItem key={cat.id} onSelect={(e) => e.preventDefault()}>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id={cat.id}
@@ -99,7 +122,7 @@ export default function ShopPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-             <DropdownMenu>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Sort by <ChevronDown className="ml-2 h-4 w-4" />
@@ -107,9 +130,9 @@ export default function ShopPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
-                    <DropdownMenuRadioItem value="newest">Newest</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="newest">Newest</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadio-item>
+                  <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>

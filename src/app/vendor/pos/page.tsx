@@ -1,11 +1,8 @@
-
 'use client';
 
 import * as React from 'react';
 import Image from 'next/image';
-import { products } from '@/lib/data';
-import type { CartItem } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { CartItem, Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,21 +16,32 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase-client';
 
 export default function VendorPosPage() {
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [products, setProducts] = React.useState<Product[]>([]);
   const { toast } = useToast();
   
-  // For the vendor dashboard, we only show products belonging to 'vendor-2'
-  const vendorProducts = products.filter(p => p.vendorId === 'vendor-2');
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data as Product[]);
+      }
+    };
+    fetchProducts();
+  }, []);
 
-  const filteredProducts = vendorProducts.filter((product) =>
+  const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const addToCart = (productId: string) => {
-    const product = vendorProducts.find((p) => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (!product) return;
 
     setCart((prevCart) => {
@@ -50,8 +58,6 @@ export default function VendorPosPage() {
         {
           ...product,
           quantity: 1,
-          size: product.sizes?.[0] || null,
-          color: product.colors?.[0] || null,
         },
       ];
     });
@@ -124,23 +130,19 @@ export default function VendorPosPage() {
             <ScrollArea className="h-full pr-4 -mr-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => {
-                  const image = PlaceHolderImages.find(
-                    (p) => p.id === product.imageIds[0]
-                  );
                   return (
                     <Card
                       key={product.id}
                       className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
                       onClick={() => addToCart(product.id)}
                     >
-                      {image && (
+                      {product.image_url && (
                         <div className="aspect-square relative">
                           <Image
-                            src={image.imageUrl}
+                            src={product.image_url}
                             alt={product.name}
                             fill
                             className="object-cover"
-                            data-ai-hint={image.imageHint}
                           />
                         </div>
                       )}

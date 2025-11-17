@@ -15,29 +15,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/auth-context';
+import { supabase } from '@/lib/supabase-client';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // This is mock authentication logic.
-    // In a real app, you would make an API call to your backend.
-    if (email === 'admin@ethereal.com') {
-      login('admin');
-      router.push('/admin');
-    } else if (email === 'maria.g@example.com') {
-      login('vendor');
-      router.push('/vendor');
-    } else if (email === 'david.lee@example.com') {
-      login('salesperson');
-      router.push('/salesperson');
-    }
-     else {
+    setError('');
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      // For the purpose of this example, we'll just log the user in as a generic 'customer'
+      // In a real app, you would fetch the user's role from your database
+      // and use that to determine where to redirect them.
       login('customer');
       router.push('/');
     }
@@ -55,6 +56,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form className="space-y-6" onSubmit={handleLogin}>
+              {error && <p className="text-red-500">{error}</p>}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

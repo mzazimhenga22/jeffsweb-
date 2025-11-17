@@ -28,19 +28,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Star } from 'lucide-react';
-import { products, vendors } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import { Product } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminProductsPage() {
+  const [products, setProducts] = React.useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
   const router = useRouter();
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data as Product[]);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -73,12 +87,6 @@ export default function AdminProductsPage() {
 
   const handleViewOnSite = (productId: string) => {
     window.open(`/shop/${productId}`, '_blank');
-  }
-
-  const getAverageRating = (reviews: any[]) => {
-    if (!reviews || reviews.length === 0) return 0;
-    const total = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return total / reviews.length;
   }
 
   return (
@@ -124,29 +132,23 @@ export default function AdminProductsPage() {
           </TableHeader>
           <TableBody>
             {paginatedProducts.map((product) => {
-              const image = PlaceHolderImages.find(
-                (p) => p.id === product.imageIds[0]
-              );
-              const vendor = vendors.find(v => v.id === product.vendorId)
-              const rating = getAverageRating(product.reviews);
               return (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                        {image && 
+                        {product.image_url && 
                             <Image
-                                src={image.imageUrl}
+                                src={product.image_url}
                                 alt={product.name}
                                 width={40}
                                 height={40}
                                 className="rounded-md object-cover"
-                                data-ai-hint={image.imageHint}
                             />
                         }
                       <span className="font-medium">{product.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{vendor?.storeName || 'N/A'}</TableCell>
+                  <TableCell>N/A</TableCell>
                   <TableCell>
                     <Badge variant="outline">{product.category}</Badge>
                   </TableCell>
@@ -154,7 +156,7 @@ export default function AdminProductsPage() {
                   <TableCell>
                     <div className='flex items-center gap-1'>
                         <Star className='w-4 h-4 text-primary fill-primary' />
-                        {rating.toFixed(1)}
+                        4.5
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

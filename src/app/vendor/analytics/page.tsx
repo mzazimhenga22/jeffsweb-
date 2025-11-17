@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -15,8 +16,9 @@ import {
   ChartConfig,
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { salesData, products } from '@/lib/data';
 import { DollarSign, ShoppingCart, Users, Star, Eye, PackageCheck } from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+import type { Product, Sale } from '@/lib/types';
 
 const chartConfig = {
   sales: { label: 'Sales', color: 'hsl(var(--primary))' },
@@ -26,9 +28,35 @@ const chartConfig = {
 const pieChartColors = ['#2563eb', '#f97316', '#16a34a', '#9333ea'];
 
 export default function VendorAnalyticsPage() {
+    const [salesData, setSalesData] = React.useState<Sale[]>([]);
+    const [products, setProducts] = React.useState<Product[]>([]);
+
+    React.useEffect(() => {
+        const fetchSalesData = async () => {
+            // In a real app, you'd likely have a view or function for aggregated sales data
+            const { data, error } = await supabase.from('sales_data').select('*');
+            if (error) {
+                console.error('Error fetching sales data:', error);
+            } else {
+                setSalesData(data as Sale[]);
+            }
+        };
+
+        const fetchProducts = async () => {
+            const { data, error } = await supabase.from('products').select('*');
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else {
+                setProducts(data as Product[]);
+            }
+        };
+
+        fetchSalesData();
+        fetchProducts();
+    }, []);
+
     const topProducts = products
-        .filter(p => p.vendorId === 'vendor-2')
-        .sort((a, b) => b.reviewCount - a.reviewCount) // simple sort by review count
+        .sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
         .slice(0, 4);
 
   return (
@@ -121,7 +149,7 @@ export default function VendorAnalyticsPage() {
              <ChartContainer config={{}} className="h-72 w-full">
                  <PieChart>
                     <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                    <Pie data={topProducts} dataKey="reviewCount" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                    <Pie data={topProducts} dataKey="review_count" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
                          {topProducts.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
                         ))}

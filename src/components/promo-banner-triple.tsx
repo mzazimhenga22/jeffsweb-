@@ -3,7 +3,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 
@@ -12,16 +11,19 @@ const banners = [
         id: 'promo-banner-4',
         title: 'Luxe Accessories',
         href: '/shop',
+        imageUrl: '/placeholder.svg'
     },
     {
         id: 'promo-banner-5',
         title: 'Statement Shoes',
         href: '/shop',
+        imageUrl: '/placeholder.svg'
     },
     {
         id: 'promo-banner-6',
         title: 'The Gift Guide',
         href: '/shop',
+        imageUrl: '/placeholder.svg'
     }
 ]
 
@@ -30,20 +32,16 @@ export function PromoBannerTriple() {
     <section className="container mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {banners.map(bannerInfo => {
-            const bannerImage = PlaceHolderImages.find(p => p.id === bannerInfo.id);
-            if (!bannerImage) return null;
-
             return (
                 <Link key={bannerInfo.id} href={bannerInfo.href} className="group">
                     <Card className="overflow-hidden rounded-3xl h-96 border-none">
                         <CardContent className='p-0 h-full'>
                             <div className="relative h-full w-full">
                                 <Image
-                                    src={bannerImage.imageUrl}
+                                    src={bannerInfo.imageUrl}
                                     alt={bannerInfo.title}
                                     fill
                                     className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    data-ai-hint={bannerImage.imageHint}
                                 />
                                 <div className="absolute inset-0 bg-black/40" />
                                 <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between text-white p-6">
@@ -62,5 +60,3 @@ export function PromoBannerTriple() {
     </section>
   );
 }
-
-    

@@ -20,17 +20,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { categories, products } from '@/lib/data';
 import { Upload } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import type { Product, Category } from '@/lib/types';
 
 export default function EditProductPage({ params }: { params: { slug: string } }) {
-  const resolvedParams = React.use(params);
-  const product = products.find(p => p.id === resolvedParams.slug);
+  const [product, setProduct] = React.useState<Product | null>(null);
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
-  // In a real app, you'd also check if the product belongs to the current vendor
-  if (!product || product.vendorId !== 'vendor-2') {
-    notFound();
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', params.slug)
+        .single();
+      
+      if (error || !data) {
+        console.error('Error fetching product:', error);
+        notFound();
+      } else {
+        setProduct(data as Product);
+      }
+    };
+
+    const fetchCategories = async () => {
+        const { data, error } = await supabase.from('categories').select('*');
+        if (error) {
+            console.error('Error fetching categories:', error);
+        } else {
+            setCategories(data as Category[]);
+        }
+    };
+
+    fetchProduct();
+    fetchCategories();
+  }, [params.slug]);
+
+  if (!product) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -82,7 +111,7 @@ export default function EditProductPage({ params }: { params: { slug: string } }
                             </div>
                             <input id="dropzone-file" type="file" className="hidden" multiple />
                         </label>
-                    </div> 
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -122,11 +151,11 @@ export default function EditProductPage({ params }: { params: { slug: string } }
                         </div>
                          <div>
                             <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                            <Input id="sizes" defaultValue={product.sizes.join(', ')} />
+                            <Input id="sizes" defaultValue={product.sizes?.join(', ')} />
                         </div>
                          <div>
                             <Label htmlFor="colors">Colors (comma-separated)</Label>
-                            <Input id="colors" defaultValue={product.colors.join(', ')} />
+                            <Input id="colors" defaultValue={product.colors?.join(', ')} />
                         </div>
                     </CardContent>
                  </Card>

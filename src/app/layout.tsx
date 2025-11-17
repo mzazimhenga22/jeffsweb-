@@ -1,51 +1,40 @@
-
-import type { Metadata } from 'next';
-import { Figtree } from 'next/font/google';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { CartProvider } from '@/context/cart-context';
-import { AuthProvider } from '@/context/auth-context';
-import { ThemeProvider } from '@/components/theme-provider';
-import { WishlistProvider } from '@/context/wishlist-context';
-import { QuickViewProvider } from '@/context/quick-view-context';
-import { QuickView } from '@/components/quick-view';
+import { Providers } from './providers';
+import { Inter as FontSans } from 'next/font/google';
+import { cn } from '@/lib/utils';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 
-const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
+const fontSans = FontSans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
 
-export const metadata: Metadata = {
-  title: 'Ethereal Commerce',
-  description: 'A premium eCommerce experience by Firebase Studio',
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: { 
   children: React.ReactNode;
-}>) {
+}) {
+
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { session } } = await supabase.auth.getSession();
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Figtree:wght@300..900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className={`${figtree.className} font-body antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <QuickViewProvider>
-                  {children}
-                  <QuickView />
-                </QuickViewProvider>
-              </WishlistProvider>
-            </CartProvider>
-          </AuthProvider>
-          <Toaster />
-        </ThemeProvider>
+      <head />
+      <body
+        className={cn(
+          'min-h-screen bg-background font-sans antialiased',
+          fontSans.variable
+        )}
+      >
+        <Providers session={session}>
+          <Header />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -20,16 +19,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { categories, products } from '@/lib/data';
 import { Upload } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
+import { Product } from '@/lib/types';
+
+const categories = [
+    { id: '1', name: 'Electronics' },
+    { id: '2', name: 'Apparel' },
+    { id: '3', name: 'Footwear' },
+    { id: '4', name: 'Accessories' },
+    { id: '5', name: 'Home Goods' },
+];
 
 export default function EditProductPage({ params }: { params: { slug: string } }) {
-  const resolvedParams = React.use(params);
-  const product = products.find(p => p.id === resolvedParams.slug);
+  const [product, setProduct] = React.useState<Product | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', params.slug)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching product:', error);
+        setLoading(false);
+      } else {
+        setProduct(data as Product);
+        setLoading(false);
+      }
+    };
+
+    if (params.slug) {
+      fetchProduct();
+    }
+  }, [params.slug]);
+  
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-64">
+            <p>Loading...</p>
+        </div>
+    )
+  }
 
   if (!product) {
     notFound();
+    return null;
   }
 
   return (
@@ -61,7 +101,7 @@ export default function EditProductPage({ params }: { params: { slug: string } }
                       <Label htmlFor="product-description">Description</Label>
                       <Textarea
                         id="product-description"
-                        defaultValue={product.description}
+                        defaultValue={product.description || ''}
                         rows={6}
                       />
                     </div>
@@ -97,7 +137,7 @@ export default function EditProductPage({ params }: { params: { slug: string } }
                         </div>
                         <div>
                             <Label htmlFor="stock">Stock Quantity</Label>
-                            <Input id="stock" type="number" defaultValue={product.stock} />
+                            <Input id="stock" type="number" defaultValue={product.stock || 0} />
                         </div>
                     </CardContent>
                  </Card>
@@ -119,20 +159,12 @@ export default function EditProductPage({ params }: { params: { slug: string } }
                                 </SelectContent>
                             </Select>
                         </div>
-                         <div>
-                            <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                            <Input id="sizes" defaultValue={product.sizes.join(', ')} />
-                        </div>
-                         <div>
-                            <Label htmlFor="colors">Colors (comma-separated)</Label>
-                            <Input id="colors" defaultValue={product.colors.join(', ')} />
-                        </div>
                     </CardContent>
                  </Card>
               </div>
             </div>
              <div className="flex justify-end gap-2">
-                <Button variant="outline">Discard Changes</Button>
+                <Button variant="outline" onClick={() => router.back()}>Discard Changes</Button>
                 <Button>Save Changes</Button>
             </div>
           </form>

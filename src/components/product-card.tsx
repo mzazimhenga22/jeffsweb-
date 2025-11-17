@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,12 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Star, ShoppingCart, Eye, Maximize, Check } from 'lucide-react';
 import type { Product } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
-import { vendors } from '@/lib/data';
 import { useQuickView } from '@/context/quick-view-context';
 import { cn } from '@/lib/utils';
 
@@ -20,11 +17,9 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
-  const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { openQuickView } = useQuickView();
-  const vendor = vendors.find(v => v.id === product.vendorId);
   const [showAdded, setShowAdded] = React.useState(false);
 
 
@@ -36,7 +31,6 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       size: product.sizes?.[0] || null,
       color: product.colors?.[0] || null,
-      vendorName: vendor?.storeName,
     });
     toast({
       title: 'Added to cart!',
@@ -52,26 +46,16 @@ export function ProductCard({ product }: ProductCardProps) {
     openQuickView(product);
   }
 
-  const averageRating = React.useMemo(() => {
-    if (!product.reviews || product.reviews.length === 0) {
-      return 0;
-    }
-    const totalRating = product.reviews.reduce((acc, review) => acc + review.rating, 0);
-    return totalRating / product.reviews.length;
-  }, [product.reviews]);
-
-
   return (
     <div className="group relative overflow-hidden rounded-2xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
        <Link href={`/shop/${product.id}`} className="block h-full w-full">
         <div className="relative aspect-square w-full">
-            {image && (
+            {product.image_url && (
                 <Image
-                src={image.imageUrl}
+                src={product.image_url}
                 alt={product.name}
                 fill
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                data-ai-hint={image.imageHint}
                 />
             )}
             <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
@@ -88,8 +72,6 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-start justify-between">
                 <Badge variant="secondary" className='bg-white/20 text-white border-none text-xs'>{product.category}</Badge>
                 <div className="flex items-center gap-1 text-primary">
-                <Star className="h-3 w-3 fill-primary" />
-                <span className="font-bold text-white text-xs">{averageRating.toFixed(1)}</span>
                 </div>
             </div>
             <h3 className="mt-1 text-sm font-semibold leading-tight font-headline text-white truncate">

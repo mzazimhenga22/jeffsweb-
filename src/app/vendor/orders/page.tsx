@@ -20,11 +20,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { orders as initialOrders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatusUpdater } from '@/components/order-status-updater';
-import type { Order, OrderStatus } from '@/lib/types';
+import type { Order, OrderStatus, User } from '@/lib/types';
+import { supabase } from '@/lib/supabase-client';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -32,12 +32,34 @@ export default function VendorOrdersPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [users, setUsers] = React.useState<User[]>([]);
 
-  const [orders, setOrders] = React.useState<Order[]>(initialOrders.filter(o => o.vendorId === 'vendor-2'));
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      const { data, error } = await supabase.from('orders').select('*');
+      if (error) {
+        console.error('Error fetching orders:', error);
+      } else {
+        setOrders(data as Order[]);
+      }
+    };
+    const fetchUsers = async () => {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) {
+            console.error('Error fetching users:', error);
+        } else {
+            setUsers(data as User[]);
+        }
+    };
+
+    fetchOrders();
+    fetchUsers();
+  }, []);
 
   const filteredOrders = orders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    users.find(u => u.id === order.userId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    users.find(u => u.id === order.user_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
@@ -101,12 +123,12 @@ export default function VendorOrdersPage() {
           </TableHeader>
           <TableBody>
             {paginatedOrders.map((order) => {
-                const user = users.find(u => u.id === order.userId);
+                const user = users.find(u => u.id === order.user_id);
                 return (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
                 <TableCell>{user?.name || 'Unknown User'}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
+                <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
                 <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -20,15 +19,27 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { orders as initialOrders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { OrderStatusUpdater } from '@/components/order-status-updater';
 import type { Order, OrderStatus } from '@/lib/types';
+import { supabase } from '@/lib/supabase-client';
 
 export default function AdminOrdersPage() {
   const { toast } = useToast();
-  const [orders, setOrders] = React.useState<Order[]>(initialOrders);
+  const [orders, setOrders] = React.useState<Order[]>([]);
+
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      const { data, error } = await supabase.from('orders').select('*');
+      if (error) {
+        console.error('Error fetching orders:', error);
+      } else {
+        setOrders(data as Order[]);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const handleAction = (message: string, isDestructive: boolean = false) => {
     toast({
@@ -72,12 +83,11 @@ export default function AdminOrdersPage() {
           </TableHeader>
           <TableBody>
             {orders.map((order) => {
-                const user = users.find(u => u.id === order.userId);
                 return (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{user?.name || 'Unknown User'}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
+                <TableCell>Unknown User</TableCell>
+                <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge

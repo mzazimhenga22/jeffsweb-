@@ -26,19 +26,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { users as initialUsers } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { AddEditSalespersonDialog } from '@/components/add-edit-salesperson-dialog';
 import { DeleteSalespersonDialog } from '@/components/delete-salesperson-dialog';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase-client';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function VendorSalespersonsPage() {
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
+  const [users, setUsers] = React.useState<User[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
@@ -48,7 +47,18 @@ export default function VendorSalespersonsPage() {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedSalesperson, setSelectedSalesperson] = React.useState<User | null>(null);
 
-  // In a real app, these would be filtered by the logged-in vendor
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) {
+        console.error('Error fetching users:', error);
+      } else {
+        setUsers(data as User[]);
+      }
+    };
+    fetchUsers();
+  }, []);
+
   const salespersons = users.filter(user => user.role === 'salesperson');
 
   const filteredSalespersons = salespersons.filter((user) =>
@@ -96,8 +106,8 @@ export default function VendorSalespersonsPage() {
         id: `user-${users.length + 1}`,
         ...data,
         role: 'salesperson',
-        avatarId: 'avatar-1', // Default avatar
-        createdAt: new Date().toISOString().split('T')[0],
+        avatar_url: '', // Default avatar
+        created_at: new Date().toISOString(),
       };
       setUsers([...users, newUser]);
       toast({ title: "Salesperson Added", description: `${data.name} has been added as a salesperson.` });
@@ -152,20 +162,19 @@ export default function VendorSalespersonsPage() {
             </TableHeader>
             <TableBody>
               {paginatedSalespersons.map((user) => {
-                const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId);
                 return (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
-                        {avatar && <AvatarImage src={avatar.imageUrl} data-ai-hint={avatar.imageHint} />}
+                        {user.avatar_url && <AvatarImage src={user.avatar_url} />}
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <span className="font-medium">{user.name}</span>
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.createdAt}</TableCell>
+                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
