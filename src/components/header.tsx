@@ -100,7 +100,7 @@ export function Header() {
 
 
         {isMobile ? (
-          <div className="flex flex-1 items-center justify-end">
+          <div className="flex items-center justify-end">
              <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
@@ -165,11 +165,11 @@ export function Header() {
           </div>
         ) : (
           <div className="flex items-center justify-end gap-4">
-            <div className="relative flex items-center justify-end">
+            <div className="relative flex items-center">
                 <div
                     className={cn(
                     'absolute right-0 top-1/2 -translate-y-1/2 w-full transition-all duration-300 ease-in-out',
-                    isSearchOpen ? 'opacity-100 w-64' : 'opacity-0 w-0'
+                    isSearchOpen ? 'opacity-100 w-96' : 'opacity-0 w-0'
                     )}
                 >
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
