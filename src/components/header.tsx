@@ -113,11 +113,11 @@ export function Header() {
 
         {isMobile ? (
           <div className="flex items-center justify-end">
-             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+             <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)} className='hover:bg-foreground/5'>
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
               </Button>
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild className='hover:bg-foreground/5'>
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
@@ -132,7 +132,7 @@ export function Header() {
             </Button>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className='hover:bg-foreground/5'>
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
@@ -192,13 +192,13 @@ export function Header() {
                         onBlur={() => setIsSearchOpen(false)}
                     />
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)}>
+                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)} className='hover:bg-foreground/5'>
                     <Search className="h-5 w-5" />
                     <span className="sr-only">Search</span>
                 </Button>
             </div>
 
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild className='hover:bg-foreground/5'>
             <Link href="/cart" className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
@@ -215,7 +215,7 @@ export function Header() {
             {user ? (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="ghost" className='hover:bg-foreground/5'>
                     <User className="mr-2 h-4 w-4" />
                     {getWelcomeMessage()}
                 </Button>
@@ -228,6 +228,7 @@ export function Header() {
                   <>
                     <DropdownMenuItem asChild><Link href="/account/orders">My Orders</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/account/wishlist">My Wishlist</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/account/profile">My Profile</Link></DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuItem>Settings</DropdownMenuItem>
@@ -237,7 +238,7 @@ export function Header() {
             </DropdownMenu>
             ) : (
             <div className="flex items-center gap-2">
-                <Button variant="outline" asChild>
+                <Button variant="ghost" asChild className='hover:bg-foreground/5'>
                 <Link href="/login">Login</Link>
                 </Button>
                 <Button asChild>
