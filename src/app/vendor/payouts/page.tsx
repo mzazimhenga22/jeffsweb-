@@ -22,9 +22,9 @@ export default function VendorPayoutsPage() {
                     <CardTitle>Available for Payout</CardTitle>
                     <CardDescription>This is the amount ready to be transferred to your bank.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-baseline justify-between">
+                <CardContent className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4">
                     <p className="text-4xl font-bold">$1,580.20</p>
-                    <Button>Request Payout</Button>
+                    <Button className='w-full sm:w-auto'>Request Payout</Button>
                 </CardContent>
             </Card>
              <Card>
