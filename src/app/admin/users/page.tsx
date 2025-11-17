@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -31,6 +32,7 @@ import { users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,6 +40,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
+  const router = useRouter();
 
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,7 +108,7 @@ export default function AdminUsersPage() {
             {paginatedUsers.map((user) => {
               const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId);
               return (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className="cursor-pointer" onClick={() => router.push(`/admin/users/${user.id}`)}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
@@ -132,14 +135,14 @@ export default function AdminUsersPage() {
                 <TableCell>{user.createdAt}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>View Details</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleAction('User edit page opened.')}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('User details viewed.')}>View Details</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => handleAction('User deleted.', true)}>
                         Delete
                       </DropdownMenuItem>
