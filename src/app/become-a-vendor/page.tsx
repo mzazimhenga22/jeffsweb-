@@ -16,6 +16,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { categories } from '@/lib/data';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function BecomeAVendorPage() {
   const { toast } = useToast();
@@ -63,9 +71,24 @@ export default function BecomeAVendorPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="store-name">Proposed Store Name</Label>
-                <Input id="store-name" placeholder="e.g., Artisan Creations" required />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="store-name">Proposed Store Name</Label>
+                    <Input id="store-name" placeholder="e.g., Artisan Creations" required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="category">Product Category</Label>
+                    <Select required>
+                        <SelectTrigger id="category">
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">
