@@ -131,7 +131,7 @@ export default function ShopPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
                   <DropdownMenuRadioItem value="newest">Newest</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadio-item>
+                  <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
