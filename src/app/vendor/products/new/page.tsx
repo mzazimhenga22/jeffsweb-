@@ -1,6 +1,8 @@
 
 'use client';
 
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -19,10 +21,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { categories } from '@/lib/data';
+import { categories, addProduct } from '@/lib/data';
 import { Upload } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import type { Product } from '@/lib/types';
 
 export default function AddProductPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [name, setName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [price, setPrice] = React.useState('');
+  const [stock, setStock] = React.useState('');
+  const [category, setCategory] = React.useState('');
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const newProduct: Omit<Product, 'id' | 'imageIds' | 'reviewCount' | 'reviews'> & { vendorId: string } = {
+      name,
+      description,
+      price: parseFloat(price) || 0,
+      stock: parseInt(stock) || 0,
+      category,
+      vendorId: 'vendor-2', // Hardcoded for the current mock vendor
+      sizes: [],
+      colors: [],
+    };
+
+    // In a real app, you'd have more robust logic for ID generation and image handling
+    const fullProduct: Product = {
+        ...newProduct,
+        id: `prod-${Date.now()}`,
+        imageIds: ['product-shoe-1'], // Mock image
+        reviewCount: 0,
+        reviews: [],
+    };
+
+    addProduct(fullProduct);
+
+    toast({
+        title: "Product Published!",
+        description: `"${fullProduct.name}" is now live on the marketplace.`,
+    });
+
+    router.push('/vendor/products');
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -33,7 +77,7 @@ export default function AddProductPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-6">
                 <Card>
@@ -46,6 +90,9 @@ export default function AddProductPage() {
                       <Input
                         id="product-name"
                         placeholder="e.g., Urban Runner Sneakers"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
                       />
                     </div>
                     <div>
@@ -54,6 +101,9 @@ export default function AddProductPage() {
                         id="product-description"
                         placeholder="Describe your product..."
                         rows={6}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required
                       />
                     </div>
                   </CardContent>
@@ -84,11 +134,11 @@ export default function AddProductPage() {
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="price">Price</Label>
-                            <Input id="price" type="number" placeholder="0.00" />
+                            <Input id="price" type="number" placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} required />
                         </div>
                         <div>
                             <Label htmlFor="stock">Stock Quantity</Label>
-                            <Input id="stock" type="number" placeholder="e.g., 50" />
+                            <Input id="stock" type="number" placeholder="e.g., 50" value={stock} onChange={(e) => setStock(e.target.value)} required />
                         </div>
                     </CardContent>
                  </Card>
@@ -99,7 +149,7 @@ export default function AddProductPage() {
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="category">Category</Label>
-                            <Select>
+                            <Select value={category} onValueChange={setCategory} required>
                                 <SelectTrigger id="category">
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
@@ -123,8 +173,8 @@ export default function AddProductPage() {
               </div>
             </div>
              <div className="flex justify-end gap-2">
-                <Button variant="outline">Save Draft</Button>
-                <Button>Publish Product</Button>
+                <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
+                <Button type="submit">Publish Product</Button>
             </div>
           </form>
         </CardContent>

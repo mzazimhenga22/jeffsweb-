@@ -17,7 +17,7 @@ const reviews: ProductReview[] = [
 ];
 
 
-export const products: Product[] = [
+let initialProducts: Product[] = [
   { id: 'prod-1', name: 'Chronograph Excellence', description: 'A masterpiece of precision and style.', price: 1250.00, reviewCount: 150, category: 'Watches', imageIds: ['product-watch-1', 'product-watch-2', 'product-watch-3'], vendorId: 'vendor-1', sizes: ['One Size'], colors: ['#000000', '#C0C0C0', '#FFD700'], commission: 10, stock: 15, reviews: [reviews[0], reviews[1]] },
   { id: 'prod-2', name: 'Urban Runner Sneakers', description: 'Experience comfort and style on the go.', price: 180.00, reviewCount: 230, category: 'Shoes', imageIds: ['product-shoe-1', 'product-shoe-2', 'product-shoe-3'], vendorId: 'vendor-2', sizes: ['8', '9', '10', '11', '12'], colors: ['#FFFFFF', '#000000', '#0000FF'], commission: 15, stock: 30, reviews: [reviews[2]] },
   { id: 'prod-3', name: 'Denim Voyager Jacket', description: 'A timeless classic for any wardrobe.', price: 250.00, reviewCount: 95, category: 'Clothing', imageIds: ['product-clothing-1', 'product-clothing-2', 'product-clothing-3'], vendorId: 'vendor-3', sizes: ['S', 'M', 'L', 'XL'], colors: ['#0000FF', '#000000'], commission: 12, stock: 25, reviews: [reviews[3]] },
@@ -31,6 +31,12 @@ export const products: Product[] = [
   { id: 'prod-11', name: 'Digital Sport Watch', description: 'Track your fitness with precision.', price: 299.99, reviewCount: 215, category: 'Watches', imageIds: ['product-watch-2'], vendorId: 'vendor-2', sizes: ['One Size'], colors: ['#000000', '#C0C0C0'], commission: 10, stock: 18, reviews: [] },
   { id: 'prod-12', name: 'Slim-Fit Wallet', description: 'A minimalist wallet for the modern man.', price: 75.00, reviewCount: 320, category: 'Accessories', imageIds: ['product-accessory-1'], vendorId: 'vendor-3', sizes: ['One Size'], colors: ['#000000', '#A52A2A'], commission: 20, stock: 0, reviews: [] },
 ];
+
+export const products: Product[] = [...initialProducts];
+
+export const addProduct = (product: Product) => {
+    products.unshift(product);
+}
 
 export const users: User[] = [
     { id: 'user-1', name: 'Alex Johnson', email: 'alex.j@example.com', avatarId: 'avatar-1', role: 'customer', createdAt: '2023-01-15' },
