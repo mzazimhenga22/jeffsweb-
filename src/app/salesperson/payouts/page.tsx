@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const payouts = [
     { id: 'sp-payout-1', date: '2023-06-05', amount: 450.25, status: 'Paid' },
@@ -13,6 +14,15 @@ const payouts = [
 ]
 
 export default function SalespersonPayoutsPage() {
+  const { toast } = useToast();
+
+  const handleRequestPayout = () => {
+    toast({
+      title: "Payout Requested",
+      description: "Your payout request has been submitted for processing.",
+    });
+  };
+  
   return (
     <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -21,8 +31,9 @@ export default function SalespersonPayoutsPage() {
                     <CardTitle>Commission Available</CardTitle>
                     <CardDescription>This is your earned commission ready for the next payout cycle.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex items-baseline justify-between">
                     <p className="text-4xl font-bold">$620.50</p>
+                    <Button onClick={handleRequestPayout}>Request Payout</Button>
                 </CardContent>
             </Card>
              <Card>
