@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ShoppingCart, Eye } from 'lucide-react';
+import { Star, ShoppingCart, Eye, Maximize } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
@@ -12,6 +12,7 @@ import { Badge } from './ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { vendors } from '@/lib/data';
+import { useQuickView } from '@/context/quick-view-context';
 
 type ProductCardProps = {
   product: Product;
@@ -21,6 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { openQuickView } = useQuickView();
   const vendor = vendors.find(v => v.id === product.vendorId);
 
 
@@ -38,6 +40,11 @@ export function ProductCard({ product }: ProductCardProps) {
       description: `${product.name} has been added to your cart.`,
     });
   };
+
+  const handleQuickView = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    openQuickView(product);
+  }
 
   const averageRating = React.useMemo(() => {
     if (!product.reviews || product.reviews.length === 0) {
@@ -62,10 +69,10 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           )}
            <div className="absolute inset-0 bg-black/10 transition-colors duration-300 group-hover:bg-black/30" />
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <Button variant="outline" className="gap-2 border-white/20 bg-black/40 backdrop-blur-lg hover:bg-black/50 text-white hover:text-white">
-                    <Eye className="h-4 w-4" />
-                    View
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 gap-2">
+                <Button variant="outline" onClick={handleQuickView} className="gap-2 border-white/20 bg-black/40 backdrop-blur-lg hover:bg-black/50 text-white hover:text-white">
+                    <Maximize className="h-4 w-4" />
+                    Quick View
                 </Button>
             </div>
         </div>

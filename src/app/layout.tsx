@@ -7,6 +7,8 @@ import { CartProvider } from '@/context/cart-context';
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WishlistProvider } from '@/context/wishlist-context';
+import { QuickViewProvider } from '@/context/quick-view-context';
+import { QuickView } from '@/components/quick-view';
 
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -35,7 +37,10 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
-                {children}
+                <QuickViewProvider>
+                  {children}
+                  <QuickView />
+                </QuickViewProvider>
               </WishlistProvider>
             </CartProvider>
           </AuthProvider>
