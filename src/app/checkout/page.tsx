@@ -14,26 +14,44 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { addOrder } from '@/lib/data';
+import { useAuth } from '@/context/auth-context';
+import type { Order } from '@/lib/types';
+
 
 export default function CheckoutPage() {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { toast } = useToast();
     const router = useRouter();
+    const { user } = useAuth();
 
     const handlePlaceOrder = () => {
         // In a real app, you would process the payment here.
-        // For this demo, we'll just show a success message, clear the cart,
-        // and redirect to a confirmation page with the order details.
+        const newOrderId = `order-${Date.now()}`;
         
-        // Serialize cart items to pass in URL
-        const orderData = encodeURIComponent(JSON.stringify(cartItems));
+        cartItems.forEach((item, index) => {
+             const newOrder: Order = {
+                id: `${newOrderId}-${index}`,
+                userId: user?.role === 'customer' ? 'user-1' : 'user-2', // Mock user ID
+                vendorId: item.vendorId,
+                productId: item.id,
+                salespersonId: 'user-5', // Mock salesperson
+                quantity: item.quantity,
+                total: item.price * item.quantity,
+                status: 'Pending',
+                orderDate: new Date().toISOString().split('T')[0],
+                size: item.size,
+                color: item.color
+            };
+            addOrder(newOrder);
+        })
         
         toast({
             title: "Order Placed!",
             description: "Thank you for your purchase.",
         });
         
-        const href = `/order-confirmation?order=${orderData}`;
+        const href = `/order-confirmation?orderId=${newOrderId}`;
         clearCart();
         router.push(href);
     }

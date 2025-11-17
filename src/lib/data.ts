@@ -1,4 +1,5 @@
 
+
 import type { Product, Category, User, Order, Vendor, Testimonial, ProductReview, OrderStatus } from './types';
 
 export const categories: Category[] = [
@@ -47,12 +48,18 @@ export const vendors: Vendor[] = [
   { id: 'vendor-4', name: 'Future Gadgets', email: 'info@futuregadgets.com', avatarId: 'avatar-1', storeName: 'Future Gadgets', products: 0, joinedDate: '2023-05-01', status: 'Pending' },
 ];
 
-export const orders: Order[] = [
-  { id: 'order-1', userId: 'user-1', vendorId: 'vendor-1', productId: 'prod-1', quantity: 1, total: 1250.00, status: 'Delivered', orderDate: '2023-05-01', salespersonId: 'user-5' },
-  { id: 'order-2', userId: 'user-3', vendorId: 'vendor-2', productId: 'prod-2', quantity: 1, total: 180.00, status: 'On Transit', orderDate: '2023-05-03' },
-  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Processing', orderDate: '2023-05-04', salespersonId: 'user-6' },
-  { id: 'order-4', userId: 'user-2', vendorId: 'vendor-1', productId: 'prod-4', quantity: 2, total: 300.00, status: 'Delivered', orderDate: '2023-04-28' },
+let initialOrders: Order[] = [
+  { id: 'order-1', userId: 'user-1', vendorId: 'vendor-1', productId: 'prod-1', quantity: 1, total: 1250.00, status: 'Delivered', orderDate: '2023-05-01', salespersonId: 'user-5', size: 'One Size', color: 'Black' },
+  { id: 'order-2', userId: 'user-3', vendorId: 'vendor-2', productId: 'prod-2', quantity: 1, total: 180.00, status: 'On Transit', orderDate: '2023-05-03', size: '10', color: 'White' },
+  { id: 'order-3', userId: 'user-1', vendorId: 'vendor-3', productId: 'prod-3', quantity: 1, total: 250.00, status: 'Processing', orderDate: '2023-05-04', salespersonId: 'user-6', size: 'L', color: 'Blue' },
+  { id: 'order-4', userId: 'user-2', vendorId: 'vendor-1', productId: 'prod-4', quantity: 2, total: 300.00, status: 'Delivered', orderDate: '2023-04-28', size: 'One Size', color: 'Black' },
 ];
+
+export const orders: Order[] = [...initialOrders];
+
+export const addOrder = (order: Order) => {
+    orders.unshift(order);
+}
 
 export const salesData = [
   { name: 'Jan', sales: 4000 },

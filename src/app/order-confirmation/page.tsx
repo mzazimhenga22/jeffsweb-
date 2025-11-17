@@ -9,35 +9,49 @@ import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { CartItem } from '@/lib/types';
+import type { Order } from '@/lib/types';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { orders as allOrders, products } from '@/lib/data';
 
 function OrderConfirmationContent() {
     const searchParams = useSearchParams();
-    const orderData = searchParams.get('order');
-    const [orderItems, setOrderItems] = React.useState<CartItem[]>([]);
-    const [orderId, setOrderId] = React.useState('');
+    const orderId = searchParams.get('orderId');
+    const [confirmedOrders, setConfirmedOrders] = React.useState<Order[]>([]);
 
     React.useEffect(() => {
-        if (orderData) {
-            try {
-                const items = JSON.parse(decodeURIComponent(orderData));
-                setOrderItems(items);
-            } catch (e) {
-                console.error("Failed to parse order data", e);
-            }
+        if (orderId) {
+            const items = allOrders.filter(o => o.id.startsWith(orderId));
+            setConfirmedOrders(items);
         }
-        // Generate a mock order ID
-        setOrderId(`EC${Math.floor(Math.random() * 90000) + 10000}`);
-    }, [orderData]);
+    }, [orderId]);
 
     const subtotal = React.useMemo(() => {
-        return orderItems.reduce((total, item) => total + item.price * item.quantity, 0);
-    }, [orderItems]);
+        return confirmedOrders.reduce((total, item) => total + item.total, 0);
+    }, [confirmedOrders]);
     
     const taxes = subtotal * 0.08; // 8% tax
     const total = subtotal + taxes;
+
+    if (!orderId || confirmedOrders.length === 0) {
+        return (
+             <MainLayout>
+                <div className="container mx-auto py-12 px-4 md:px-6">
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <h1 className="text-4xl font-bold tracking-tight font-headline mb-2">
+                            Order not found
+                        </h1>
+                        <p className="text-muted-foreground text-lg max-w-2xl mb-8">
+                            We couldn't find the order you're looking for.
+                        </p>
+                         <Button asChild size="lg">
+                            <Link href="/shop">Continue Shopping</Link>
+                        </Button>
+                    </div>
+                </div>
+            </MainLayout>
+        )
+    }
 
     return (
         <MainLayout>
@@ -56,31 +70,32 @@ function OrderConfirmationContent() {
                     <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
                         <CardHeader className="text-center">
                             <CardTitle className="text-2xl">Order #{orderId}</CardTitle>
-                            <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleDateString()}</p>
+                            <p className="text-sm text-muted-foreground">Date: {new Date(confirmedOrders[0].orderDate).toLocaleDateString()}</p>
                         </CardHeader>
                         <CardContent className="p-6">
                              <div className="space-y-4 mb-8">
-                                {orderItems.map(item => {
-                                    const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
-                                    const sellerName = item.salespersonName || item.vendorName || 'Ethereal Commerce';
+                                {confirmedOrders.map(order => {
+                                    const product = products.find(p => p.id === order.productId);
+                                    if (!product) return null;
+                                    const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
+
                                     return (
-                                        <div key={item.id} className='flex items-start gap-4'>
+                                        <div key={order.id} className='flex items-start gap-4'>
                                             <div className="w-16 h-16 relative rounded-md overflow-hidden">
-                                                {image && <Image src={image.imageUrl} alt={item.name} fill className="object-cover" />}
+                                                {image && <Image src={image.imageUrl} alt={product.name} fill className="object-cover" />}
                                             </div>
                                             <div className='flex-1'>
-                                                <p className='font-medium'>{item.name}</p>
-                                                <p className='text-sm text-muted-foreground'>Qty: {item.quantity}</p>
-                                                {(item.size || item.color) && (
+                                                <p className='font-medium'>{product.name}</p>
+                                                <p className='text-sm text-muted-foreground'>Qty: {order.quantity}</p>
+                                                {(order.size || order.color) && (
                                                   <p className="text-sm text-muted-foreground">
-                                                      {item.color && `Color: ${item.color}`}
-                                                      {item.size && item.color && ' / '}
-                                                      {item.size && `Size: ${item.size}`}
+                                                      {order.color && `Color: ${order.color}`}
+                                                      {order.size && order.color && ' / '}
+                                                      {order.size && `Size: ${order.size}`}
                                                   </p>
                                                 )}
-                                                <p className='text-xs text-muted-foreground mt-1'>Sold by: {sellerName}</p>
                                             </div>
-                                            <p className='font-semibold'>${(item.price * item.quantity).toFixed(2)}</p>
+                                            <p className='font-semibold'>${(order.total).toFixed(2)}</p>
                                         </div>
                                     )
                                 })}
