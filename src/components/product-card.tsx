@@ -58,7 +58,7 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-2xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
       <Link href={`/shop/${product.id}`} className="block">
-        <div className="relative aspect-[4/5] w-full">
+        <div className="relative aspect-square w-full">
           {image && (
             <Image
               src={image.imageUrl}
@@ -80,15 +80,15 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-start justify-between">
             <Badge variant="secondary" className='bg-white/20 text-white border-none text-xs'>{product.category}</Badge>
             <div className="flex items-center gap-1 text-primary">
-              <Star className="h-4 w-4 fill-primary" />
-              <span className="font-bold text-white text-sm">{averageRating.toFixed(1)}</span>
+              <Star className="h-3 w-3 fill-primary" />
+              <span className="font-bold text-white text-xs">{averageRating.toFixed(1)}</span>
             </div>
           </div>
-          <h3 className="mt-1 text-md font-semibold leading-tight font-headline text-white truncate">
+          <h3 className="mt-1 text-sm font-semibold leading-tight font-headline text-white truncate">
             {product.name}
           </h3>
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-xl font-bold text-white">${product.price.toFixed(2)}</p>
+            <p className="text-lg font-bold text-white">${product.price.toFixed(2)}</p>
             <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart" className='h-8 w-8 bg-white/20 border-white/30 hover:bg-white/30 text-white hover:text-white'>
               <ShoppingCart className="h-4 w-4" />
             </Button>
