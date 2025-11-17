@@ -62,6 +62,7 @@ function OrderConfirmationContent() {
                              <div className="space-y-4 mb-8">
                                 {orderItems.map(item => {
                                     const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                                    const sellerName = item.salespersonName || item.vendorName || 'Ethereal Commerce';
                                     return (
                                         <div key={item.id} className='flex items-center gap-4'>
                                             <div className="w-16 h-16 relative rounded-md overflow-hidden">
@@ -70,6 +71,7 @@ function OrderConfirmationContent() {
                                             <div className='flex-1'>
                                                 <p className='font-medium'>{item.name}</p>
                                                 <p className='text-sm text-muted-foreground'>Qty: {item.quantity}</p>
+                                                <p className='text-xs text-muted-foreground'>Sold by: {sellerName}</p>
                                             </div>
                                             <p className='font-semibold'>${(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
@@ -145,4 +147,3 @@ export default function OrderConfirmationPage() {
         </React.Suspense>
     )
 }
-

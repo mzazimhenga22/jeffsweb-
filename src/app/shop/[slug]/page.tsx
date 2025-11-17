@@ -9,9 +9,9 @@ import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { products, vendors } from '@/lib/data';
+import { products, vendors, users } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { notFound } from 'next/navigation';
+import { notFound, useSearchParams } from 'next/navigation';
 import {
   Accordion,
   AccordionContent,
@@ -37,12 +37,7 @@ import type { Product } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const { slug } = React.use(params);
+function ProductDetailContent({ slug }: { slug: string }) {
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
@@ -55,8 +50,13 @@ export default function ProductDetailPage({
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const searchParams = useSearchParams();
 
   const product = products.find((p) => p.id === slug);
+  const vendor = product ? vendors.find((v) => v.id === product.vendorId) : null;
+  const salespersonId = searchParams.get('sp');
+  const salesperson = salespersonId ? users.find(u => u.id === salespersonId && u.role === 'salesperson') : null;
+
 
   React.useEffect(() => {
     if (product) {
@@ -105,7 +105,16 @@ export default function ProductDetailPage({
         });
         return;
     }
-    addToCart({ ...product, quantity, size: selectedSize, color: selectedColor });
+    
+    addToCart({ 
+      ...product, 
+      quantity, 
+      size: selectedSize, 
+      color: selectedColor,
+      vendorName: vendor?.storeName,
+      salespersonName: salesperson?.name,
+    });
+    
     toast({
         title: "Added to cart!",
         description: `${product.name} has been added to your cart.`,
@@ -116,7 +125,6 @@ export default function ProductDetailPage({
       toggleWishlist(product);
   }
 
-  const vendor = vendors.find((v) => v.id === product.vendorId);
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const getStockMessage = () => {
@@ -140,6 +148,11 @@ export default function ProductDetailPage({
   return (
     <MainLayout backgroundImage={mainImage}>
       <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
+        {salesperson && (
+          <div className='mb-8 p-4 rounded-xl bg-primary/10 border border-primary/20 text-center'>
+            <p className='text-sm text-primary-foreground'>You are shopping with <span className='font-bold'>{salesperson.name}</span>.</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Product Image Gallery */}
           <div className="space-y-4">
@@ -296,7 +309,7 @@ export default function ProductDetailPage({
                     <AccordionItem value="vendor">
                         <AccordionTrigger className='text-lg font-medium'>Vendor Information</AccordionTrigger>
                         <AccordionContent className='text-base text-muted-foreground'>
-                        Sold by <span className='text-foreground font-semibold'>{vendor?.storeName || 'Unknown'}</span>. A trusted partner on Ethereal Commerce.
+                        Sold by <span className='text-foreground font-semibold'>{vendor?.storeName || 'Ethereal Commerce'}</span>. A trusted partner on our platform.
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="shipping" className='border-b-0'>
@@ -401,4 +414,13 @@ export default function ProductDetailPage({
       </div>
     </MainLayout>
   );
+}
+
+
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <ProductDetailContent slug={params.slug} />
+    </React.Suspense>
+  )
 }

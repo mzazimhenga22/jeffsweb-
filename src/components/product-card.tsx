@@ -11,6 +11,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
+import { vendors } from '@/lib/data';
 
 type ProductCardProps = {
   product: Product;
@@ -20,6 +21,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = PlaceHolderImages.find((p) => p.id === product.imageIds[0]);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const vendor = vendors.find(v => v.id === product.vendorId);
+
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // prevent link navigation
@@ -28,6 +31,7 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       size: product.sizes?.[0] || null,
       color: product.colors?.[0] || null,
+      vendorName: vendor?.storeName,
     });
     toast({
       title: 'Added to cart!',

@@ -1,4 +1,5 @@
 
+
 export type Product = {
   id: string;
   name: string;
@@ -29,6 +30,8 @@ export type CartItem = Product & {
     quantity: number;
     size: string | null;
     color: string | null;
+    vendorName?: string;
+    salespersonName?: string;
 }
 
 export type Category = {
