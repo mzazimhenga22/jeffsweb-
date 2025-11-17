@@ -27,14 +27,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { vendors, products } from '@/lib/data';
+import { vendors as initialVendors, products } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import type { Vendor } from '@/lib/types';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminVendorsPage() {
+  const [vendors, setVendors] = React.useState<Vendor[]>(initialVendors);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { toast } = useToast();
@@ -74,11 +76,18 @@ export default function AdminVendorsPage() {
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
-
-  const handleAction = (message: string, isDestructive: boolean = false) => {
+  
+  const handleUpdateStatus = (vendorId: string, status: 'Approved' | 'Rejected') => {
+    setVendors(vendors.map(v => v.id === vendorId ? { ...v, status } : v));
     toast({
-      title: message,
-      variant: isDestructive ? 'destructive' : 'default',
+        title: `Vendor ${status}`,
+        description: `The vendor has been successfully ${status.toLowerCase()}.`
+    });
+  }
+
+  const handleAction = (message: string) => {
+    toast({
+      title: message
     });
   };
 
@@ -167,11 +176,11 @@ export default function AdminVendorsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleAction('Vendor approved.')}>Approve</DropdownMenuItem>
+                        {vendor.status === 'Pending' && <DropdownMenuItem onClick={() => handleUpdateStatus(vendor.id, 'Approved')}>Approve</DropdownMenuItem>}
                         <DropdownMenuItem onClick={() => handleAction('Vendor details viewed.')}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Vendor rejected.', true)}>
+                        {vendor.status !== 'Rejected' && <DropdownMenuItem className="text-destructive" onClick={() => handleUpdateStatus(vendor.id, 'Rejected')}>
                           Reject
-                        </DropdownMenuItem>
+                        </DropdownMenuItem>}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
