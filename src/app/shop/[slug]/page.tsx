@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation'
 
-import type { Product } from '@/lib/types'
+import type { Product, ProductReview } from '@/lib/types'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { ProductDetailClient } from './product-detail-client'
 
 async function getProduct(slug: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -21,7 +21,7 @@ async function getProduct(slug: string) {
 }
 
 async function getRelatedProducts(category: string, currentProductId: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -37,6 +37,22 @@ async function getRelatedProducts(category: string, currentProductId: string) {
   return (data as Product[]) || []
 }
 
+async function getProductReviews(productId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select('*')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching product reviews:', error)
+    return []
+  }
+
+  return (data as ProductReview[]) || []
+}
+
 export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
   const product = await getProduct(params.slug)
 
@@ -44,7 +60,27 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
     notFound()
   }
 
-  const relatedProducts = await getRelatedProducts(product.category, product.id)
+  const [reviews, relatedProducts] = await Promise.all([
+    getProductReviews(product.id),
+    getRelatedProducts(product.category, product.id),
+  ])
 
-  return <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      : 0
+
+  const productWithRating: Product = {
+    ...product,
+    averageRating,
+    reviewCount: reviews.length,
+  }
+
+  return (
+    <ProductDetailClient
+      product={productWithRating}
+      relatedProducts={relatedProducts}
+      initialReviews={reviews}
+    />
+  )
 }

@@ -56,6 +56,19 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['testimonials']['Row']>
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          id: string
+          product_id: string
+          user_id: string | null
+          rating: number
+          comment: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['product_reviews']['Row']>
+        Update: Partial<Database['public']['Tables']['product_reviews']['Row']>
+        Relationships: []
+      }
       orders: {
         Row: {
           id: string
@@ -88,8 +101,49 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['users']['Row']>
         Relationships: []
       }
+      vendor_profiles: {
+        Row: {
+          id: string
+          user_id: string | null
+          store_name: string
+          status: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['vendor_profiles']['Row']>
+        Update: Partial<Database['public']['Tables']['vendor_profiles']['Row']>
+        Relationships: []
+      }
+      salesperson_profiles: {
+        Row: {
+          id: string
+          user_id: string | null
+          commission_rate: number | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['salesperson_profiles']['Row']>
+        Update: Partial<Database['public']['Tables']['salesperson_profiles']['Row']>
+        Relationships: []
+      }
+      vendor_staff: {
+        Row: {
+          id: string
+          vendor_id: string
+          salesperson_id: string
+          invited_by: string | null
+          role: string
+          status: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['vendor_staff']['Row']>
+        Update: Partial<Database['public']['Tables']['vendor_staff']['Row']>
+        Relationships: []
+      }
     }
+    Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

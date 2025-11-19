@@ -21,10 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { categories, addProduct } from '@/lib/data';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Product } from '@/lib/types';
+import { supabase } from '@/lib/supabase-client';
+
+const categories = [
+  { id: '1', name: 'Electronics' },
+  { id: '2', name: 'Apparel' },
+  { id: '3', name: 'Footwear' },
+  { id: '4', name: 'Accessories' },
+  { id: '5', name: 'Home Goods' },
+];
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -34,38 +41,134 @@ export default function AddProductPage() {
   const [price, setPrice] = React.useState('');
   const [stock, setStock] = React.useState('');
   const [category, setCategory] = React.useState('');
+  const [sizes, setSizes] = React.useState('');
+  const [colors, setColors] = React.useState('');
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newProduct: Omit<Product, 'id' | 'imageIds' | 'reviewCount' | 'reviews'> & { vendorId: string } = {
-      name,
-      description,
-      price: parseFloat(price) || 0,
-      stock: parseInt(stock) || 0,
-      category,
-      vendorId: 'vendor-2', // Hardcoded for the current mock vendor
-      sizes: [],
-      colors: [],
-    };
+    if (isSubmitting) return;
 
-    // In a real app, you'd have more robust logic for ID generation and image handling
-    const fullProduct: Product = {
-        ...newProduct,
-        id: `prod-${Date.now()}`,
-        imageIds: ['product-shoe-1'], // Mock image
-        reviewCount: 0,
-        reviews: [],
-    };
+    if (
+      !name.trim() ||
+      !description.trim() ||
+      !price.trim() ||
+      !stock.trim() ||
+      !category ||
+      !sizes.trim() ||
+      !colors.trim()
+    ) {
+      toast({
+        title: 'Missing details',
+        description: 'Please complete all product fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    addProduct(fullProduct);
+    if (!imageFile) {
+      toast({
+        title: 'Image required',
+        description: 'Upload at least one product image.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    toast({
-        title: "Product Published!",
-        description: `"${fullProduct.name}" is now live on the marketplace.`,
-    });
+    setIsSubmitting(true);
 
-    router.push('/vendor/products');
-  }
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        toast({
+          title: 'Authentication error',
+          description: authError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const vendorId = authData.user?.id ?? null;
+
+      const { data: imageData, error: imageError } = await supabase.storage
+        .from('product-images')
+        .upload(`${Date.now()}_${imageFile.name}`, imageFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (imageError || !imageData) {
+        toast({
+          title: 'Error uploading image',
+          description: imageError?.message ?? 'Unable to upload product image.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(imageData.path);
+      const imageUrl = publicUrlData.publicUrl;
+
+      const { error: productError } = await supabase.from('products').insert([
+        {
+          name: name.trim(),
+          description: description.trim(),
+          price: parseFloat(price),
+          stock: parseInt(stock, 10),
+          category,
+          sizes: sizes.split(',').map((s) => s.trim()).filter(Boolean),
+          colors: colors.split(',').map((c) => c.trim()).filter(Boolean),
+          image_url: imageUrl,
+          vendorId,
+        },
+      ]);
+
+      if (productError) {
+        toast({
+          title: 'Error publishing product',
+          description: productError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Product published',
+        description: `"${name}" is now live in your catalog.`,
+      });
+
+      setName('');
+      setDescription('');
+      setPrice('');
+      setStock('');
+      setCategory('');
+      setSizes('');
+      setColors('');
+      setImageFile(null);
+      setImagePreview(null);
+
+      router.push('/vendor/products');
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -115,12 +218,16 @@ export default function AddProductPage() {
                   <CardContent>
                     <div className="flex items-center justify-center w-full">
                         <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
-                            </div>
-                            <input id="dropzone-file" type="file" className="hidden" multiple />
+                            {imagePreview ? (
+                              <img src={imagePreview} alt="Product preview" className="h-full w-full object-cover rounded-lg" />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                  <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                              </div>
+                            )}
+                            <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                         </label>
                     </div> 
                   </CardContent>
@@ -162,19 +269,19 @@ export default function AddProductPage() {
                         </div>
                          <div>
                             <Label htmlFor="sizes">Sizes (comma-separated)</Label>
-                            <Input id="sizes" placeholder="e.g., S, M, L, XL" />
+                            <Input id="sizes" placeholder="e.g., S, M, L, XL" value={sizes} onChange={(e) => setSizes(e.target.value)} />
                         </div>
                          <div>
                             <Label htmlFor="colors">Colors (comma-separated)</Label>
-                            <Input id="colors" placeholder="e.g., Black, White, Blue" />
+                            <Input id="colors" placeholder="e.g., Black, White, Blue" value={colors} onChange={(e) => setColors(e.target.value)} />
                         </div>
                     </CardContent>
                  </Card>
               </div>
             </div>
              <div className="flex justify-end gap-2">
-                <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
-                <Button type="submit">Publish Product</Button>
+                <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Publishing...' : 'Publish Product'}</Button>
             </div>
           </form>
         </CardContent>

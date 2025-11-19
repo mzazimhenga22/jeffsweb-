@@ -15,6 +15,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase-client';
+import type { Database } from '@/lib/database.types';
+
+type UserRole = Database['public']['Tables']['users']['Row']['role'];
+
+function resolveDashboardPath({
+  role,
+  metadataRole,
+  isAdminFlag,
+}: {
+  role?: UserRole | null;
+  metadataRole?: string;
+  isAdminFlag?: boolean;
+}): string {
+  if (isAdminFlag || role === 'admin' || metadataRole === 'admin') {
+    return '/admin';
+  }
+  if (role === 'vendor' || metadataRole === 'vendor') {
+    return '/vendor';
+  }
+  if (role === 'salesperson' || metadataRole === 'salesperson') {
+    return '/salesperson';
+  }
+  return '/';
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +50,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -34,7 +58,38 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/');
+      const authUser = data.user ?? null;
+      let profileRole: UserRole | null = null;
+
+      if (authUser?.id) {
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Failed to load profile for redirect', profileError);
+        } else {
+          profileRole = profile?.role ?? null;
+        }
+      }
+
+      const metadataRole =
+        typeof authUser?.user_metadata?.role === 'string'
+          ? authUser.user_metadata.role
+          : undefined;
+      const isAdminFlag =
+        authUser?.user_metadata?.is_admin === true ||
+        metadataRole === 'admin';
+
+      const destination = resolveDashboardPath({
+        role: profileRole,
+        metadataRole,
+        isAdminFlag,
+      });
+
+      router.push(destination);
       router.refresh();
     }
   };

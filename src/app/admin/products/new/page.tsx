@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -42,6 +43,8 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,6 +60,25 @@ export default function AddProductPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
+    if (
+      !productName.trim() ||
+      !description.trim() ||
+      !price.trim() ||
+      !stock.trim() ||
+      !category ||
+      !sizes.trim() ||
+      !colors.trim()
+    ) {
+      toast({
+        title: 'Missing details',
+        description: 'Please fill in all product details before publishing.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!imageFile) {
       toast({
         title: 'Error',
@@ -65,63 +87,58 @@ export default function AddProductPage() {
       });
       return;
     }
+    setIsSubmitting(true);
 
-    // Upload image to Supabase Storage
-    const { data: imageData, error: imageError } = await supabase.storage
-      .from('product-images')
-      .upload(`${Date.now()}_${imageFile.name}`, imageFile);
+    try {
+      const { data: imageData, error: imageError } = await supabase.storage
+        .from('product-images')
+        .upload(`${Date.now()}_${imageFile.name}`, imageFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-    if (imageError) {
-      toast({
-        title: 'Error uploading image',
-        description: imageError.message,
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if(!imageData) {
+      if (imageError || !imageData) {
         toast({
-            title: 'Error uploading image',
-            description: "Something went wrong",
-            variant: 'destructive',
+          title: 'Error uploading image',
+          description: imageError?.message ?? 'Something went wrong while uploading the product image.',
+          variant: 'destructive',
         });
         return;
-    }
+      }
 
-    // Get public URL of the uploaded image
-    const { data: publicUrlData } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(imageData.path);
+      const { data: publicUrlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(imageData.path);
 
-    const imageUrl = publicUrlData.publicUrl;
+      const imageUrl = publicUrlData.publicUrl;
 
-    // Insert product data into Supabase database
-    const { error: productError } = await supabase.from('products').insert([
-      {
-        name: productName,
-        description,
-        price: parseFloat(price),
-        stock: parseInt(stock, 10),
-        category,
-        sizes: sizes.split(',').map((s) => s.trim()),
-        colors: colors.split(',').map((c) => c.trim()),
-        image_url: imageUrl,
-      },
-    ]);
+      const { error: productError } = await supabase.from('products').insert([
+        {
+          name: productName.trim(),
+          description: description.trim(),
+          price: parseFloat(price),
+          stock: parseInt(stock, 10),
+          category,
+          sizes: sizes.split(',').map((s) => s.trim()).filter(Boolean),
+          colors: colors.split(',').map((c) => c.trim()).filter(Boolean),
+          image_url: imageUrl,
+        },
+      ]);
 
-    if (productError) {
+      if (productError) {
+        toast({
+          title: 'Error adding product',
+          description: productError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       toast({
-        title: 'Error adding product',
-        description: productError.message,
-        variant: 'destructive',
+        title: 'Product published',
+        description: 'The product has been added successfully.',
       });
-    } else {
-      toast({
-        title: 'Success',
-        description: 'Product added successfully.',
-      });
-      // Reset form
+
       setProductName('');
       setDescription('');
       setPrice('');
@@ -131,6 +148,10 @@ export default function AddProductPage() {
       setColors('');
       setImageFile(null);
       setImagePreview(null);
+      router.push('/admin/products');
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -288,10 +309,12 @@ export default function AddProductPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" disabled={isSubmitting}>
                 Save Draft
               </Button>
-              <Button type="submit">Publish Product</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Publishing...' : 'Publish Product'}
+              </Button>
             </div>
           </form>
         </CardContent>

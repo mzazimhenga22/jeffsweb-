@@ -3,6 +3,9 @@ import { cookies } from 'next/headers'
 
 import type { Database } from './database.types'
 
-export function createSupabaseServerClient() {
-  return createServerComponentClient<Database>({ cookies })
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies()
+  return createServerComponentClient<Database>({
+    cookies: () => cookieStore,
+  })
 }

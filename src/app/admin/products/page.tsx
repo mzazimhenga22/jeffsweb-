@@ -1,194 +1,36 @@
+import { createSupabaseServerClient } from '@/lib/supabase-server'
+import type { Product, VendorProfile } from '@/lib/types'
+import { ProductsTable } from './products-table'
 
-'use client';
+export type AdminProductRow = Product & {
+  vendorName?: string | null
+}
 
-import * as React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Star } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase-client';
-import { Product } from '@/lib/types';
+export default async function AdminProductsPage() {
+  const supabase = await createSupabaseServerClient()
+  const [{ data: productRows, error: productError }, { data: vendorRows, error: vendorError }] =
+    await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }).returns<Product[]>(),
+      supabase.from('vendor_profiles').select('id, store_name').returns<Pick<VendorProfile, 'id' | 'store_name'>[]>(),
+    ])
 
-const ITEMS_PER_PAGE = 10;
-
-export default function AdminProductsPage() {
-  const [products, setProducts] = React.useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const { toast } = useToast();
-  const router = useRouter();
-
-  React.useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) {
-        console.error('Error fetching products:', error);
-      } else {
-        setProducts(data as Product[]);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const handleAction = (message: string, isDestructive: boolean = false) => {
-    toast({
-      title: message,
-      variant: isDestructive ? 'destructive' : 'default',
-    });
-  };
-  
-  const handleEdit = (productId: string) => {
-    router.push(`/admin/products/${productId}/edit`);
+  if (productError) {
+    console.error('Failed to load products', productError)
+    return <ProductsTable products={[]} />
   }
 
-  const handleViewOnSite = (productId: string) => {
-    window.open(`/shop/${productId}`, '_blank');
+  if (vendorError) {
+    console.error('Failed to load vendor profiles', vendorError)
   }
 
-  return (
-    <Card className="bg-card/70 backdrop-blur-sm">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle>Products</CardTitle>
-            <CardDescription>
-              Manage all products on the platform.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input 
-              placeholder="Search products..." 
-              className="w-full sm:w-64" 
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-            <Button asChild>
-                <Link href="/admin/products/new">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Product
-                </Link>
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Vendor</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedProducts.map((product) => {
-              return (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                        {product.image_url && 
-                            <Image
-                                src={product.image_url}
-                                alt={product.name}
-                                width={40}
-                                height={40}
-                                className="rounded-md object-cover"
-                            />
-                        }
-                      <span className="font-medium">{product.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>N/A</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{product.category}</Badge>
-                  </TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <div className='flex items-center gap-1'>
-                        <Star className='w-4 h-4 text-primary fill-primary' />
-                        4.5
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(product.id)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewOnSite(product.id)}>View on site</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Product deleted.', true)}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const vendorMap = new Map<string, string>()
+  vendorRows?.forEach((vendor) => vendorMap.set(vendor.id, vendor.store_name))
+
+  const productsWithVendors: AdminProductRow[] =
+    productRows?.map((product) => ({
+      ...product,
+      vendorName: product.vendorId ? vendorMap.get(product.vendorId) : null,
+    })) ?? []
+
+  return <ProductsTable products={productsWithVendors} />
 }

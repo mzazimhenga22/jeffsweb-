@@ -8,8 +8,11 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import type { Order, Product } from '@/lib/types'
+import type { Database } from '@/lib/database.types'
 
 export const dynamic = 'force-dynamic'
+
+type OrdersRow = Database['public']['Tables']['orders']['Row']
 
 type OrderItem = {
   id: string
@@ -20,7 +23,7 @@ type OrderItem = {
 type OrderWithItems = Order & { order_items: OrderItem[] }
 
 export default async function OrdersPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -36,6 +39,8 @@ export default async function OrdersPage() {
     )
   }
 
+  const userIdForQuery: OrdersRow['userId'] = session.user.id
+
   const { data: orders, error } = await supabase
     .from('orders')
     .select(`
@@ -45,7 +50,7 @@ export default async function OrdersPage() {
         products:(*)
       )
     `)
-    .eq('userId', session.user.id)
+    .filter('userId', 'eq', userIdForQuery)
     .order('created_at', { ascending: false })
     .returns<OrderWithItems[]>()
 

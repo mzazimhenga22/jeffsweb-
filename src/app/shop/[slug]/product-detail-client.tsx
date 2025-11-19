@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Image from 'next/image'
-import { Check, Heart, Minus, Plus, Share2, Facebook, Twitter } from 'lucide-react'
+import { Check, Heart, Minus, Plus, Share2, Facebook, Twitter, Star } from 'lucide-react'
 
 import { MainLayout } from '@/components/main-layout'
 import { Button } from '@/components/ui/button'
@@ -27,22 +27,34 @@ import {
 } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import { useWishlist } from '@/context/wishlist-context'
-import type { Product } from '@/lib/types'
+import { useAuth } from '@/context/auth-context'
+import type { Product, ProductReview } from '@/lib/types'
+import { Textarea } from '@/components/ui/textarea'
 
 interface ProductDetailClientProps {
   product: Product
   relatedProducts: Product[]
+  initialReviews: ProductReview[]
 }
 
-export function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  relatedProducts,
+  initialReviews,
+}: ProductDetailClientProps) {
   const [selectedColor, setSelectedColor] = React.useState<string | null>(null)
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null)
   const [quantity, setQuantity] = React.useState(1)
   const [activeImage, setActiveImage] = React.useState<string | null>(null)
+  const [reviews, setReviews] = React.useState<ProductReview[]>(initialReviews)
+  const [reviewRating, setReviewRating] = React.useState(5)
+  const [reviewComment, setReviewComment] = React.useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = React.useState(false)
 
   const { addToCart } = useCart()
   const { toast } = useToast()
   const { toggleWishlist, isInWishlist } = useWishlist()
+  const { supabase, session } = useAuth()
 
   React.useEffect(() => {
     if (product.colors?.length) {
@@ -55,6 +67,12 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
       setActiveImage(product.image_url)
     }
   }, [product])
+
+  const averageRating = React.useMemo(() => {
+    if (reviews.length === 0) return 0
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0)
+    return total / reviews.length
+  }, [reviews])
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
@@ -83,6 +101,52 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
     toggleWishlist(product)
   }
 
+  const handleReviewSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!session) {
+      toast({
+        variant: 'destructive',
+        title: 'Login required',
+        description: 'Please sign in to leave a review.',
+      })
+      return
+    }
+
+    try {
+      setIsSubmittingReview(true)
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .insert({
+          product_id: product.id,
+          user_id: session.user.id,
+          rating: reviewRating,
+          comment: reviewComment.trim() || null,
+        })
+        .select()
+        .single()
+
+      if (error || !data) {
+        throw error
+      }
+
+      setReviews((prev) => [data as ProductReview, ...prev])
+      setReviewComment('')
+      toast({
+        title: 'Thanks for your feedback!',
+        description: 'Your review has been recorded.',
+      })
+    } catch (error) {
+      console.error('Error saving review:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Could not save your review',
+        description: 'Please try again in a moment.',
+      })
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
+
   const getStockMessage = () => {
     if (product.stock === 0) return { text: 'Out of Stock', className: 'text-destructive' }
     if (product.stock < 10) return { text: `Only ${product.stock} left!`, className: 'text-amber-600' }
@@ -90,6 +154,8 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
   }
 
   const mainImage = activeImage
+  const reviewCount = reviews.length
+  const ratingOptions = [1, 2, 3, 4, 5] as const
 
   return (
     <MainLayout backgroundImage={mainImage || undefined}>
@@ -215,6 +281,102 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
                 </AccordionItem>
               </Accordion>
             </div>
+
+            <Card className="mt-8 p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Average Rating</p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-4xl font-bold">
+                      {reviewCount === 0 ? '0.0' : averageRating.toFixed(1)}
+                    </span>
+                    <Star className="h-8 w-8 text-yellow-500 fill-yellow-500" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {reviewCount === 0
+                      ? 'No reviews yet'
+                      : `${reviewCount} review${reviewCount === 1 ? '' : 's'}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-8 lg:grid-cols-2">
+                <form onSubmit={handleReviewSubmit} className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Your Rating</p>
+                    <div className="flex items-center gap-2">
+                      {ratingOptions.map((rating) => (
+                        <button
+                          type="button"
+                          key={rating}
+                          aria-label={`Rate ${rating} star${rating === 1 ? '' : 's'}`}
+                          onClick={() => setReviewRating(rating)}
+                          className="p-2 rounded-full border border-border/40 hover:bg-muted transition-colors"
+                        >
+                          <Star
+                            className={cn(
+                              'h-6 w-6',
+                              rating <= reviewRating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'
+                            )}
+                            fill={rating <= reviewRating ? 'currentColor' : 'none'}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Textarea
+                    value={reviewComment}
+                    onChange={(event) => setReviewComment(event.target.value)}
+                    placeholder="Share your thoughts about this product..."
+                    rows={4}
+                  />
+                  {!session && (
+                    <p className="text-xs text-muted-foreground">
+                      You need to be logged in to submit a review.
+                    </p>
+                  )}
+                  <Button type="submit" disabled={isSubmittingReview || !session}>
+                    {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                  </Button>
+                </form>
+
+                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                  {reviews.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Be the first to leave a review for this product.
+                    </p>
+                  ) : (
+                    reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="rounded-2xl border border-border/30 p-4 bg-background/50 backdrop-blur"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1 text-primary">
+                          {ratingOptions.map((star) => (
+                            <Star
+                              key={`${review.id}-${star}`}
+                              className={cn(
+                                'h-4 w-4',
+                                star <= review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'
+                              )}
+                              fill={star <= review.rating ? 'currentColor' : 'none'}
+                            />
+                          ))}
+                        </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm text-foreground">
+                          {review.comment || 'No comment provided.'}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </Card>
 
             <Card className="mt-8 p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
               <div className="flex items-center gap-4">

@@ -1,45 +1,68 @@
 
-'use client';
+'use client'
 
-import * as React from 'react';
-import Image from 'next/image';
-import { products } from '@/lib/data';
-import type { CartItem } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Button } from '@/components/ui/button';
+import * as React from 'react'
+import Image from 'next/image'
+import type { CartItem, Product } from '@/lib/types'
+import { supabase } from '@/lib/supabase-client'
+import { PlaceHolderImages } from '@/lib/placeholder-images'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 export default function AdminPosPage() {
-  const [cart, setCart] = React.useState<CartItem[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const { toast } = useToast();
+  const [cart, setCart] = React.useState<CartItem[]>([])
+  const [searchQuery, setSearchQuery] = React.useState('')
+  const [products, setProducts] = React.useState<Product[]>([])
+  const { toast } = useToast()
+
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*').returns<Product[]>()
+      if (!isMounted) return
+      if (error) {
+        console.error('Error fetching products for POS', error)
+        toast({
+          variant: 'destructive',
+          title: 'Could not load products',
+          description: 'Please refresh to try again.',
+        })
+        return
+      }
+      setProducts(data ?? [])
+    }
+    fetchProducts()
+    return () => {
+      isMounted = false
+    }
+  }, [toast])
 
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   const addToCart = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
+    const product = products.find((p) => p.id === productId)
+    if (!product) return
 
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === productId);
+      const existingItem = prevCart.find((item) => item.id === productId)
       if (existingItem) {
         return prevCart.map((item) =>
           item.id === productId
             ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+            : item,
+        )
       }
       return [
         ...prevCart,
@@ -49,44 +72,44 @@ export default function AdminPosPage() {
           size: product.sizes?.[0] || null,
           color: product.colors?.[0] || null,
         },
-      ];
-    });
-  };
+      ]
+    })
+  }
 
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
+      removeFromCart(productId)
+      return
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
-  };
+        item.id === productId ? { ...item, quantity } : item,
+      ),
+    )
+  }
   
   const updatePrice = (productId: string, newPrice: number) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === productId ? { ...item, price: newPrice } : item
-      )
-    );
-  };
+        item.id === productId ? { ...item, price: newPrice } : item,
+      ),
+    )
+  }
 
   const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
-  };
+    setCart((prevCart) => prevCart.filter((item) => item.id !== productId))
+  }
   
   const clearCart = () => {
-    setCart([]);
+    setCart([])
   }
 
   const cartSubtotal = React.useMemo(() => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  }, [cart]);
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  }, [cart])
   
-  const tax = cartSubtotal * 0.08;
-  const cartTotal = cartSubtotal + tax;
+  const tax = cartSubtotal * 0.08
+  const cartTotal = cartSubtotal + tax
 
   const handleCreateOrder = () => {
     if(cart.length === 0) {
@@ -120,23 +143,25 @@ export default function AdminPosPage() {
             <ScrollArea className="h-full pr-4 -mr-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => {
-                  const image = PlaceHolderImages.find(
-                    (p) => p.id === product.imageIds[0]
-                  );
+                  const placeholderImage =
+                    product.imageIds && product.imageIds.length > 0
+                      ? PlaceHolderImages.find((p) => p.id === product.imageIds?.[0])
+                      : undefined
+                  const imageUrl = product.image_url || placeholderImage?.imageUrl
                   return (
                     <Card
                       key={product.id}
                       className="overflow-hidden cursor-pointer hover:border-primary transition-colors"
                       onClick={() => addToCart(product.id)}
                     >
-                      {image && (
+                      {imageUrl && (
                         <div className="aspect-square relative">
                           <Image
-                            src={image.imageUrl}
+                            src={imageUrl}
                             alt={product.name}
                             fill
                             className="object-cover"
-                            data-ai-hint={image.imageHint}
+                            data-ai-hint={placeholderImage?.imageHint}
                           />
                         </div>
                       )}

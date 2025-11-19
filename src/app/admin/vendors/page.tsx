@@ -1,182 +1,53 @@
+import { notFound } from 'next/navigation'
 
-'use client';
+import { createSupabaseServerClient } from '@/lib/supabase-server'
+import type { Product, VendorProfile } from '@/lib/types'
+import { VendorsTable } from './vendors-table'
 
-import * as React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import type { Vendor } from '@/lib/types';
+export type VendorTableItem = {
+  id: string
+  storeName: string
+  status: string
+  contactEmail: string | null
+  contactPhone: string | null
+  products: number
+  createdAt: string
+}
 
-const ITEMS_PER_PAGE = 10;
+export default async function AdminVendorsPage() {
+  const supabase = await createSupabaseServerClient()
 
-const initialVendors: Vendor[] = [
-    { id: '1', name: 'John Doe', storeName: 'Artisan Creations', email: 'john.doe@example.com', products: 25, status: 'Approved', avatarId: '' },
-    { id: '2', name: 'Jane Smith', storeName: 'Modern Designs', email: 'jane.smith@example.com', products: 15, status: 'Pending', avatarId: '' },
-    { id: '3', name: 'Robert Johnson', storeName: 'Vintage Finds', email: 'robert.j@example.com', products: 40, status: 'Approved', avatarId: '' },
-    { id: '4', name: 'Emily White', storeName: 'Home Comforts', email: 'emily.w@example.com', products: 10, status: 'Rejected', avatarId: '' },
-];
+  const [{ data: vendorRows, error: vendorError }, { data: vendorProducts, error: productError }] =
+    await Promise.all([
+      supabase.from('vendor_profiles').select('*').order('created_at', { ascending: false }).returns<VendorProfile[]>(),
+      supabase.from('products').select('id, vendorId').returns<Pick<Product, 'id' | 'vendorId'>[]>(),
+    ])
 
-export default function AdminVendorsPage() {
-  const [vendors, setVendors] = React.useState<Vendor[]>(initialVendors);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const { toast } = useToast();
-
-  const filteredVendors = vendors.filter((vendor) =>
-    vendor.storeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    vendor.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredVendors.length / ITEMS_PER_PAGE);
-  const paginatedVendors = filteredVendors.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-  
-  const handleUpdateStatus = (vendorId: string, status: 'Approved' | 'Rejected') => {
-    setVendors(vendors.map(v => v.id === vendorId ? { ...v, status } : v));
-    toast({
-        title: `Vendor ${status}`,
-        description: `The vendor has been successfully ${status.toLowerCase()}.`
-    });
+  if (vendorError) {
+    console.error('Failed to load vendors', vendorError)
+    notFound()
   }
 
-  const handleAction = (message: string) => {
-    toast({
-      title: message
-    });
-  };
+  if (productError) {
+    console.error('Failed to load vendor products', productError)
+  }
 
-  return (
-    <Card className="bg-card/70 backdrop-blur-sm">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle>Vendors</CardTitle>
-            <CardDescription>
-              Approve and manage vendors for the platform.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Input 
-              placeholder="Search vendors..." 
-              className="w-full sm:w-64"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-            <Button onClick={() => handleAction('Add Vendor form opened.')}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Vendor
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Store Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Products</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedVendors.map((vendor) => {
-              return (
-                <TableRow key={vendor.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                          <AvatarImage src='/placeholder.svg' />
-                        <AvatarFallback>{vendor.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{vendor.storeName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{vendor.email}</TableCell>
-                  <TableCell>{vendor.products}</TableCell>
-                  <TableCell>4.5</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        vendor.status === 'Approved'
-                          ? 'default'
-                          : vendor.status === 'Pending'
-                          ? 'secondary'
-                          : 'destructive'
-                      }
-                    >
-                      {vendor.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {vendor.status === 'Pending' && <DropdownMenuItem onClick={() => handleUpdateStatus(vendor.id, 'Approved')}>Approve</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => handleAction('Vendor details viewed.')}>View Details</DropdownMenuItem>
-                        {vendor.status !== 'Rejected' && <DropdownMenuItem className="text-destructive" onClick={() => handleUpdateStatus(vendor.id, 'Rejected')}>
-                          Reject
-                        </DropdownMenuItem>}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const productCountMap = new Map<string, number>()
+  vendorProducts?.forEach((product) => {
+    if (!product.vendorId) return
+    productCountMap.set(product.vendorId, (productCountMap.get(product.vendorId) ?? 0) + 1)
+  })
+
+  const vendors: VendorTableItem[] =
+    vendorRows?.map((vendor) => ({
+      id: vendor.id,
+      storeName: vendor.store_name,
+      status: vendor.status,
+      contactEmail: vendor.contact_email,
+      contactPhone: vendor.contact_phone,
+      products: productCountMap.get(vendor.id) ?? 0,
+      createdAt: vendor.created_at,
+    })) ?? []
+
+  return <VendorsTable vendors={vendors} />
 }
