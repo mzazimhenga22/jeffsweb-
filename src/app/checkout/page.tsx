@@ -33,7 +33,7 @@ export default function CheckoutPage() {
              const newOrder: Order = {
                 id: `${newOrderId}-${index}`,
                 userId: user?.role === 'customer' ? 'user-1' : 'user-2', // Mock user ID
-                vendorId: item.vendorId,
+                vendorId: item.vendorId ?? 'admin',
                 productId: item.id,
                 salespersonId: 'user-5', // Mock salesperson
                 quantity: item.quantity,
@@ -141,14 +141,18 @@ export default function CheckoutPage() {
                             <CardContent>
                                 <div className="space-y-4">
                                     {cartItems.map(item => {
-                                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                                        const placeholder = item.imageIds?.[0]
+                                            ? PlaceHolderImages.find(p => p.id === item.imageIds?.[0])
+                                            : null;
+                                        const imageUrl = item.image_url || placeholder?.imageUrl;
                                         return (
                                             <div key={item.id} className='flex items-start gap-4'>
                                                 <div className="w-16 h-16 relative rounded-md overflow-hidden">
-                                                    {image && <Image src={image.imageUrl} alt={item.name} fill className="object-cover" />}
+                                                    {imageUrl && <Image src={imageUrl} alt={item.name} fill className="object-cover" />}
                                                 </div>
                                                 <div className='flex-1'>
                                                     <p className='font-medium'>{item.name}</p>
+                                                    <p className='text-sm text-muted-foreground'>Vendor: {item.vendorName || 'Admin'}</p>
                                                     <p className='text-sm text-muted-foreground'>Qty: {item.quantity}</p>
                                                     {(item.size || item.color) && (
                                                         <p className="text-sm text-muted-foreground">

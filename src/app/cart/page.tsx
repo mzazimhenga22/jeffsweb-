@@ -66,22 +66,26 @@ export default function CartPage() {
                   <CardContent className="p-0">
                     <ul className="divide-y divide-border/50">
                       {cartItems.map((item) => {
-                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                        const placeholder = item.imageIds?.[0]
+                          ? PlaceHolderImages.find((p) => p.id === item.imageIds?.[0])
+                          : null;
+                        const imageUrl = item.image_url || placeholder?.imageUrl;
                         return (
                           <li key={item.id} className="flex items-center p-6">
                             <div className="w-24 h-24 relative rounded-md overflow-hidden">
-                              {image && 
-                                <Image 
-                                  src={image.imageUrl} 
-                                  alt={item.name} 
+                              {imageUrl && (
+                                <Image
+                                  src={imageUrl}
+                                  alt={item.name}
                                   fill
-                                  className="object-cover" 
-                                  data-ai-hint={image.imageHint}
+                                  className="object-cover"
+                                  data-ai-hint={placeholder?.imageHint}
                                 />
-                              }
+                              )}
                             </div>
                             <div className="ml-6 flex-1">
                               <h3 className="font-semibold text-lg">{item.name}</h3>
+                              <p className="text-sm text-muted-foreground">Vendor: {item.vendorName || 'Admin'}</p>
                               <p className="text-muted-foreground text-sm">
                                   {item.color && `Color: ${item.color}`}
                                   {item.size && item.color && ' | '}

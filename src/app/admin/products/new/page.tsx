@@ -96,6 +96,9 @@ export default function AddProductPage() {
 
     const imageUrl = publicUrlData.publicUrl;
 
+    const { data: userData } = await supabase.auth.getUser();
+    const vendorId = userData?.user?.id || 'admin';
+
     // Insert product data into Supabase database
     const { error: productError } = await supabase.from('products').insert([
       {
@@ -107,6 +110,7 @@ export default function AddProductPage() {
         sizes: sizes.split(',').map((s) => s.trim()),
         colors: colors.split(',').map((c) => c.trim()),
         image_url: imageUrl,
+        vendorId,
       },
     ]);
 

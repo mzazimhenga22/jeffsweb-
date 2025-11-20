@@ -128,7 +128,7 @@ export default function VendorOrdersPage() {
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
                 <TableCell>{user?.name || 'Unknown User'}</TableCell>
-                <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
                 <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge

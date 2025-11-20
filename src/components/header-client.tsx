@@ -29,7 +29,10 @@ const navLinks = [
 
 export function HeaderClient({ user, cartCount: initialCartCount }: { user: any, cartCount: number }) {
   const isMobile = useIsMobile();
-  const { cartCount, logout } = useAuth();
+  const { cartCount } = useCart();
+  const { logout, session } = useAuth();
+  const resolvedUser = user ?? session?.user ?? null;
+  const resolvedCartCount = cartCount ?? initialCartCount;
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -63,15 +66,15 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
   }, []);
 
   const getWelcomeMessage = () => {
-    if (!user) return '';
-    if (user.user_metadata?.role === 'customer') return 'My Account';
-    const role = user.user_metadata?.role || '';
+    if (!resolvedUser) return '';
+    if (resolvedUser.user_metadata?.role === 'customer') return 'My Account';
+    const role = resolvedUser.user_metadata?.role || '';
     return `Welcome, ${role.charAt(0).toUpperCase() + role.slice(1)}`;
   }
-  
+
   const getAccountHomePage = () => {
-    if (!user) return '/login';
-    switch (user.user_metadata?.role) {
+    if (!resolvedUser) return '/login';
+    switch (resolvedUser.user_metadata?.role) {
       case 'admin': return '/admin';
       case 'vendor': return '/vendor';
       case 'salesperson': return '/salesperson';
@@ -119,12 +122,12 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
             <Button variant="ghost" size="icon" asChild className='hover:bg-foreground/5'>
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
+                {resolvedCartCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute top-0 right-0 h-5 w-5 justify-center p-0"
                   >
-                    {cartCount}
+                    {resolvedCartCount}
                   </Badge>
                 )}
               </Link>
@@ -154,7 +157,7 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
                     ))}
                   </nav>
                    <div className="flex flex-col gap-2">
-                    {user ? (
+                    {resolvedUser ? (
                       <>
                         <p className='text-center text-muted-foreground mb-2'>{getWelcomeMessage()}</p>
                         <Button onClick={logout}>Logout</Button>
@@ -200,18 +203,18 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
             <Button variant="ghost" size="icon" asChild className='hover:bg-foreground/5'>
             <Link href="/cart" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
+                {resolvedCartCount > 0 && (
                 <Badge
                     variant="destructive"
                     className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0"
                 >
-                    {cartCount}
+                    {resolvedCartCount}
                 </Badge>
                 )}
             </Link>
             </Button>
 
-            {user ? (
+            {resolvedUser ? (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className='hover:bg-foreground/5'>
@@ -223,7 +226,7 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href={getAccountHomePage()}>Dashboard</Link></DropdownMenuItem>
-                {user.user_metadata?.role === 'customer' && (
+                {resolvedUser.user_metadata?.role === 'customer' && (
                   <>
                     <DropdownMenuItem asChild><Link href="/account/orders">My Orders</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/account/wishlist">My Wishlist</Link></DropdownMenuItem>

@@ -72,6 +72,7 @@ export function HeroCarousel({ products, setBackgroundImage }: { products: Produ
                   <div className="max-w-xl mb-8 text-lg text-white/80 drop-shadow-xl h-14">
                     <p>{product.description}</p>
                   </div>
+                  <p className="text-sm text-white/80 mb-4">Sold by {product.vendorName || 'Admin'}</p>
                   <Button size="lg" asChild className="text-lg py-7">
                     <Link href={`/shop/${product.id}`}>
                       Shop Now <ArrowRight className="ml-2 h-5 w-5" />

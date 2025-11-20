@@ -10,23 +10,52 @@ import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/product-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Product, Category, Testimonial } from '@/lib/types';
+import type { Product, Category, Testimonial, User } from '@/lib/types';
 import { PromoBanners } from '@/components/promo-banners';
 import { PromoBannerTriple } from '@/components/promo-banner-triple';
 import { PromoBannerSingle } from '@/components/promo-banner-single';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { supabase } from '@/lib/supabase-client';
 
+async function addVendorNames(products: Product[]): Promise<Product[]> {
+  const vendorIds = Array.from(
+    new Set(
+      products
+        .map((product) => product.vendorId)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  if (vendorIds.length === 0) return products.map((product) => ({ ...product, vendorName: 'Admin' }));
+
+  const { data: vendorData, error: vendorError } = await supabase
+    .from('users')
+    .select('id, name')
+    .in('id', vendorIds);
+
+  if (vendorError) {
+    console.error('Error fetching vendors:', vendorError);
+    return products;
+  }
+
+  const vendorMap = new Map<string, string>();
+  (vendorData as User[] | null)?.forEach((vendor) => {
+    vendorMap.set(vendor.id, vendor.name);
+  });
+
+  return products.map((product) => ({
+    ...product,
+    vendorName: vendorMap.get(product.vendorId ?? '') ?? (product.vendorId ? 'Unknown vendor' : 'Admin'),
+  }));
+}
+
 async function getFeaturedProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .limit(8);
+  const { data, error } = await supabase.from('products').select('*').limit(8);
   if (error) {
     console.error('Error fetching featured products:', error);
     return [];
   }
-  return data as Product[];
+  return addVendorNames((data as Product[]) || []);
 }
 
 async function getNewArrivals(): Promise<Product[]> {
@@ -39,20 +68,17 @@ async function getNewArrivals(): Promise<Product[]> {
     console.error('Error fetching new arrivals:', error);
     return [];
   }
-  return data as Product[];
+  return addVendorNames((data as Product[]) || []);
 }
 
 async function getBestSellers(): Promise<Product[]> {
-    // Bestsellers are hardcoded for now
-    const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .limit(4);
+  // Bestsellers are hardcoded for now
+  const { data, error } = await supabase.from('products').select('*').limit(4);
   if (error) {
     console.error('Error fetching bestsellers:', error);
     return [];
   }
-  return data as Product[];
+  return addVendorNames((data as Product[]) || []);
 }
 
 async function getCategories(): Promise<Category[]> {

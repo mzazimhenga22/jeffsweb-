@@ -18,7 +18,7 @@ import { ListFilter, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase-client';
-import { Product } from '@/lib/types';
+import { Product, User } from '@/lib/types';
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
 
@@ -38,13 +38,44 @@ export default function ShopPage() {
 
   React.useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*');
+      const { data: productData, error } = await supabase.from('products').select('*');
       if (error) {
         console.error('Error fetching products:', error);
-      } else {
-        setProducts(data as Product[]);
-        setFilteredProducts(data as Product[]);
+        return;
       }
+
+      const vendorIds = Array.from(
+        new Set(
+          (productData || [])
+            .map((product) => product.vendorId)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+
+      const vendorMap = new Map<string, string>();
+
+      if (vendorIds.length > 0) {
+        const { data: vendorData, error: vendorError } = await supabase
+          .from('users')
+          .select('id, name')
+          .in('id', vendorIds);
+
+        if (vendorError) {
+          console.error('Error fetching vendors:', vendorError);
+        }
+
+        (vendorData as User[] | null)?.forEach((vendor) => {
+          vendorMap.set(vendor.id, vendor.name);
+        });
+      }
+
+      const productsWithVendorNames = (productData as Product[]).map((product) => ({
+        ...product,
+        vendorName: vendorMap.get(product.vendorId ?? '') ?? (product.vendorId ? 'Unknown vendor' : 'Admin'),
+      }));
+
+      setProducts(productsWithVendorNames);
+      setFilteredProducts(productsWithVendorNames);
     };
 
     fetchProducts();
@@ -131,7 +162,7 @@ export default function ShopPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
                   <DropdownMenuRadioItem value="newest">Newest</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadio-item>
+                  <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
