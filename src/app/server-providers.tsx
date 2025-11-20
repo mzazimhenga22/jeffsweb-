@@ -4,8 +4,6 @@ import { AuthProvider } from '@/context/auth-context';
 import { CartProvider } from '@/context/cart-context';
 import { QuickViewProvider } from '@/context/quick-view-context';
 import { WishlistProvider } from '@/context/wishlist-context';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { type Session } from '@supabase/auth-helpers-nextjs';
 
 export function Providers({ 

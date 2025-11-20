@@ -82,6 +82,7 @@ export default function CartPage() {
                             </div>
                             <div className="ml-6 flex-1">
                               <h3 className="font-semibold text-lg">{item.name}</h3>
+                              <p className="text-sm text-muted-foreground">Vendor: {item.vendorName || 'Admin'}</p>
                               <p className="text-muted-foreground text-sm">
                                   {item.color && `Color: ${item.color}`}
                                   {item.size && item.color && ' | '}

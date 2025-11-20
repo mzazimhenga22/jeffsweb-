@@ -33,7 +33,7 @@ export default function CheckoutPage() {
              const newOrder: Order = {
                 id: `${newOrderId}-${index}`,
                 userId: user?.role === 'customer' ? 'user-1' : 'user-2', // Mock user ID
-                vendorId: item.vendorId,
+                vendorId: item.vendorId ?? 'admin',
                 productId: item.id,
                 salespersonId: 'user-5', // Mock salesperson
                 quantity: item.quantity,
@@ -149,6 +149,7 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <div className='flex-1'>
                                                     <p className='font-medium'>{item.name}</p>
+                                                    <p className='text-sm text-muted-foreground'>Vendor: {item.vendorName || 'Admin'}</p>
                                                     <p className='text-sm text-muted-foreground'>Qty: {item.quantity}</p>
                                                     {(item.size || item.color) && (
                                                         <p className="text-sm text-muted-foreground">

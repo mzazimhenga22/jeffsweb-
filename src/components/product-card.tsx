@@ -77,6 +77,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <h3 className="mt-1 text-sm font-semibold leading-tight font-headline text-white truncate">
                 {product.name}
             </h3>
+            <p className="text-[11px] text-white/80 mt-1">By {product.vendorName || 'Admin'}</p>
           </Link>
           <div className="mt-2 flex items-center justify-between">
             <p className="text-lg font-bold text-white">${product.price.toFixed(2)}</p>
