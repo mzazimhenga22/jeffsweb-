@@ -30,8 +30,36 @@ const navLinks = [
 export function HeaderClient({ user, cartCount: initialCartCount }: { user: any, cartCount: number }) {
   const isMobile = useIsMobile();
   const { cartCount } = useCart();
-  const { logout, session } = useAuth();
-  const resolvedUser = user ?? session?.user ?? null;
+  const { logout, session, user: contextUser } = useAuth();
+
+  const normalizeRoles = React.useCallback((value?: unknown): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean);
+    if (typeof value === 'string') return value.split(',').map((v) => v.trim()).filter(Boolean);
+    return [];
+  }, []);
+
+  const profileUser = React.useMemo(() => {
+    const candidate = contextUser as any;
+    if (candidate && typeof candidate.role === 'string') {
+      return candidate as { role: string; roles?: string[]; email?: string; name?: string };
+    }
+    return null;
+  }, [contextUser]);
+
+  const authUser = session?.user ?? (user ?? null);
+  const resolvedUser = profileUser ?? authUser ?? null;
+  const resolvedRoles = React.useMemo(() => {
+    const profileRoles = normalizeRoles(profileUser?.role).concat(normalizeRoles((profileUser as any)?.roles));
+    const metaRoles = normalizeRoles(authUser?.user_metadata?.role);
+    const all = new Set([...profileRoles, ...metaRoles]);
+    return Array.from(all);
+  }, [authUser?.user_metadata?.role, normalizeRoles, profileUser]);
+  const resolvedRole =
+    resolvedRoles.find((r) => r === 'admin') ??
+    resolvedRoles.find((r) => r === 'vendor') ??
+    resolvedRoles.find((r) => r === 'salesperson') ??
+    resolvedRoles.find((r) => r === 'customer');
   const resolvedCartCount = cartCount ?? initialCartCount;
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -67,14 +95,15 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
 
   const getWelcomeMessage = () => {
     if (!resolvedUser) return '';
-    if (resolvedUser.user_metadata?.role === 'customer') return 'My Account';
-    const role = resolvedUser.user_metadata?.role || '';
-    return `Welcome, ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+    if (profileUser?.name) return `Welcome, ${profileUser.name.split(' ')[0]}`;
+    if (resolvedRoles.includes('customer')) return 'My Account';
+    const role = resolvedRole || resolvedRoles[0] || '';
+    return role ? `Welcome, ${role.charAt(0).toUpperCase() + role.slice(1)}` : 'My Account';
   }
 
   const getAccountHomePage = () => {
     if (!resolvedUser) return '/login';
-    switch (resolvedUser.user_metadata?.role) {
+    switch (resolvedRole) {
       case 'admin': return '/admin';
       case 'vendor': return '/vendor';
       case 'salesperson': return '/salesperson';
@@ -226,7 +255,7 @@ export function HeaderClient({ user, cartCount: initialCartCount }: { user: any,
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href={getAccountHomePage()}>Dashboard</Link></DropdownMenuItem>
-                {resolvedUser.user_metadata?.role === 'customer' && (
+                {resolvedRoles.includes('customer') && (
                   <>
                     <DropdownMenuItem asChild><Link href="/account/orders">My Orders</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/account/wishlist">My Wishlist</Link></DropdownMenuItem>

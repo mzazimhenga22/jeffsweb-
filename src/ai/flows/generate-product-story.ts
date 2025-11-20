@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { enforceOpenAiRateLimit } from '@/ai/rate-limit';
 
 const GenerateProductStoryInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
@@ -50,6 +51,7 @@ const generateProductStoryFlow = ai.defineFlow(
   },
   async input => {
     try {
+      enforceOpenAiRateLimit('generateProductStory');
       const {output} = await prompt(input);
       return output!;
     } catch (error) {

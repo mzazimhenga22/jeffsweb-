@@ -20,7 +20,7 @@ export default async function AdminVendorsPage() {
   const [{ data: vendorRows, error: vendorError }, { data: vendorProducts, error: productError }] =
     await Promise.all([
       supabase.from('vendor_profiles').select('*').order('created_at', { ascending: false }).returns<VendorProfile[]>(),
-      supabase.from('products').select('id, vendorId').returns<Pick<Product, 'id' | 'vendorId'>[]>(),
+      supabase.from('products').select('id, vendor_id').returns<Pick<Product, 'id' | 'vendor_id'>[]>(),
     ])
 
   if (vendorError) {
@@ -34,20 +34,23 @@ export default async function AdminVendorsPage() {
 
   const productCountMap = new Map<string, number>()
   vendorProducts?.forEach((product) => {
-    if (!product.vendorId) return
-    productCountMap.set(product.vendorId, (productCountMap.get(product.vendorId) ?? 0) + 1)
+    if (!product.vendor_id) return
+    productCountMap.set(product.vendor_id, (productCountMap.get(product.vendor_id) ?? 0) + 1)
   })
 
   const vendors: VendorTableItem[] =
-    vendorRows?.map((vendor) => ({
-      id: vendor.id,
-      storeName: vendor.store_name,
-      status: vendor.status,
-      contactEmail: vendor.contact_email,
-      contactPhone: vendor.contact_phone,
-      products: productCountMap.get(vendor.id) ?? 0,
-      createdAt: vendor.created_at,
-    })) ?? []
+    vendorRows?.map((vendor) => {
+      const vendorId = vendor.id
+      return {
+        id: vendor.id,
+        storeName: vendor.store_name,
+        status: vendor.status,
+        contactEmail: vendor.contact_email,
+        contactPhone: vendor.contact_phone,
+        products: vendorId ? productCountMap.get(vendorId) ?? 0 : 0,
+        createdAt: vendor.created_at,
+      }
+    }) ?? []
 
   return <VendorsTable vendors={vendors} />
 }

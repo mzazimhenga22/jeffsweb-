@@ -51,6 +51,7 @@ const adminNavItems = [
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/admin/payouts', icon: Wallet, label: 'Payouts' },
+  { href: '/admin/banners', icon: PanelLeft, label: 'Banners' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 

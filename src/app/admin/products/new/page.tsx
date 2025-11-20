@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -21,16 +21,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
-import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
-
-const categories = [
-    { id: '1', name: 'Electronics' },
-    { id: '2', name: 'Apparel' },
-    { id: '3', name: 'Footwear' },
-    { id: '4', name: 'Accessories' },
-    { id: '5', name: 'Home Goods' },
-];
+import { useAuth } from '@/context/auth-context';
+import type { Category } from '@/lib/types';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState('');
@@ -45,6 +38,54 @@ export default function AddProductPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { supabase, session } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadCategories = async () => {
+      const { data, error } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      if (!isMounted) return;
+      if (error) {
+        console.error('Failed to load categories', error);
+        toast({
+          title: 'Could not load categories',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+      setCategories((data as Category[]) ?? []);
+    };
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, toast]);
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+    const name = newCategory.trim();
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([{ name }])
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to add category', error);
+      toast({
+        title: 'Could not add category',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
+    setNewCategory('');
+    toast({ title: 'Category added' });
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,8 +131,18 @@ export default function AddProductPage() {
     setIsSubmitting(true);
 
     try {
+      if (!session?.user) {
+        toast({
+          title: 'Authentication error',
+          description: 'Please sign in again before publishing a product.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const storageBucket = 'product_images'
       const { data: imageData, error: imageError } = await supabase.storage
-        .from('product-images')
+        .from(storageBucket)
         .upload(`${Date.now()}_${imageFile.name}`, imageFile, {
           cacheControl: '3600',
           upsert: false,
@@ -107,7 +158,7 @@ export default function AddProductPage() {
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('product-images')
+        .from(storageBucket)
         .getPublicUrl(imageData.path);
 
       const imageUrl = publicUrlData.publicUrl;
@@ -285,6 +336,20 @@ export default function AddProductPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-category">Add Category</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="new-category"
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value)}
+                          placeholder="New category name"
+                        />
+                        <Button type="button" variant="outline" onClick={handleAddCategory}>
+                          Add
+                        </Button>
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="sizes">Sizes (comma-separated)</Label>

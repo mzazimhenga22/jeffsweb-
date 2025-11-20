@@ -28,7 +28,7 @@ export interface Database {
           colors: string[]
           stock: number
           image_url: string | null
-          vendorId: string | null
+          vendor_id: string | null
         }
         Insert: Partial<Database['public']['Tables']['products']['Row']>
         Update: Partial<Database['public']['Tables']['products']['Row']>
@@ -73,7 +73,7 @@ export interface Database {
         Row: {
           id: string
           userId: string
-          vendorId: string | null
+          vendor_id: string | null
           salespersonId: string | null
           productId: string | null
           quantity: number
@@ -114,6 +114,27 @@ export interface Database {
         Insert: Partial<Database['public']['Tables']['vendor_profiles']['Row']>
         Update: Partial<Database['public']['Tables']['vendor_profiles']['Row']>
         Relationships: []
+      }
+      vendors: {
+        Row: {
+          id: string
+          business_name: string
+          business_description: string | null
+        }
+        Insert: {
+          id: string
+          business_name: string
+          business_description?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['vendors']['Row']>
+        Relationships: [
+          {
+            foreignKeyName: 'vendors_id_fkey'
+            columns: ['id']
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
       }
       salesperson_profiles: {
         Row: {

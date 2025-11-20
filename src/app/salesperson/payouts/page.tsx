@@ -6,15 +6,60 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
+import * as React from 'react';
+import type { Order } from '@/lib/types';
 
 const payouts = [
     { id: 'sp-payout-1', date: '2023-06-05', amount: 450.25, status: 'Paid' },
     { id: 'sp-payout-2', date: '2023-05-20', amount: 380.00, status: 'Paid' },
-    { id: 'sp-payout-3', date: '2023-05-05', amount: 510.75, status: 'Paid' },
-]
+];
 
 export default function SalespersonPayoutsPage() {
   const { toast } = useToast();
+  const { supabase, user } = useAuth();
+  const salespersonId = user?.id ?? null;
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    if (!salespersonId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadOrders = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('salespersonId', salespersonId)
+        .in('status', ['Delivered', 'Processing', 'On Transit', 'Pending']);
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Failed to load commission orders', error);
+        toast({
+          title: 'Could not load commission data',
+          description: 'Please refresh to try again.',
+          variant: 'destructive',
+        });
+      }
+
+      setOrders((data as Order[]) ?? []);
+      setIsLoading(false);
+    };
+
+    loadOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [salespersonId, supabase, toast]);
+
+  const availableCommission = orders.reduce((sum, order) => sum + (order.total ?? 0) * 0.05, 0);
 
   const handleRequestPayout = () => {
     toast({
@@ -33,7 +78,9 @@ export default function SalespersonPayoutsPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
                     <div>
-                        <p className="text-4xl font-bold">$620.50</p>
+                        <p className="text-4xl font-bold">
+                          {isLoading ? '—' : `$${availableCommission.toFixed(2)}`}
+                        </p>
                     </div>
                     <Button onClick={handleRequestPayout} className='w-full sm:w-auto mt-4 sm:mt-0'>Request Payout</Button>
                 </CardContent>

@@ -18,6 +18,7 @@ import { ProductCard } from '@/components/product-card'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/context/cart-context'
 import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 import {
   Select,
   SelectContent,
@@ -55,6 +56,7 @@ export function ProductDetailClient({
   const { toast } = useToast()
   const { toggleWishlist, isInWishlist } = useWishlist()
   const { supabase, session } = useAuth()
+  const router = useRouter()
 
   React.useEffect(() => {
     if (product.colors?.length) {
@@ -95,6 +97,11 @@ export function ProductDetailClient({
       title: 'Added to cart!',
       description: `${product.name} has been added to your cart.`,
     })
+  }
+
+  const handleBuyNow = () => {
+    handleAddToCart()
+    router.push('/checkout')
   }
 
   const handleWishlistToggle = () => {
@@ -260,7 +267,7 @@ export function ProductDetailClient({
                   <Heart className={cn('h-6 w-6', isInWishlist(product.id) && 'fill-red-500 text-red-500')} />
                 </Button>
               </div>
-              <Button size="lg" variant="secondary" className="text-lg py-7" disabled={product.stock === 0}>
+              <Button size="lg" variant="secondary" className="text-lg py-7" disabled={product.stock === 0} onClick={handleBuyNow}>
                 Buy Now
               </Button>
             </div>

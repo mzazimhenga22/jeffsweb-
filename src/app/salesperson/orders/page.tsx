@@ -20,16 +20,61 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { orders as initialOrders, users } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Order, OrderStatus } from '@/lib/types';
 import { OrderStatusUpdater } from '@/components/order-status-updater';
+import { useAuth } from '@/context/auth-context';
 
 export default function SalespersonOrdersPage() {
   const { toast } = useToast();
-  const salespersonId = 'user-5'; // Mock salesperson
-  const [orders, setOrders] = React.useState<Order[]>(initialOrders.filter(order => order.salespersonId === salespersonId));
+  const { supabase, user } = useAuth();
+  const salespersonId = user?.id ?? null;
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [users, setUsers] = React.useState<Record<string, { name: string; email: string }>>({});
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [search, setSearch] = React.useState('');
+
+  React.useEffect(() => {
+    let isMounted = true;
+    if (!salespersonId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      const [{ data: orderRows, error: orderError }, { data: userRows, error: userError }] = await Promise.all([
+        supabase.from('orders').select('*').eq('salespersonId', salespersonId),
+        supabase.from('users').select('id, name, email'),
+      ]);
+
+      if (!isMounted) return;
+
+      if (orderError || userError) {
+        console.error('Failed to load salesperson orders', { orderError, userError });
+        toast({
+          title: 'Unable to load orders',
+          description: 'Please refresh to try again.',
+          variant: 'destructive',
+        });
+      }
+
+      setOrders((orderRows as Order[]) ?? []);
+      const usersMap: Record<string, { name: string; email: string }> = {};
+      (userRows ?? []).forEach((u) => {
+        usersMap[u.id] = { name: u.name ?? '', email: u.email ?? '' };
+      });
+      setUsers(usersMap);
+      setIsLoading(false);
+    };
+
+    fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [salespersonId, supabase, toast]);
 
   const handleAction = (message: string) => {
     toast({
@@ -37,15 +82,37 @@ export default function SalespersonOrdersPage() {
     });
   };
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderId ? {...o, status: newStatus} : o)
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
+      );
+      const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+      if (error) throw error;
+      toast({
+        title: 'Order Status Updated',
+        description: `Order ${orderId} has been updated to "${newStatus}".`,
+      });
+    } catch (error) {
+      console.error('Failed to update status', error);
+      toast({
+        title: 'Unable to update order status',
+        description: 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const filteredOrders = orders.filter((order) => {
+    if (!search) return true;
+    const term = search.toLowerCase();
+    const customer = users[order.userId ?? ''];
+    return (
+      order.id.toLowerCase().includes(term) ||
+      (customer?.name?.toLowerCase().includes(term) ?? false) ||
+      (customer?.email?.toLowerCase().includes(term) ?? false)
     );
-    toast({
-        title: "Order Status Updated",
-        description: `Order ${orderId} has been updated to "${newStatus}".`
-    })
-  }
+  });
 
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
@@ -55,10 +122,20 @@ export default function SalespersonOrdersPage() {
                 <CardTitle>Your Orders</CardTitle>
                 <CardDescription>View and track all orders you're credited for.</CardDescription>
             </div>
-            <Input placeholder="Search orders..." className="w-full sm:w-64" />
+            <Input
+              placeholder="Search orders..."
+              className="w-full sm:w-64"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
         </div>
       </CardHeader>
       <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading orders...</p>
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No orders found.</p>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -71,14 +148,20 @@ export default function SalespersonOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => {
-                const user = users.find(u => u.id === order.userId);
+            {filteredOrders.map((order) => {
+                const customer = users[order.userId ?? ''];
                 return (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{user?.name || 'Unknown User'}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
-                <TableCell>${order.total.toFixed(2)}</TableCell>
+                <TableCell>{customer?.name || 'Unknown User'}</TableCell>
+                <TableCell>
+                  {order.orderDate
+                    ? new Date(order.orderDate).toLocaleDateString()
+                    : order.created_at
+                    ? new Date(order.created_at).toLocaleDateString()
+                    : '—'}
+                </TableCell>
+                <TableCell>${(order.total ?? 0).toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -106,6 +189,7 @@ export default function SalespersonOrdersPage() {
             )})}
           </TableBody>
         </Table>
+        )}
         <div className="flex items-center justify-end space-x-2 py-4">
             <Button variant="outline" size="sm">Previous</Button>
             <Button variant="outline" size="sm">Next</Button>

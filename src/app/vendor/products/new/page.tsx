@@ -23,19 +23,13 @@ import {
 } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase-client';
-
-const categories = [
-  { id: '1', name: 'Electronics' },
-  { id: '2', name: 'Apparel' },
-  { id: '3', name: 'Footwear' },
-  { id: '4', name: 'Accessories' },
-  { id: '5', name: 'Home Goods' },
-];
+import { useAuth } from '@/context/auth-context';
+import type { Category } from '@/lib/types';
 
 export default function AddProductPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { supabase, session } = useAuth();
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [price, setPrice] = React.useState('');
@@ -46,6 +40,91 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [vendorProfileId, setVendorProfileId] = React.useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = React.useState(true);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [newCategory, setNewCategory] = React.useState('');
+
+  const describeError = (cause: unknown) => {
+    if (!cause) return 'Unknown error';
+    if (cause instanceof Error) {
+      const status = (cause as { status?: number }).status;
+      const body = (cause as { body?: unknown }).body;
+      const suffix =
+        typeof body === 'object' && body !== null && 'message' in body
+          ? ` (${String((body as { message?: string }).message)})`
+          : '';
+      return `${cause.message}${status ? ` [status ${status}]` : ''}${suffix}`;
+    }
+    if (typeof cause === 'object') {
+      try {
+        return JSON.stringify(cause, Object.getOwnPropertyNames(cause));
+      } catch {
+        return '[object Object]';
+      }
+    }
+    return String(cause);
+  };
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const fetchVendorProfile = async () => {
+      if (!session?.user) {
+        setVendorProfileId(null);
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('vendor_profiles')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Failed to load vendor profile', error);
+        toast({
+          title: 'Cannot load vendor profile',
+          description: 'Please try again or contact support.',
+          variant: 'destructive',
+        });
+        setVendorProfileId(null);
+      } else {
+        setVendorProfileId(data?.id ?? null);
+      }
+      setIsLoadingProfile(false);
+    };
+
+    fetchVendorProfile();
+
+    return () => {
+      isMounted = false;
+    };
+    }, [session?.user, supabase, toast]);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const loadCategories = async () => {
+      const { data, error } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      if (!isMounted) return;
+      if (error) {
+        console.error('Failed to load categories', error);
+        toast({
+          title: 'Could not load categories',
+          description: 'Please try again.',
+          variant: 'destructive',
+        });
+      }
+      setCategories((data as Category[]) ?? []);
+    };
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, toast]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -89,39 +168,59 @@ export default function AddProductPage() {
       return;
     }
 
+    if (isLoadingProfile) {
+      toast({
+        title: 'Please wait',
+        description: 'Still loading your vendor profile.',
+      });
+      return;
+    }
+
+    if (!vendorProfileId) {
+      toast({
+        title: 'No vendor profile found',
+        description: 'You need an approved vendor profile before publishing products.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError) {
+      if (!session?.user) {
         toast({
           title: 'Authentication error',
-          description: authError.message,
+          description: 'Please sign in again before publishing a product.',
           variant: 'destructive',
         });
         return;
       }
 
-      const vendorId = authData.user?.id ?? null;
-
+      const storageBucket = 'product_images'
       const { data: imageData, error: imageError } = await supabase.storage
-        .from('product-images')
+        .from(storageBucket)
         .upload(`${Date.now()}_${imageFile.name}`, imageFile, {
           cacheControl: '3600',
           upsert: false,
         });
 
       if (imageError || !imageData) {
+        console.error('Image upload error', {
+          error: imageError,
+          vendorProfileId,
+          userId: session.user.id,
+        });
         toast({
           title: 'Error uploading image',
-          description: imageError?.message ?? 'Unable to upload product image.',
+          description: describeError(imageError),
           variant: 'destructive',
         });
         return;
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('product-images')
+        .from(storageBucket)
         .getPublicUrl(imageData.path);
       const imageUrl = publicUrlData.publicUrl;
 
@@ -135,14 +234,23 @@ export default function AddProductPage() {
           sizes: sizes.split(',').map((s) => s.trim()).filter(Boolean),
           colors: colors.split(',').map((c) => c.trim()).filter(Boolean),
           image_url: imageUrl,
-          vendorId,
+          vendor_id: session.user.id,
         },
       ]);
 
       if (productError) {
+        console.error('Product insert error', {
+          error: productError,
+          message: productError?.message,
+          details: (productError as { details?: string })?.details,
+          hint: (productError as { hint?: string })?.hint,
+          code: (productError as { code?: string })?.code,
+          vendorProfileId,
+          userId: session.user.id,
+        });
         toast({
           title: 'Error publishing product',
-          description: productError.message,
+          description: describeError(productError),
           variant: 'destructive',
         });
         return;
@@ -168,6 +276,30 @@ export default function AddProductPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+    const name = newCategory.trim();
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([{ name }])
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to add category', error);
+      toast({
+        title: 'Could not add category',
+        description: describeError(error),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
+    setNewCategory('');
+    toast({ title: 'Category added' });
   };
 
   return (
@@ -266,6 +398,20 @@ export default function AddProductPage() {
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="new-category">Add Category</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="new-category"
+                              value={newCategory}
+                              onChange={(e) => setNewCategory(e.target.value)}
+                              placeholder="New category name"
+                            />
+                            <Button type="button" variant="outline" onClick={handleAddCategory}>
+                              Add
+                            </Button>
+                          </div>
                         </div>
                          <div>
                             <Label htmlFor="sizes">Sizes (comma-separated)</Label>

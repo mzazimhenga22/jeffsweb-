@@ -16,16 +16,16 @@ import { useAuth } from '@/context/auth-context';
 
 type UserRow = {
   id: string;
-  full_name: string | null;
+  name: string | null;
   email: string;
   role: 'customer' | 'vendor' | 'admin' | 'salesperson' | string;
-  createdAt: string;
+  createdAt: string | null;
   avatarId?: string | null;
 };
 
 type OrderRow = {
   id: string;
-  user_id: string;
+  userId: string;
   status: string;
   total: number;
   created_at: string;
@@ -50,7 +50,7 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
       // 1) Fetch user from Supabase
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, full_name, email, role, createdAt')
+        .select('id, name, email, role, createdAt, avatarId, avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
@@ -75,18 +75,18 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
 
       const mappedUser: UserRow = {
         id: userData.id,
-        full_name: userData.full_name ?? '',
+        name: userData.name ?? '',
         email: userData.email,
         role: userData.role,
-        createdAt: userData.createdAt,
-        avatarId: null, // if you later add avatar_id to users, map it here
+        createdAt: userData.createdAt ?? null,
+        avatarId: userData.avatarId ?? userData.avatar_url ?? null,
       };
 
       // 2) Fetch orders for this user
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, user_id, status, total, created_at')
-        .eq('user_id', userId)
+        .select('id, userId, status, total, created_at')
+        .eq('userId', userId)
         .order('created_at', { ascending: false });
 
       if (ordersError) {
@@ -156,7 +156,7 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
         .from('users')
         .update({ role: newRole })
         .eq('id', user.id)
-        .select('id, full_name, email, role, createdAt')
+        .select('id, name, email, role, createdAt')
         .maybeSingle();
 
       if (error) {
@@ -182,31 +182,55 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
 
       // 2) OPTIONAL: create vendor/salesperson profile rows
       if (newRole === 'vendor') {
+        const storeNameBase =
+          user.name?.trim() ||
+          user.email?.split('@')[0] ||
+          'New Vendor';
+
+        const preferredStoreName = `${storeNameBase} Store`;
+
         const { error: vpError } = await supabase
           .from('vendor_profiles')
-          .insert({
-            user_id: user.id,
-            store_name: `${user.full_name || 'New'} Store`,
-            contact_email: user.email,
-          })
-          .select()
-          .single();
+          .upsert(
+            {
+              user_id: user.id,
+              store_name: preferredStoreName,
+              status: 'approved',
+              contact_email: user.email,
+            },
+            { onConflict: 'user_id' },
+          );
 
-        // ignore duplicate error (unique user_id)
         if (vpError && vpError.code !== '23505') {
-          console.warn('Failed to create vendor profile:', vpError);
+          console.warn('Failed to create/update vendor profile:', vpError);
+        }
+
+        const { error: vendorRecordError } = await supabase
+          .from('vendors')
+          .upsert(
+            {
+              id: user.id,
+              business_name: preferredStoreName,
+            },
+            { onConflict: 'id' },
+          );
+
+        if (vendorRecordError && vendorRecordError.code !== '23505') {
+          console.warn('Failed to create/update vendor record:', vendorRecordError);
         }
       } else if (newRole === 'salesperson') {
         const { error: spError } = await supabase
           .from('salesperson_profiles')
-          .insert({
-            user_id: user.id,
-          })
-          .select()
-          .single();
+          .upsert(
+            {
+              user_id: user.id,
+              commission_rate: 5,
+            },
+            { onConflict: 'user_id' },
+          );
 
         if (spError && spError.code !== '23505') {
-          console.warn('Failed to create salesperson profile:', spError);
+          console.warn('Failed to create/update salesperson profile:', spError);
         }
       }
 
@@ -240,13 +264,13 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
                   />
                 )}
                 <AvatarFallback>
-                  {user.full_name?.charAt(0).toUpperCase() ??
+                  {user.name?.charAt(0).toUpperCase() ??
                     user.email.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <CardTitle className="text-2xl">
-                  {user.full_name || user.email}
+                  {user.name || user.email}
                 </CardTitle>
                 <CardDescription>{user.email}</CardDescription>
                 <div className="flex items-center gap-2 mt-2">

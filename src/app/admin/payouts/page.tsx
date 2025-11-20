@@ -19,7 +19,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { vendors, users } from '@/lib/data';
+const vendors: { id: string; storeName: string }[] = []
+const users: { id: string; name: string }[] = []
 
 const vendorPayouts = [
     { id: 'vp-1', vendorId: 'vendor-1', amount: 1580.20, requestedDate: '2023-06-10', status: 'Pending' },

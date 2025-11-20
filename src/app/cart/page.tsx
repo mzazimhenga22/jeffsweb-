@@ -4,16 +4,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
-import { Minus, Plus, Trash2, ShoppingCart, Loader } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { products } from '@/lib/data';
-import { getStyleSuggestions, type GetStyleSuggestionsOutput } from '@/ai/flows/get-style-suggestions';
-import { ProductCard } from '@/components/product-card';
+import type { GetStyleSuggestionsOutput } from '@/ai/flows/get-style-suggestions';
 
 export default function CartPage() {
   const { cartItems, cartTotal, removeFromCart, updateQuantity, cartCount } = useCart();
@@ -21,26 +19,9 @@ export default function CartPage() {
   const [loadingSuggestions, setLoadingSuggestions] = React.useState(true);
 
   React.useEffect(() => {
-    if (cartItems.length > 0) {
-      const firstItem = cartItems[0];
-      setLoadingSuggestions(true);
-      getStyleSuggestions({
-        productName: firstItem.name,
-        productCategory: firstItem.category,
-        currentProductId: firstItem.id
-      }).then(result => {
-        // Filter out items that are already in the cart
-        const suggestionsInCart = result.suggestions.filter(suggestion => 
-          !cartItems.some(cartItem => cartItem.id === suggestion.productId)
-        );
-        setStyleSuggestions(suggestionsInCart);
-      }).finally(() => {
-        setLoadingSuggestions(false);
-      });
-    } else {
-      setLoadingSuggestions(false);
-      setStyleSuggestions([]);
-    }
+    // Suggestions disabled until Supabase-backed recommendations are added.
+    setStyleSuggestions([]);
+    setLoadingSuggestions(false);
   }, [cartItems]);
 
 
@@ -66,7 +47,8 @@ export default function CartPage() {
                   <CardContent className="p-0">
                     <ul className="divide-y divide-border/50">
                       {cartItems.map((item) => {
-                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                        const imageId = Array.isArray(item.imageIds) ? item.imageIds[0] : undefined;
+                        const image = imageId ? PlaceHolderImages.find(p => p.id === imageId) : undefined;
                         return (
                           <li key={item.id} className="flex items-center p-6">
                             <div className="w-24 h-24 relative rounded-md overflow-hidden">
@@ -143,28 +125,7 @@ export default function CartPage() {
                 </Card>
               </div>
             </div>
-            {styleSuggestions.length > 0 && (
-              <div className="mt-24">
-                <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
-                  You Might Also Like
-                </h2>
-                {loadingSuggestions ? (
-                    <div className="flex justify-center"><Loader className="h-8 w-8 animate-spin" /></div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-                    {styleSuggestions.slice(0, 4).map((suggestion) => {
-                        const suggestedProduct = products.find(p => p.id === suggestion.productId);
-                        if (!suggestedProduct) return null;
-                        return (
-                            <div key={suggestion.productId}>
-                                <ProductCard product={suggestedProduct} />
-                            </div>
-                        )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Suggestions temporarily disabled until Supabase-backed recommendations are implemented. */}
           </>
         )}
       </div>

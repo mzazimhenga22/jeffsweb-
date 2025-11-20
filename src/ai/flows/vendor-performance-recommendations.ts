@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { enforceOpenAiRateLimit } from '@/ai/rate-limit';
 
 const VendorPerformanceRecommendationsInputSchema = z.object({
   userId: z.string().describe('The ID of the user requesting recommendations.'),
@@ -68,7 +69,16 @@ const vendorPerformanceRecommendationsFlow = ai.defineFlow(
     outputSchema: VendorPerformanceRecommendationsOutputSchema,
   },
   async input => {
-    const {output} = await vendorPerformanceRecommendationsPrompt(input);
-    return output!;
+    try {
+      enforceOpenAiRateLimit('vendorPerformanceRecommendations');
+      const {output} = await vendorPerformanceRecommendationsPrompt(input);
+      return output!;
+    } catch (error) {
+      if ((error as any)?.code === 'rate_limit_exceeded') {
+        console.warn('OpenAI rate limit reached, returning empty recommendations.');
+        return { recommendations: [] };
+      }
+      throw error;
+    }
   }
 );

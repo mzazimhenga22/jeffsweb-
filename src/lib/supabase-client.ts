@@ -1,12 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 import type { Database } from './database.types'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase environment variables are not defined.')
-}
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+// This client automatically reads/writes the `sb` auth cookies so session
+// persists across navigations and refreshes.
+export const supabase = createClientComponentClient<Database>()

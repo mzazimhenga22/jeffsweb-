@@ -28,7 +28,7 @@ export default function SignUpPage() {
       password,
       options: {
         data: {
-          full_name: fullName,
+          name: fullName,
         }
       }
     });
@@ -36,6 +36,21 @@ export default function SignUpPage() {
     if (error) {
       setError(error.message);
     } else {
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .upsert({
+            id: data.user.id,
+            name: fullName || data.user.email || '',
+            email,
+            role: 'customer',
+            createdAt: new Date().toISOString(),
+          });
+
+        if (profileError) {
+          console.error('Failed to create user profile row', profileError);
+        }
+      }
       router.push('/auth/confirm');
     }
   };
@@ -80,7 +95,7 @@ export default function SignUpPage() {
                                 minLength={6}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
+                                placeholder="********"
                             />
                         </div>
                         {error && <p className="text-red-500 text-sm">{error}</p>}

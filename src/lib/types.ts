@@ -8,6 +8,7 @@ export type Product = ProductRow & {
   reviews?: ProductReview[]
   reviewCount?: number
   averageRating?: number
+  commission?: number
 }
 
 export type CartItem = Product & {
@@ -19,7 +20,10 @@ export type CartItem = Product & {
 export type ProductReview = ProductReviewRow
 export type Category = Database['public']['Tables']['categories']['Row']
 export type Testimonial = Database['public']['Tables']['testimonials']['Row']
-export type Order = Database['public']['Tables']['orders']['Row']
+export type Order = Database['public']['Tables']['orders']['Row'] & {
+  size?: string | null
+  color?: string | null
+}
 export type OrderStatus = DatabaseOrderStatus
 export type User = Database['public']['Tables']['users']['Row']
 

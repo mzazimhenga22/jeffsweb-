@@ -18,23 +18,16 @@ import { ListFilter, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase-client';
-import { Product } from '@/lib/types';
+import { Product, Category } from '@/lib/types';
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
-
-const categories = [
-    { id: '1', name: 'Electronics' },
-    { id: '2', name: 'Apparel' },
-    { id: '3', name: 'Footwear' },
-    { id: '4', name: 'Accessories' },
-    { id: '5', name: 'Home Goods' },
-];
 
 export default function ShopPage() {
   const [products, setProducts] = React.useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = React.useState<Product[]>([]);
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
   const [sortOption, setSortOption] = React.useState<SortOption>('newest');
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
     const fetchProducts = async () => {
@@ -47,6 +40,16 @@ export default function ShopPage() {
       }
     };
 
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from('categories').select('*');
+      if (error) {
+        console.error('Error fetching categories:', error);
+      } else {
+        setCategories((data as Category[]) ?? []);
+      }
+    };
+
+    fetchCategories();
     fetchProducts();
   }, []);
 

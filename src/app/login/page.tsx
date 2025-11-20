@@ -17,26 +17,28 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase-client';
 import type { Database } from '@/lib/database.types';
 
-type UserRole = Database['public']['Tables']['users']['Row']['role'];
+type UserRole = Database['public']['Tables']['users']['Row']['role']
+
+const normalizeRoles = (value?: unknown): string[] => {
+  if (!value) return []
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean)
+  if (typeof value === 'string') return value.split(',').map((v) => v.trim()).filter(Boolean)
+  return []
+}
 
 function resolveDashboardPath({
-  role,
+  profileRole,
   metadataRole,
   isAdminFlag,
 }: {
-  role?: UserRole | null;
-  metadataRole?: string;
+  profileRole?: UserRole | null;
+  metadataRole?: string | string[];
   isAdminFlag?: boolean;
 }): string {
-  if (isAdminFlag || role === 'admin' || metadataRole === 'admin') {
-    return '/admin';
-  }
-  if (role === 'vendor' || metadataRole === 'vendor') {
-    return '/vendor';
-  }
-  if (role === 'salesperson' || metadataRole === 'salesperson') {
-    return '/salesperson';
-  }
+  const roles = new Set<string>([...normalizeRoles(profileRole), ...normalizeRoles(metadataRole)]);
+  if (isAdminFlag || roles.has('admin')) return '/admin';
+  if (roles.has('vendor')) return '/vendor';
+  if (roles.has('salesperson')) return '/salesperson';
   return '/';
 }
 
@@ -75,16 +77,13 @@ export default function LoginPage() {
         }
       }
 
-      const metadataRole =
-        typeof authUser?.user_metadata?.role === 'string'
-          ? authUser.user_metadata.role
-          : undefined;
+      const metadataRole = authUser?.user_metadata?.role;
       const isAdminFlag =
         authUser?.user_metadata?.is_admin === true ||
-        metadataRole === 'admin';
+        normalizeRoles(metadataRole).includes('admin');
 
       const destination = resolveDashboardPath({
-        role: profileRole,
+        profileRole,
         metadataRole,
         isAdminFlag,
       });

@@ -14,46 +14,113 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { addOrder } from '@/lib/data';
 import { useAuth } from '@/context/auth-context';
-import type { Order } from '@/lib/types';
+import type { User as DbUser } from '@/lib/types';
+import type { Database } from '@/lib/database.types';
+import { useEffect, useMemo, useState } from 'react';
 
 
 export default function CheckoutPage() {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { toast } = useToast();
     const router = useRouter();
-    const { user } = useAuth();
+    const { supabase, session, user } = useAuth();
+    const profileUser = (user as DbUser | null) ?? null;
+    const [isPlacing, setIsPlacing] = React.useState(false);
+    const [vendorsById, setVendorsById] = useState<Record<string, string>>({});
 
-    const handlePlaceOrder = () => {
-        // In a real app, you would process the payment here.
-        const newOrderId = `order-${Date.now()}`;
-        
-        cartItems.forEach((item, index) => {
-             const newOrder: Order = {
-                id: `${newOrderId}-${index}`,
-                userId: user?.role === 'customer' ? 'user-1' : 'user-2', // Mock user ID
-                vendorId: item.vendorId,
+    useEffect(() => {
+        const vendorIds = Array.from(new Set(cartItems.map((item) => item.vendor_id).filter(Boolean) as string[]));
+        if (vendorIds.length === 0) return;
+
+        supabase
+          .from('users')
+          .select('id, name, full_name, email')
+          .in('id', vendorIds)
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('Failed to load vendor names for checkout', error);
+              return;
+            }
+            const map: Record<string, string> = {};
+            (data ?? []).forEach((u) => {
+              map[u.id] = u.name ?? (u as any).full_name ?? u.email ?? 'Vendor';
+            });
+            setVendorsById(map);
+          });
+    }, [cartItems, supabase]);
+
+    const resolvedItems = useMemo(() => {
+        return cartItems.map((item) => ({
+            ...item,
+            vendorName: item.vendor_id ? vendorsById[item.vendor_id] : null,
+        }));
+    }, [cartItems, vendorsById]);
+
+    const handlePlaceOrder = async () => {
+        if (cartItems.length === 0) {
+            toast({
+                title: 'Your cart is empty',
+                description: 'Add some items before checking out.',
+            });
+            return;
+        }
+
+        const customerId = profileUser?.id ?? session?.user?.id ?? null;
+        if (!customerId) {
+            toast({
+                title: 'Please sign in',
+                description: 'Login to place your order.',
+                variant: 'destructive',
+            });
+            router.push('/login');
+            return;
+        }
+
+        try {
+            setIsPlacing(true);
+            const orderDate = new Date().toISOString();
+            const baseOrderId = `order-${Date.now()}`;
+            const orderRows: Database['public']['Tables']['orders']['Insert'][] = cartItems.map((item, index) => ({
+                id: `${baseOrderId}-${index}`,
+                userId: customerId,
+                vendor_id: item.vendor_id,
                 productId: item.id,
-                salespersonId: 'user-5', // Mock salesperson
+                salespersonId: null,
                 quantity: item.quantity,
                 total: item.price * item.quantity,
                 status: 'Pending',
-                orderDate: new Date().toISOString().split('T')[0],
-                size: item.size,
-                color: item.color
-            };
-            addOrder(newOrder);
-        })
-        
-        toast({
-            title: "Order Placed!",
-            description: "Thank you for your purchase.",
-        });
-        
-        const href = `/order-confirmation?orderId=${newOrderId}`;
-        clearCart();
-        router.push(href);
+                orderDate,
+                created_at: orderDate,
+              }));
+
+            const { data, error } = await supabase
+                .from('orders')
+                .insert(orderRows)
+                .select('id')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const confirmationId = data?.[0]?.id ?? orderRows[0].id;
+
+            toast({
+                title: "Order Placed!",
+                description: "Thank you for your purchase.",
+            });
+            
+            clearCart();
+            router.push(`/order-confirmation?orderId=${confirmationId}`);
+        } catch (err) {
+            console.error('Failed to place order', err);
+            toast({
+                title: 'Could not place order',
+                description: 'Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsPlacing(false);
+        }
     }
     
     return (
@@ -140,8 +207,9 @@ export default function CheckoutPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {cartItems.map(item => {
-                                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                                    {resolvedItems.map(item => {
+                                        const imageId = Array.isArray(item.imageIds) ? item.imageIds[0] : undefined;
+                                        const image = imageId ? PlaceHolderImages.find(p => p.id === imageId) : undefined;
                                         return (
                                             <div key={item.id} className='flex items-start gap-4'>
                                                 <div className="w-16 h-16 relative rounded-md overflow-hidden">
@@ -149,6 +217,9 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <div className='flex-1'>
                                                     <p className='font-medium'>{item.name}</p>
+                                                    {item.vendorName && (
+                                                        <p className='text-xs text-muted-foreground'>Sold by {item.vendorName}</p>
+                                                    )}
                                                     <p className='text-sm text-muted-foreground'>Qty: {item.quantity}</p>
                                                     {(item.size || item.color) && (
                                                         <p className="text-sm text-muted-foreground">
@@ -186,8 +257,8 @@ export default function CheckoutPage() {
                                     </div>
                                 </div>
 
-                                <Button size="lg" className="w-full mt-6 text-lg py-6" onClick={handlePlaceOrder}>
-                                    Place Order
+                                <Button size="lg" className="w-full mt-6 text-lg py-6" onClick={handlePlaceOrder} disabled={isPlacing}>
+                                    {isPlacing ? 'Placing Order...' : 'Place Order'}
                                 </Button>
                                 <p className='text-center text-xs text-muted-foreground mt-4'>By placing your order, you agree to our <Link href="#" className='underline'>Terms & Conditions</Link>.</p>
                             </CardContent>

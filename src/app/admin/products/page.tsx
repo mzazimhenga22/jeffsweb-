@@ -24,12 +24,16 @@ export default async function AdminProductsPage() {
   }
 
   const vendorMap = new Map<string, string>()
-  vendorRows?.forEach((vendor) => vendorMap.set(vendor.id, vendor.store_name))
+  vendorRows?.forEach((vendor) => {
+    if (vendor.user_id) {
+      vendorMap.set(vendor.user_id, vendor.store_name)
+    }
+  })
 
   const productsWithVendors: AdminProductRow[] =
     productRows?.map((product) => ({
       ...product,
-      vendorName: product.vendorId ? vendorMap.get(product.vendorId) : null,
+      vendorName: product.vendor_id ? vendorMap.get(product.vendor_id) : null,
     })) ?? []
 
   return <ProductsTable products={productsWithVendors} />

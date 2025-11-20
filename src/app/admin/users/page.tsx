@@ -41,7 +41,7 @@ type AdminUser = {
   email: string;
   role: 'customer' | 'vendor' | 'admin' | 'salesperson' | string;
   avatarId: string | null;
-  createdAt: string;
+  createdAt: string | null;
 };
 
 export default function AdminUsersPage() {
@@ -60,11 +60,11 @@ export default function AdminUsersPage() {
       setIsLoading(true);
 
       // 👉 Use the REAL column names from your DB:
-      // id, full_name, email, role, createdAt
+      // id, name, email, role, created_at
       const { data, error } = await supabase
         .from('users')
-        .select('id, full_name, email, role, createdAt')
-        .order('createdAt', { ascending: false });
+        .select('id, name, email, role, created_at, avatar_id, avatar_url')
+        .order('created_at', { ascending: false });
 
       if (!isMounted) return;
 
@@ -82,11 +82,11 @@ export default function AdminUsersPage() {
       const mapped: AdminUser[] =
         (data ?? []).map((u: any) => ({
           id: u.id,
-          name: u.full_name ?? u.name ?? '',
+          name: u.name ?? '',
           email: u.email,
           role: u.role,
-          avatarId: null, // you can wire this up later if you add avatar_id
-          createdAt: u.createdAt,
+          avatarId: u.avatar_id ?? u.avatar_url ?? null,
+          createdAt: u.created_at ?? u.createdAt ?? null,
         })) ?? [];
 
       setUsers(mapped);

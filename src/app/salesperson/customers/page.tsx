@@ -26,17 +26,74 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
-import { users, orders } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
+import type { Order, User } from '@/lib/types';
 
 export default function SalespersonCustomersPage() {
   const { toast } = useToast();
-  const salespersonId = 'user-5'; // Mock salesperson
-  
-  const customerIds = [...new Set(orders.filter(o => o.salespersonId === salespersonId).map(o => o.userId))];
-  const customers = users.filter(u => customerIds.includes(u.id));
+  const { supabase, user } = useAuth();
+  const salespersonId = user?.id ?? null;
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [search, setSearch] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    if (!salespersonId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadData = async () => {
+      setIsLoading(true);
+      const [{ data: orderRows, error: orderError }, { data: userRows, error: userError }] = await Promise.all([
+        supabase.from('orders').select('*').eq('salespersonId', salespersonId),
+        supabase.from('users').select('*'),
+      ]);
+
+      if (!isMounted) return;
+
+      if (orderError || userError) {
+        console.error('Failed to load customers', { orderError, userError });
+        toast({
+          title: 'Unable to load customers',
+          description: 'Please refresh to try again.',
+          variant: 'destructive',
+        });
+      }
+
+      setOrders((orderRows as Order[]) ?? []);
+      setUsers((userRows as User[]) ?? []);
+      setIsLoading(false);
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [salespersonId, supabase, toast]);
+
+  const customerIds = React.useMemo(
+    () => new Set(orders.filter((o) => o.salespersonId === salespersonId).map((o) => o.userId)),
+    [orders, salespersonId],
+  );
+
+  const filteredCustomers = React.useMemo(() => {
+    const term = search.toLowerCase();
+    return users
+      .filter((u) => customerIds.has(u.id))
+      .filter((u) =>
+        term
+          ? (u.name ?? '').toLowerCase().includes(term) ||
+            (u.email ?? '').toLowerCase().includes(term)
+          : true,
+      );
+  }, [customerIds, search, users]);
 
   const handleAction = (message: string) => {
     toast({
@@ -52,10 +109,20 @@ export default function SalespersonCustomersPage() {
             <CardTitle>Your Customers</CardTitle>
             <CardDescription>A list of customers who have purchased through you.</CardDescription>
           </div>
-          <Input placeholder="Search customers..." className="w-full sm:w-64" />
+          <Input
+            placeholder="Search customers..."
+            className="w-full sm:w-64"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </CardHeader>
       <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading customers...</p>
+        ) : filteredCustomers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No customers yet.</p>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -66,8 +133,10 @@ export default function SalespersonCustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map((user) => {
-              const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId);
+            {filteredCustomers.map((user) => {
+              const avatar = user.avatarId
+                ? PlaceHolderImages.find((p) => p.id === user.avatarId)
+                : undefined;
               return (
               <TableRow key={user.id}>
                 <TableCell>
@@ -80,7 +149,11 @@ export default function SalespersonCustomersPage() {
                   </div>
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.createdAt}</TableCell>
+                <TableCell>
+                  {user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString()
+                    : '—'}
+                </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -98,6 +171,7 @@ export default function SalespersonCustomersPage() {
             )})}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   );

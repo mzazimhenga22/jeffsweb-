@@ -12,23 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import type { Order } from '@/lib/types';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { orders as allOrders, products } from '@/lib/data';
 
 function OrderConfirmationContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
     const [confirmedOrders, setConfirmedOrders] = React.useState<Order[]>([]);
 
-    React.useEffect(() => {
-        if (orderId) {
-            const items = allOrders.filter(o => o.id.startsWith(orderId));
-            setConfirmedOrders(items);
-        }
-    }, [orderId]);
-
-    const subtotal = React.useMemo(() => {
-        return confirmedOrders.reduce((total, item) => total + item.total, 0);
-    }, [confirmedOrders]);
+    const subtotal = 0;
     
     const taxes = subtotal * 0.08; // 8% tax
     const total = subtotal + taxes;
@@ -74,31 +64,7 @@ function OrderConfirmationContent() {
                         </CardHeader>
                         <CardContent className="p-6">
                              <div className="space-y-4 mb-8">
-                                {confirmedOrders.map(order => {
-                                    const product = products.find(p => p.id === order.productId);
-                                    if (!product) return null;
-                                    const image = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
-
-                                    return (
-                                        <div key={order.id} className='flex items-start gap-4'>
-                                            <div className="w-16 h-16 relative rounded-md overflow-hidden">
-                                                {image && <Image src={image.imageUrl} alt={product.name} fill className="object-cover" />}
-                                            </div>
-                                            <div className='flex-1'>
-                                                <p className='font-medium'>{product.name}</p>
-                                                <p className='text-sm text-muted-foreground'>Qty: {order.quantity}</p>
-                                                {(order.size || order.color) && (
-                                                  <p className="text-sm text-muted-foreground">
-                                                      {order.color && `Color: ${order.color}`}
-                                                      {order.size && order.color && ' / '}
-                                                      {order.size && `Size: ${order.size}`}
-                                                  </p>
-                                                )}
-                                            </div>
-                                            <p className='font-semibold'>${(order.total).toFixed(2)}</p>
-                                        </div>
-                                    )
-                                })}
+                                {/* Order detail rendering omitted until Supabase order history is wired up */}
                             </div>
 
                             <Separator className="my-6" />

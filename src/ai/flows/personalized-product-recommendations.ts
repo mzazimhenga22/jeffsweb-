@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { enforceOpenAiRateLimit } from '@/ai/rate-limit';
 
 const PersonalizedProductRecommendationsInputSchema = z.object({
   browsingHistory: z.string().describe('The user\'s browsing history.'),
@@ -47,7 +48,16 @@ const personalizedProductRecommendationsFlow = ai.defineFlow(
     outputSchema: PersonalizedProductRecommendationsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      enforceOpenAiRateLimit('personalizedProductRecommendations');
+      const {output} = await prompt(input);
+      return output!;
+    } catch (error) {
+      if ((error as any)?.code === 'rate_limit_exceeded') {
+        console.warn('OpenAI rate limit reached, returning empty recommendations.');
+        return { productRecommendations: '' };
+      }
+      throw error;
+    }
   }
 );

@@ -53,8 +53,11 @@ async function getProductReviews(productId: string) {
   return (data as ProductReview[]) || []
 }
 
-export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const product = await getProduct(params.slug)
+type ProductPageParams = Promise<{ slug: string }>
+
+export default async function ProductDetailPage({ params }: { params: ProductPageParams }) {
+  const { slug } = await params
+  const product = await getProduct(slug)
 
   if (!product) {
     notFound()

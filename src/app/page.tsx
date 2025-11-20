@@ -56,21 +56,52 @@ async function getBestSellers(): Promise<Product[]> {
 }
 
 async function getCategories(): Promise<Category[]> {
-    const { data, error } = await supabase.from('categories').select('*').limit(4);
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.warn('Supabase env missing; skipping categories fetch.');
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true })
+      .limit(8);
+
     if (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching categories:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: (error as any)?.code,
+        });
         return [];
     }
-    return data as Category[];
+    return (data as Category[]) ?? [];
 }
 
 async function getTestimonials(): Promise<Testimonial[]> {
-    const { data, error } = await supabase.from('testimonials').select('*').limit(3);
-    if (error) {
-        console.error('Error fetching testimonials:', error);
-        return [];
-    }
-    return data as Testimonial[];
+  // If env vars are missing, avoid calling Supabase so we don't spam errors.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('Supabase env missing; skipping testimonials fetch.');
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('testimonials')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error('Error fetching testimonials:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: (error as any)?.code,
+    });
+    return [];
+  }
+  return (data as Testimonial[]) ?? [];
 }
 
 export default function HomePage() {
