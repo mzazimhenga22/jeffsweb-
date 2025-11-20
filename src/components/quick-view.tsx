@@ -33,8 +33,12 @@ export function QuickView() {
       setSelectedColor(product.colors?.[0] || null);
       setSelectedSize(product.sizes?.[0] || null);
       setQuantity(1);
-      const mainImage = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
-      if (mainImage) setActiveImage(mainImage.imageUrl);
+      if (product.image_url) {
+        setActiveImage(product.image_url);
+      } else {
+        const mainImage = product.imageIds?.[0] ? PlaceHolderImages.find((p) => p.id === product.imageIds[0]) : null;
+        if (mainImage) setActiveImage(mainImage.imageUrl);
+      }
     }
   }, [product]);
 
@@ -72,17 +76,35 @@ export function QuickView() {
                     />
                 )}
             </div>
-            <div className="grid grid-cols-5 gap-2">
-              {product.imageIds.map(imageId => {
-                const image = PlaceHolderImages.find(p => p.id === imageId);
-                if (!image) return null;
-                return (
-                  <button key={imageId} onClick={() => setActiveImage(image.imageUrl)} className={cn('overflow-hidden rounded-md aspect-square border-2 transition', activeImage === image.imageUrl ? 'border-primary' : 'border-transparent')}>
-                    <Image src={image.imageUrl} alt={`${product.name} thumbnail`} width={100} height={100} className="h-full w-full object-cover" />
-                  </button>
-                )
-              })}
-            </div>
+            {product.image_url || (product.imageIds && product.imageIds.length > 0) ? (
+              <div className="grid grid-cols-5 gap-2">
+                {(product.imageIds && product.imageIds.length > 0 ? product.imageIds : ['__image_url__']).map((imageId) => {
+                  const image = imageId === '__image_url__'
+                    ? { imageUrl: product.image_url as string }
+                    : PlaceHolderImages.find((p) => p.id === imageId)
+
+                  if (!image || !image.imageUrl) return null
+                  return (
+                    <button
+                      key={imageId}
+                      onClick={() => setActiveImage(image.imageUrl)}
+                      className={cn(
+                        'overflow-hidden rounded-md aspect-square border-2 transition',
+                        activeImage === image.imageUrl ? 'border-primary' : 'border-transparent'
+                      )}
+                    >
+                      <Image
+                        src={image.imageUrl}
+                        alt={`${product.name} thumbnail`}
+                        width={100}
+                        height={100}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
           
           {/* Product Details */}

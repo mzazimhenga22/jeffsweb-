@@ -40,6 +40,7 @@ async function addVendorNames(supabase: SupabaseClient, products: Product[]) {
 
   return products.map((product) => ({
     ...product,
+    vendorId: product.vendorId ?? 'admin-1',
     vendorName: vendorMap.get(product.vendorId ?? '') ?? (product.vendorId ? 'Unknown vendor' : 'Admin'),
   }))
 }

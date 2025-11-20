@@ -141,11 +141,14 @@ export default function CheckoutPage() {
                             <CardContent>
                                 <div className="space-y-4">
                                     {cartItems.map(item => {
-                                        const image = PlaceHolderImages.find(p => p.id === item.imageIds[0]);
+                                        const primaryImageId = item.imageIds?.[0]
+                                        const placeholder = primaryImageId ? PlaceHolderImages.find((p) => p.id === primaryImageId) : null
+                                        const imageUrl = item.image_url ?? placeholder?.imageUrl
+
                                         return (
                                             <div key={item.id} className='flex items-start gap-4'>
                                                 <div className="w-16 h-16 relative rounded-md overflow-hidden">
-                                                    {image && <Image src={image.imageUrl} alt={item.name} fill className="object-cover" />}
+                                                    {imageUrl && <Image src={imageUrl} alt={item.name} fill className="object-cover" />}
                                                 </div>
                                                 <div className='flex-1'>
                                                     <p className='font-medium'>{item.name}</p>

@@ -69,10 +69,15 @@ export default function ShopPage() {
         });
       }
 
-      const productsWithVendorNames = (productData as Product[]).map((product) => ({
-        ...product,
-        vendorName: vendorMap.get(product.vendorId ?? '') ?? (product.vendorId ? 'Unknown vendor' : 'Admin'),
-      }));
+      const productsWithVendorNames = (productData as Product[]).map((product) => {
+        const vendorName = vendorMap.get(product.vendorId ?? '') ?? (product.vendorId ? 'Unknown vendor' : 'Admin');
+
+        return {
+          ...product,
+          vendorId: product.vendorId ?? 'admin-1',
+          vendorName,
+        };
+      });
 
       setProducts(productsWithVendorNames);
       setFilteredProducts(productsWithVendorNames);
