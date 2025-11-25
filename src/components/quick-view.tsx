@@ -33,8 +33,11 @@ export function QuickView() {
       setSelectedColor(product.colors?.[0] || null);
       setSelectedSize(product.sizes?.[0] || null);
       setQuantity(1);
-      const mainImage = PlaceHolderImages.find(p => p.id === product.imageIds[0]);
-      if (mainImage) setActiveImage(mainImage.imageUrl);
+      const placeholderImageId = product.imageIds?.[0];
+      const mainImage = placeholderImageId
+        ? PlaceHolderImages.find((p) => p.id === placeholderImageId)
+        : null;
+      setActiveImage(mainImage?.imageUrl || product.image_url || null);
     }
   }, [product]);
 
@@ -56,12 +59,12 @@ export function QuickView() {
   
   return (
     <Dialog open={isOpen} onOpenChange={closeQuickView}>
-      <DialogContent className="max-w-4xl p-0">
+      <DialogContent className="max-w-4xl p-0 bg-white/5/80 backdrop-blur-3xl border border-white/15 shadow-2xl">
         <DialogTitle className="sr-only">{product.name}</DialogTitle>
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Image Gallery */}
-          <div className="p-6 space-y-4">
-            <div className="overflow-hidden rounded-xl aspect-square bg-muted">
+          <div className="p-6 space-y-4 bg-white/5 backdrop-blur-xl">
+            <div className="overflow-hidden rounded-xl aspect-square bg-white/10 backdrop-blur-sm border border-white/10">
                 {activeImage && (
                     <Image
                     src={activeImage}
@@ -73,7 +76,7 @@ export function QuickView() {
                 )}
             </div>
             <div className="grid grid-cols-5 gap-2">
-              {product.imageIds.map(imageId => {
+              {(product.imageIds ?? []).map(imageId => {
                 const image = PlaceHolderImages.find(p => p.id === imageId);
                 if (!image) return null;
                 return (
@@ -86,7 +89,7 @@ export function QuickView() {
           </div>
           
           {/* Product Details */}
-          <div className="p-8 flex flex-col">
+          <div className="p-8 flex flex-col bg-white/5 backdrop-blur-xl border-l border-white/10">
             <Badge variant="secondary" className="w-fit">{product.category}</Badge>
             <h2 className="mt-2 text-3xl font-bold tracking-tight font-headline">{product.name}</h2>
             
@@ -94,7 +97,7 @@ export function QuickView() {
                 <div className="flex items-center">
                     {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < Math.round(averageRating) ? 'text-primary fill-primary' : 'text-muted-foreground/50'}`} />)}
                 </div>
-                <span className="text-muted-foreground">({product.reviewCount} reviews)</span>
+                <span className="text-muted-foreground">({product.reviewCount ?? product.reviews?.length ?? 0} reviews)</span>
             </div>
 
             <p className="mt-4 text-3xl font-bold">${product.price.toFixed(2)}</p>

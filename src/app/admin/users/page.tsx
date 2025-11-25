@@ -34,13 +34,12 @@ import { useAuth } from '@/context/auth-context';
 
 const ITEMS_PER_PAGE = 10;
 
-// Type we actually use in this page
 type AdminUser = {
   id: string;
   name: string;
   email: string;
   role: 'customer' | 'vendor' | 'admin' | 'salesperson' | string;
-  avatarId: string | null;
+  avatarUrl: string | null;
   createdAt: string | null;
 };
 
@@ -52,6 +51,7 @@ export default function AdminUsersPage() {
   const { supabase } = useAuth();
   const [users, setUsers] = React.useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -59,17 +59,16 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
       setIsLoading(true);
 
-      // 👉 Use the REAL column names from your DB:
-      // id, name, email, role, created_at
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email, role, created_at, avatar_id, avatar_url')
-        .order('created_at', { ascending: false });
+        .select('id, full_name, email, role, createdAt, avatar_url')
+        .order('createdAt', { ascending: false });
 
       if (!isMounted) return;
 
       if (error) {
         console.error('Failed to load users', error);
+        setLoadError(error.message);
         toast({
           title: 'Unable to load users',
           description: error.message,
@@ -82,15 +81,16 @@ export default function AdminUsersPage() {
       const mapped: AdminUser[] =
         (data ?? []).map((u: any) => ({
           id: u.id,
-          name: u.name ?? '',
+          name: u.full_name ?? '',
           email: u.email,
           role: u.role,
-          avatarId: u.avatar_id ?? u.avatar_url ?? null,
-          createdAt: u.created_at ?? u.createdAt ?? null,
+          avatarUrl: u.avatar_url ?? null,
+          createdAt: u.createdAt ?? null,
         })) ?? [];
 
       setUsers(mapped);
       setIsLoading(false);
+      setLoadError(null);
     };
 
     fetchUsers();
@@ -165,6 +165,11 @@ export default function AdminUsersPage() {
         </div>
       </CardHeader>
       <CardContent>
+        {loadError && (
+          <div className="mb-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {loadError}
+          </div>
+        )}
         <Table>
           <TableHeader>
             <TableRow>
@@ -188,7 +193,7 @@ export default function AdminUsersPage() {
             ) : (
               paginatedUsers.map((user) => {
                 const avatar = PlaceHolderImages.find(
-                  (p) => p.id === user.avatarId
+                  (p) => p.id === user.avatarUrl
                 );
 
                 const joinedDate = user.createdAt
@@ -211,10 +216,13 @@ export default function AdminUsersPage() {
                             />
                           ) : null}
                           <AvatarFallback>
-                            {user.name?.charAt(0).toUpperCase() ?? '?'}
+                            {user.name?.charAt(0).toUpperCase() ??
+                              '?'}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{user.name}</span>
+                        <span className="font-medium">
+                          {user.name || user.email}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -276,23 +284,28 @@ export default function AdminUsersPage() {
             )}
           </TableBody>
         </Table>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {paginatedUsers.length} of {filteredUsers.length} users
+          </p>
+          <div className="flex items-center justify-end space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

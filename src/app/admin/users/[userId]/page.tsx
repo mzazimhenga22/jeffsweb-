@@ -20,12 +20,12 @@ type UserRow = {
   email: string;
   role: 'customer' | 'vendor' | 'admin' | 'salesperson' | string;
   createdAt: string | null;
-  avatarId?: string | null;
+  avatarUrl?: string | null;
 };
 
 type OrderRow = {
   id: string;
-  userId: string;
+  user_id: string;
   status: string;
   total: number;
   created_at: string;
@@ -50,7 +50,7 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
       // 1) Fetch user from Supabase
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, name, email, role, createdAt, avatarId, avatar_url')
+        .select('id, full_name, email, role, createdAt, avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
@@ -75,18 +75,18 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
 
       const mappedUser: UserRow = {
         id: userData.id,
-        name: userData.name ?? '',
+        name: userData.full_name ?? '',
         email: userData.email,
         role: userData.role,
         createdAt: userData.createdAt ?? null,
-        avatarId: userData.avatarId ?? userData.avatar_url ?? null,
+        avatarUrl: userData.avatar_url ?? null,
       };
 
       // 2) Fetch orders for this user
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, userId, status, total, created_at')
-        .eq('userId', userId)
+        .select('id, user_id, status, total, created_at')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (ordersError) {
@@ -132,8 +132,8 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
 
   const userOrders = orders;
   const totalSpent = userOrders.reduce((acc, order) => acc + (order.total ?? 0), 0);
-  const avatar = user.avatarId
-    ? PlaceHolderImages.find((p) => p.id === user.avatarId)
+  const avatar = user.avatarUrl
+    ? PlaceHolderImages.find((p) => p.id === user.avatarUrl)
     : undefined;
 
   const joinedText = user.createdAt
@@ -156,7 +156,7 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
         .from('users')
         .update({ role: newRole })
         .eq('id', user.id)
-        .select('id, name, email, role, createdAt')
+        .select('id, full_name, email, role, created_at')
         .maybeSingle();
 
       if (error) {

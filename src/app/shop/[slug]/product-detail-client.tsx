@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Image from 'next/image'
-import { Check, Heart, Minus, Plus, Share2, Facebook, Twitter, Star } from 'lucide-react'
+import { Check, Heart, Minus, Plus, Share2, Facebook, Twitter, Star, Truck, ShieldCheck, RefreshCcw, Copy, MessageCircle } from 'lucide-react'
 
 import { MainLayout } from '@/components/main-layout'
 import { Button } from '@/components/ui/button'
@@ -26,11 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useWishlist } from '@/context/wishlist-context'
 import { useAuth } from '@/context/auth-context'
 import type { Product, ProductReview } from '@/lib/types'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 
 interface ProductDetailClientProps {
   product: Product
@@ -57,6 +58,85 @@ export function ProductDetailClient({
   const { toggleWishlist, isInWishlist } = useWishlist()
   const { supabase, session } = useAuth()
   const router = useRouter()
+  const [isChatOpen, setIsChatOpen] = React.useState(false)
+  const [chatMessages, setChatMessages] = React.useState<{ role: 'user' | 'assistant'; content: string }[]>([
+    {
+      role: 'assistant',
+      content: 'Ask me anything about this product. I can help with materials, sizing, and fit.',
+    },
+  ])
+  const [chatInput, setChatInput] = React.useState('')
+  const [chatLoading, setChatLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    // Best-effort view tracking; safe if table/function is missing.
+    const trackView = async () => {
+      try {
+        const { error } = await supabase
+          .from('product_views')
+          .insert({
+            product_id: product.id,
+            vendor_id: product.vendor_id,
+            user_id: session?.user?.id ?? null,
+            viewed_at: new Date().toISOString(),
+          });
+        if (error && error.code !== '42P01') {
+          console.error('Failed to record product view:', error);
+        }
+      } catch (error) {
+        console.error('Failed to record product view (product_views table missing?):', error);
+      }
+    };
+
+    trackView();
+    // only run once per product render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  const sendChatMessage = async () => {
+    const trimmed = chatInput.trim()
+    if (!trimmed || chatLoading) return
+    const nextMessages = [...chatMessages, { role: 'user', content: trimmed }]
+    setChatMessages(nextMessages)
+    setChatInput('')
+    setChatLoading(true)
+    try {
+      const response = await fetch('/api/product-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          productName: product.name,
+          productDescription: product.description,
+          productPrice: product.price,
+          sizes: product.sizes,
+          colors: product.colors,
+          message: trimmed,
+        }),
+      })
+      if (!response.ok) {
+        throw new Error(`Chat request failed: ${response.status}`)
+      }
+      const { reply } = (await response.json()) as { reply: string }
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: reply }])
+    } catch (error) {
+      console.error('Failed to fetch chat response', error)
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Sorry, I could not reach chat right now. Please try again in a moment.',
+        },
+      ])
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  const handleChatSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    sendChatMessage()
+  }
 
   React.useEffect(() => {
     if (product.colors?.length) {
@@ -65,9 +145,7 @@ export function ProductDetailClient({
     if (product.sizes?.length) {
       setSelectedSize(product.sizes[0])
     }
-    if (product.image_url) {
-      setActiveImage(product.image_url)
-    }
+    setActiveImage(product.image_url || '/placeholder.svg')
   }, [product])
 
   const averageRating = React.useMemo(() => {
@@ -163,13 +241,89 @@ export function ProductDetailClient({
   const mainImage = activeImage
   const reviewCount = reviews.length
   const ratingOptions = [1, 2, 3, 4, 5] as const
+  const infoHighlights = [
+    { icon: Truck, title: 'Free delivery', copy: 'Complimentary shipping over Ksh 50' },
+    { icon: ShieldCheck, title: 'Secure checkout', copy: '256-bit encrypted payments' },
+    { icon: RefreshCcw, title: 'Easy returns', copy: 'Hassle-free 30 day returns' },
+  ]
+
+  const handleShare = () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+    if (!shareUrl) return
+
+    navigator?.clipboard
+      ?.writeText(shareUrl)
+      .then(() =>
+        toast({
+          title: 'Link copied',
+          description: 'Share this product with a friend.',
+        })
+      )
+      .catch(() =>
+        toast({
+          variant: 'destructive',
+          title: 'Could not copy link',
+          description: 'Please try again.',
+        })
+      )
+  }
 
   return (
     <MainLayout backgroundImage={mainImage || undefined}>
-      <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
+      <div className="relative">
+        {/* Product chat fab */}
+        <div className="fixed bottom-6 right-6 z-40">
+          {isChatOpen && (
+            <Card className="mb-3 w-80 max-w-full shadow-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Product Q&A</CardTitle>
+                <CardDescription className="text-xs">Ask anything—we&apos;ll keep answers short and friendly.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                  {chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'rounded-md px-3 py-2 text-sm',
+                        msg.role === 'assistant'
+                          ? 'bg-white/20 text-foreground backdrop-blur'
+                          : 'bg-primary/80 text-primary-foreground ml-auto w-fit'
+                      )}
+                    >
+                      {msg.content}
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="text-xs text-muted-foreground">Thinking...</div>
+                  )}
+                </div>
+                <form onSubmit={handleChatSubmit} className="space-y-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about fit, material..."
+                  />
+                  <Button type="submit" className="w-full" disabled={chatLoading}>
+                    {chatLoading ? 'Sending...' : 'Send'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <Button
+            size="lg"
+            className="rounded-full h-14 w-14 shadow-xl border border-white/30 bg-white/20 backdrop-blur-xl hover:bg-white/30 text-foreground"
+            onClick={() => setIsChatOpen((prev) => !prev)}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </div>
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-white/30 via-background/80 to-background backdrop-blur-3xl" />
+        <div className="container mx-auto max-w-screen-xl py-12 px-4 md:px-6">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           <div className="space-y-4">
-            <div className="overflow-hidden rounded-3xl h-full max-h-[600px] aspect-square">
+            <div className="overflow-hidden rounded-3xl h-full max-h-[600px] aspect-square bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/20">
               {mainImage && (
                 <Image
                   src={mainImage}
@@ -183,7 +337,7 @@ export function ProductDetailClient({
           </div>
 
           <div className="flex flex-col">
-            <Card className="p-8 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+            <Card className="p-8 bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10">
               <Badge variant="secondary" className="w-fit">{product.category}</Badge>
               <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground font-headline">
                 {product.name}
@@ -193,12 +347,24 @@ export function ProductDetailClient({
                 <div className={cn('font-medium', getStockMessage().className)}>{getStockMessage().text}</div>
               </div>
 
-              <p className="mt-6 text-4xl font-bold">${product.price.toFixed(2)}</p>
+              <p className="mt-6 text-4xl font-bold">Ksh {product.price.toFixed(2)}</p>
+
+              <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                {infoHighlights.map((item) => (
+                  <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/70 px-3 py-2">
+                    <item.icon className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">{item.title}</p>
+                      <p>{item.copy}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </Card>
 
             <Separator className="my-8" />
 
-            <Card className="p-8 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+            <Card className="p-8 bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10">
               {product.colors && product.colors.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-sm font-medium">
@@ -272,7 +438,7 @@ export function ProductDetailClient({
               </Button>
             </div>
 
-            <div className="mt-8 rounded-3xl border bg-card/60 backdrop-blur-xl p-6 border-border/20">
+            <div className="mt-8 rounded-3xl border bg-white/10 backdrop-blur-2xl p-6 border-white/10 shadow-lg shadow-black/10">
               <Accordion type="single" collapsible defaultValue="description">
                 <AccordionItem value="description">
                   <AccordionTrigger className="text-lg font-medium">Description</AccordionTrigger>
@@ -283,13 +449,13 @@ export function ProductDetailClient({
                 <AccordionItem value="shipping" className="border-b-0">
                   <AccordionTrigger className="text-lg font-medium">Shipping &amp; Returns</AccordionTrigger>
                   <AccordionContent className="text-base text-muted-foreground">
-                    Free shipping on orders over $50. Easy returns within 30 days.
+                    Free shipping on orders over Ksh 50. Easy returns within 30 days.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             </div>
 
-            <Card className="mt-8 p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+            <Card className="mt-8 p-6 bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Average Rating</p>
@@ -385,7 +551,7 @@ export function ProductDetailClient({
               </div>
             </Card>
 
-            <Card className="mt-8 p-6 bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl">
+            <Card className="mt-8 p-6 bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl">
               <div className="flex items-center gap-4">
                 <Share2 className="text-muted-foreground" />
                 <Button variant="ghost" size="icon">
@@ -403,6 +569,9 @@ export function ProductDetailClient({
                     />
                   </svg>
                 </Button>
+                <Button variant="outline" size="sm" className="ml-auto" onClick={handleShare}>
+                  <Copy className="h-4 w-4 mr-2" /> Copy link
+                </Button>
               </div>
             </Card>
           </div>
@@ -412,11 +581,18 @@ export function ProductDetailClient({
           <h2 className="mb-12 text-center text-4xl font-bold tracking-tight font-headline">
             You Might Also Like
           </h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {relatedProducts.map((related) => (
-              <ProductCard key={related.id} product={related} />
-            ))}
-          </div>
+          {relatedProducts.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center text-muted-foreground">
+              We&apos;re lining up complementary picks for you.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedProducts.map((related) => (
+                <ProductCard key={related.id} product={related} />
+              ))}
+            </div>
+          )}
+        </div>
         </div>
       </div>
     </MainLayout>

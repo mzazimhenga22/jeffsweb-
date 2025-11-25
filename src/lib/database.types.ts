@@ -7,11 +7,11 @@ export type Json =
   | Json[]
 
 export type OrderStatus =
-  | 'Pending'
-  | 'Processing'
-  | 'On Transit'
-  | 'Delivered'
-  | 'Cancelled'
+  | 'pending'
+  | 'processing'
+  | 'on transit'
+  | 'delivered'
+  | 'cancelled'
 
 export interface Database {
   public: {
@@ -72,14 +72,14 @@ export interface Database {
       orders: {
         Row: {
           id: string
-          userId: string
+          user_id: string
           vendor_id: string | null
-          salespersonId: string | null
-          productId: string | null
+          salesperson_id: string | null
+          product_id: string | null
           quantity: number
           total: number
           status: OrderStatus
-          orderDate: string
+          order_date: string
           created_at: string
         }
         Insert: Partial<Database['public']['Tables']['orders']['Row']>
@@ -159,6 +159,21 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['vendor_staff']['Row']>
         Update: Partial<Database['public']['Tables']['vendor_staff']['Row']>
+        Relationships: []
+      }
+      banners: {
+        Row: {
+          id: string
+          title: string | null
+          subtitle: string | null
+          cta_text: string | null
+          cta_url: string | null
+          image_url: string | null
+          active: boolean | null
+          created_at: string | null
+        }
+        Insert: Partial<Database['public']['Tables']['banners']['Row']>
+        Update: Partial<Database['public']['Tables']['banners']['Row']>
         Relationships: []
       }
     }

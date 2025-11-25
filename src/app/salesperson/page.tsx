@@ -63,9 +63,15 @@ export default function SalespersonDashboardPage() {
       setIsLoading(true);
       const [{ data: orderRows, error: orderError }, { data: productRows, error: productError }, { data: userRows, error: userError }] =
         await Promise.all([
-          supabase.from('orders').select('*').eq('salespersonId', salespersonId),
+          supabase
+            .from('orders')
+            .select(
+              'id, created_at, user_id, vendor_id, product_id, quantity, salesperson_id, status, total, total_amount, order_date, shipping_address',
+            )
+            .eq('salesperson_id', salespersonId)
+            .order('created_at', { ascending: false }),
           supabase.from('products').select('*'),
-          supabase.from('users').select('*'),
+          supabase.from('users').select('id, full_name, email'),
         ]);
 
       if (!isMounted) return;
@@ -93,24 +99,24 @@ export default function SalespersonDashboardPage() {
   }, [salespersonId, supabase, toast]);
 
   const salespersonOrders = React.useMemo(
-    () => orders.filter((o) => o.salespersonId === salespersonId),
+    () => orders.filter((o: any) => o.salesperson_id === salespersonId),
     [orders, salespersonId],
   );
   const recentOrders = salespersonOrders.slice(0, 5);
 
   const totalRevenue = salespersonOrders.reduce((sum, order) => sum + (order.total ?? 0), 0);
   const totalCommission = salespersonOrders.reduce((sum, order) => {
-    const product = products.find((p) => p.id === order.productId);
+    const product = products.find((p) => p.id === order.product_id);
     const commissionRate = (product?.commission ?? 5) / 100;
     return sum + (order.total ?? 0) * commissionRate;
   }, 0);
 
-  const uniqueCustomerIds = [...new Set(salespersonOrders.map((o) => o.userId))];
+  const uniqueCustomerIds = [...new Set(salespersonOrders.map((o: any) => o.user_id))];
 
   const salesData = React.useMemo(() => {
     const buckets = new Map<string, number>();
     salespersonOrders.forEach((order) => {
-      const date = order.orderDate || order.created_at;
+      const date = (order as any).order_date || (order as any).created_at;
       const monthKey = date ? new Date(date).toLocaleString('en-US', { month: 'short' }) : 'N/A';
       buckets.set(monthKey, (buckets.get(monthKey) ?? 0) + (order.total ?? 0));
     });

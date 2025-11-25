@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { QuickView } from '@/components/quick-view';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default async function RootLayout({
           <Header />
           {children}
           <Footer />
+          <QuickView />
         </Providers>
       </body>
     </html>

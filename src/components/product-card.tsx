@@ -21,8 +21,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const { openQuickView } = useQuickView();
   const [showAdded, setShowAdded] = React.useState(false);
-
-
+  const averageRating = React.useMemo(() => {
+    if (typeof (product as any).averageRating === 'number') return (product as any).averageRating;
+    if (product.reviews?.length) {
+      const total = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+      return total / product.reviews.length;
+    }
+    return 0;
+  }, [product]);
+  const reviewCount = (product as any).reviewCount ?? product.reviews?.length ?? 0;
+  const roundedRating = Math.round(averageRating);
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
@@ -47,9 +55,9 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+    <div className="group relative overflow-hidden rounded-2xl text-card-foreground transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 max-w-xs">
        <Link href={`/shop/${product.id}`} className="block h-full w-full">
-        <div className="relative aspect-square w-full">
+        <div className="relative aspect-square w-full max-w-xs mx-auto">
             {product.image_url && (
                 <Image
                 src={product.image_url}
@@ -72,6 +80,13 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-start justify-between">
                 <Badge variant="secondary" className='bg-white/20 text-white border-none text-xs'>{product.category}</Badge>
                 <div className="flex items-center gap-1 text-primary">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-3 w-3 ${i < roundedRating ? 'fill-primary text-primary' : 'text-white/60'}`}
+                    />
+                  ))}
+                  <span className="text-[11px] text-white/80 ml-1">({reviewCount})</span>
                 </div>
             </div>
             <h3 className="mt-1 text-sm font-semibold leading-tight font-headline text-white truncate">
@@ -79,7 +94,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </h3>
           </Link>
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-lg font-bold text-white">${product.price.toFixed(2)}</p>
+            <p className="text-lg font-bold text-white">Ksh {product.price.toFixed(2)}</p>
             <Button variant="outline" size="icon" onClick={handleAddToCart} aria-label="Add to cart" className='h-8 w-8 bg-white/20 border-white/30 hover:bg-white/30 text-white hover:text-white relative'>
               <ShoppingCart className={cn("h-4 w-4 transition-opacity", showAdded && 'opacity-0')} />
               <Check className={cn("h-4 w-4 absolute transition-opacity", !showAdded && 'opacity-0')} />

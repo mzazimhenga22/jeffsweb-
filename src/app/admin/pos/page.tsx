@@ -18,12 +18,23 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/context/auth-context'
 
 export default function AdminPosPage() {
   const [cart, setCart] = React.useState<CartItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState('')
   const [products, setProducts] = React.useState<Product[]>([])
   const { toast } = useToast()
+  const { user: authUser } = useAuth()
+  const [receipt, setReceipt] = React.useState<{
+    id: string
+    date: string
+    servedBy: string
+    items: { name: string; quantity: number; price: number; total: number }[]
+    subtotal: number
+    tax: number
+    total: number
+  } | null>(null)
 
   React.useEffect(() => {
     let isMounted = true
@@ -111,7 +122,7 @@ export default function AdminPosPage() {
   const tax = cartSubtotal * 0.08
   const cartTotal = cartSubtotal + tax
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if(cart.length === 0) {
         toast({
             variant: "destructive",
@@ -120,11 +131,65 @@ export default function AdminPosPage() {
         });
         return;
     }
-    toast({
-        title: "Order Created!",
-        description: "The new order has been successfully created.",
-    });
-    clearCart();
+    if (!authUser?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'Not signed in',
+        description: 'Please sign in to create POS orders.',
+      })
+      return
+    }
+
+    try {
+      const now = new Date()
+      const orderDate = now.toISOString()
+      const orderRows = cart.map((item) => ({
+        user_id: authUser.id,
+        vendor_id: item.vendor_id ?? null,
+        product_id: item.id,
+        salesperson_id: authUser.id,
+        quantity: item.quantity,
+        total: item.price * item.quantity,
+        total_amount: item.price * item.quantity,
+        status: 'pending',
+        order_date: orderDate,
+        shipping_address: {
+          pos: true,
+          served_by: authUser.email ?? authUser.id,
+          channel: 'admin-pos',
+        },
+      }))
+
+      const { error } = await supabase.from('orders').insert(orderRows)
+      if (error) throw error
+
+      toast({
+          title: "Order Created!",
+          description: "The new order has been successfully created.",
+      });
+      setReceipt({
+        id: `pos-${now.getTime()}`,
+        date: now.toLocaleString(),
+        servedBy: 'POS Attendant',
+        items: cart.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+        })),
+        subtotal: cartSubtotal,
+        tax,
+        total: cartTotal,
+      })
+      clearCart();
+    } catch (error) {
+      console.error('Failed to create POS order', error)
+      toast({
+        variant: 'destructive',
+        title: 'Could not create order',
+        description: 'Please try again.',
+      })
+    }
   }
 
   return (
@@ -250,6 +315,36 @@ export default function AdminPosPage() {
             </div>
           )}
         </Card>
+        {receipt && (
+          <Card className="mt-4 bg-card/70 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>POS Receipt</CardTitle>
+              <p className="text-sm text-muted-foreground">Served by {receipt.servedBy}</p>
+              <p className="text-xs text-muted-foreground">{receipt.date}</p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {receipt.items.map((line) => (
+                <div key={`${line.name}-${line.quantity}-${line.price}`} className="flex justify-between text-sm">
+                  <span>{line.name} × {line.quantity}</span>
+                  <span>${line.total.toFixed(2)}</span>
+                </div>
+              ))}
+              <Separator className="my-3" />
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>${receipt.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax</span>
+                <span>${receipt.tax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>${receipt.total.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

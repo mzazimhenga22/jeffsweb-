@@ -63,7 +63,7 @@ export function VendorsTable({ vendors: initialVendors }: { vendors: VendorTable
     )
   }, [vendors, searchQuery])
 
-  const totalPages = Math.ceil(filteredVendors.length / ITEMS_PER_PAGE) || 1
+  const totalPages = Math.max(1, Math.ceil(filteredVendors.length / ITEMS_PER_PAGE))
   const paginatedVendors = filteredVendors.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
@@ -128,72 +128,87 @@ export function VendorsTable({ vendors: initialVendors }: { vendors: VendorTable
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedVendors.map((vendor) => (
-              <TableRow key={vendor.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>{vendor.storeName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{vendor.storeName}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{vendor.contactEmail ?? 'N/A'}</TableCell>
-                <TableCell>{vendor.products}</TableCell>
-                <TableCell>
-                  <Badge variant={statusToBadgeVariant(vendor.status)} className="capitalize">
-                    {vendor.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {vendor.status !== 'approved' && (
-                        <DropdownMenuItem
-                          onClick={() => handleStatusUpdate(vendor.id, 'approved')}
-                          disabled={updatingId === vendor.id}
-                        >
-                          Approve
-                        </DropdownMenuItem>
-                      )}
-                      {vendor.status !== 'rejected' && (
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleStatusUpdate(vendor.id, 'rejected')}
-                          disabled={updatingId === vendor.id}
-                        >
-                          Reject
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {paginatedVendors.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
+                  {vendors.length === 0
+                    ? 'No vendors yet. Connect a vendor profile to get started.'
+                    : 'No vendors match your search.'}
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paginatedVendors.map((vendor) => (
+                <TableRow key={vendor.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>{vendor.storeName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{vendor.storeName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{vendor.contactEmail ?? 'N/A'}</TableCell>
+                  <TableCell>{vendor.products}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusToBadgeVariant(vendor.status)} className="capitalize">
+                      {vendor.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {vendor.status !== 'approved' && (
+                          <DropdownMenuItem
+                            onClick={() => handleStatusUpdate(vendor.id, 'approved')}
+                            disabled={updatingId === vendor.id}
+                          >
+                            Approve
+                          </DropdownMenuItem>
+                        )}
+                        {vendor.status !== 'rejected' && (
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleStatusUpdate(vendor.id, 'rejected')}
+                            disabled={updatingId === vendor.id}
+                          >
+                            Reject
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {paginatedVendors.length} of {filteredVendors.length} vendors
+          </p>
+          <div className="flex items-center justify-end space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

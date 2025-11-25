@@ -6,15 +6,26 @@ export default async function AdminSalespersonsPage() {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, full_name, email, role, createdAt, avatar_url')
     .eq('role' as const, 'salesperson')
     .order('createdAt', { ascending: false })
-    .returns<User[]>()
 
   if (error) {
     console.error('Failed to load salespersons', error)
     return <SalespersonsTable salespersons={[]} />
   }
 
-  return <SalespersonsTable salespersons={data ?? []} />
+  const mapped: User[] =
+    (data ?? []).map((row: any) => ({
+      id: row.id,
+      name: row.full_name ?? '',
+      email: row.email,
+      role: row.role,
+      avatarId: null,
+      avatar_url: row.avatar_url ?? null,
+      createdAt: row.createdAt ?? null,
+      phone: null,
+    })) ?? []
+
+  return <SalespersonsTable salespersons={mapped} />
 }

@@ -1,51 +1,138 @@
-
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+
 import { MainLayout } from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { Order } from '@/lib/types';
-import Image from 'next/image';
+import { useAuth } from '@/context/auth-context';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import type { Product, Order } from '@/lib/types';
 
 function OrderConfirmationContent() {
     const searchParams = useSearchParams();
-    const orderId = searchParams.get('orderId');
-    const [confirmedOrders, setConfirmedOrders] = React.useState<Order[]>([]);
+    const orderIdsParam = searchParams.get('orderIds') ?? searchParams.get('orderId');
+    const orderIds = React.useMemo(
+        () => orderIdsParam?.split(',').map((id) => id.trim()).filter(Boolean) ?? [],
+        [orderIdsParam],
+    );
 
-    const subtotal = 0;
-    
-    const taxes = subtotal * 0.08; // 8% tax
+    const { supabase, user } = useAuth();
+    const customerId = (user as any)?.id ?? null;
+    const [confirmedOrders, setConfirmedOrders] = React.useState<Order[]>([]);
+    const [productsById, setProductsById] = React.useState<Record<string, Product>>({});
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+
+    const subtotal = React.useMemo(
+        () => confirmedOrders.reduce((sum, order) => sum + (order.total ?? 0), 0),
+        [confirmedOrders],
+    );
+    const taxes = subtotal * 0.08;
     const total = subtotal + taxes;
 
-    if (!orderId || confirmedOrders.length === 0) {
+    React.useEffect(() => {
+        if (!orderIds.length) return;
+
+        const fetchOrders = async () => {
+            setLoading(true);
+            setError(null);
+
+            const baseQuery = supabase.from('orders').select('*').in('id', orderIds);
+            const { data, error } = customerId
+                ? await baseQuery.eq('user_id', customerId)
+                : await baseQuery;
+
+            if (error) {
+                console.error('Failed to load orders for confirmation', error);
+                setError('Could not load your order details.');
+                setConfirmedOrders([]);
+                setLoading(false);
+                return;
+            }
+
+            const orders = (data as Order[]) ?? [];
+            setConfirmedOrders(orders);
+            setLoading(false);
+
+            const productIds = Array.from(
+                new Set(orders.map((o) => o.product_id).filter(Boolean) as string[]),
+            );
+            if (productIds.length === 0) return;
+
+            const { data: products, error: productsError } = await supabase
+                .from('products')
+                .select('*')
+                .in('id', productIds);
+
+            if (productsError) {
+                console.error('Failed to load products for confirmation', productsError);
+                return;
+            }
+
+            const map: Record<string, Product> = {};
+            (products ?? []).forEach((p) => {
+                map[p.id] = p as Product;
+            });
+            setProductsById(map);
+        };
+
+        fetchOrders();
+    }, [orderIds, supabase]);
+
+    if (loading) {
         return (
-             <MainLayout>
+            <MainLayout>
+                <div className="container mx-auto py-12 px-4 md:px-6">
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">Loading your order...</p>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (!orderIds.length || error || confirmedOrders.length === 0) {
+        return (
+            <MainLayout>
                 <div className="container mx-auto py-12 px-4 md:px-6">
                     <div className="flex flex-col items-center justify-center text-center">
                         <h1 className="text-4xl font-bold tracking-tight font-headline mb-2">
-                            Order not found
+                            {error ? 'Could not load order' : 'Order not found'}
                         </h1>
                         <p className="text-muted-foreground text-lg max-w-2xl mb-8">
-                            We couldn't find the order you're looking for.
+                            {error
+                                ? 'Something went wrong while fetching your order. Please try again.'
+                                : "We couldn't find the order you're looking for."}
                         </p>
-                         <Button asChild size="lg">
+                        <Button asChild size="lg">
                             <Link href="/shop">Continue Shopping</Link>
                         </Button>
                     </div>
                 </div>
             </MainLayout>
-        )
+        );
     }
+
+    const firstOrder = confirmedOrders[0];
+    const placeholderImage = PlaceHolderImages.all[0];
+    const customerName =
+        (user as any)?.full_name ??
+        (user as any)?.name ??
+        (user as any)?.email ??
+        'Valued customer';
 
     return (
         <MainLayout>
-            <div className="container mx-auto py-12 px-4 md:px-6">
+            <div className="relative">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-white/30 via-background/80 to-background backdrop-blur-3xl" />
+                <div className="container mx-auto py-12 px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center text-center">
                     <CheckCircle className="h-20 w-20 text-green-500 mb-4" />
                     <h1 className="text-4xl font-bold tracking-tight font-headline mb-2">
@@ -57,14 +144,57 @@ function OrderConfirmationContent() {
                 </div>
 
                 <div className="max-w-4xl mx-auto">
-                    <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
+                    <Card className='bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10'>
                         <CardHeader className="text-center">
-                            <CardTitle className="text-2xl">Order #{orderId}</CardTitle>
-                            <p className="text-sm text-muted-foreground">Date: {new Date(confirmedOrders[0].orderDate).toLocaleDateString()}</p>
+                            <CardTitle className="text-2xl">
+                                Order #{firstOrder.id.substring(0, 8)}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Date:{' '}
+                                {firstOrder?.order_date
+                                    ? new Date(firstOrder.order_date).toLocaleDateString()
+                                    : '—'}
+                            </p>
                         </CardHeader>
                         <CardContent className="p-6">
                              <div className="space-y-4 mb-8">
-                                {/* Order detail rendering omitted until Supabase order history is wired up */}
+                                {confirmedOrders.map((order) => {
+                                    const product = order.product_id
+                                        ? productsById[order.product_id]
+                                        : undefined;
+                                    return (
+                                        <div key={order.id} className="flex items-start gap-4">
+                                            <div className="w-16 h-16 relative rounded-md overflow-hidden bg-muted">
+                                                {product?.image_url ? (
+                                                    <Image
+                                                        src={product.image_url}
+                                                        alt={product.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <Image
+                                                        src={placeholderImage.imageUrl}
+                                                        alt="Placeholder"
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">
+                                                    {product?.name ?? 'Product'}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Qty: {order.quantity}
+                                                </p>
+                                            </div>
+                                            <p className="font-semibold">
+                                                ${(order.total ?? 0).toFixed(2)}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             <Separator className="my-6" />
@@ -72,20 +202,20 @@ function OrderConfirmationContent() {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>Ksh {subtotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Shipping</span>
-                                    <span>$0.00</span>
+                                    <span>Ksh 0.00</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Taxes</span>
-                                    <span>${taxes.toFixed(2)}</span>
+                                    <span>Ksh {taxes.toFixed(2)}</span>
                                 </div>
                                 <Separator />
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>${total.toFixed(2)}</span>
+                                    <span>Ksh {total.toFixed(2)}</span>
                                 </div>
                             </div>
                             
@@ -95,18 +225,16 @@ function OrderConfirmationContent() {
                                 <div>
                                     <h3 className="font-semibold mb-2">Shipping To</h3>
                                     <p className="text-muted-foreground">
-                                        John Doe<br/>
-                                        123 Main St<br/>
-                                        New York, NY 10001
+                                        {customerName}
                                     </p>
                                 </div>
                                 <div>
                                     <h3 className="font-semibold mb-2">Billed To</h3>
                                     <p className="text-muted-foreground">
-                                        John Doe<br/>
-                                        Visa ending in 1234<br/>
-                                        123 Main St<br/>
-                                        New York, NY 10001
+                                        {customerName}<br/>
+                                        {typeof (user as any)?.email === 'string'
+                                            ? (user as any)?.email
+                                            : 'Email on file'}
                                     </p>
                                 </div>
                             </div>
@@ -115,13 +243,14 @@ function OrderConfirmationContent() {
                     </Card>
                 </div>
                 
-                 <div className="flex gap-4 justify-center mt-8">
+                <div className="flex gap-4 justify-center mt-8">
                     <Button asChild size="lg">
                         <Link href="/shop">Continue Shopping</Link>
                     </Button>
                     <Button asChild variant="outline" size="lg">
                         <Link href="/account/orders">View My Orders</Link>
                     </Button>
+                </div>
                 </div>
             </div>
         </MainLayout>

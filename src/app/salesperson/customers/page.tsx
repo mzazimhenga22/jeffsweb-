@@ -51,8 +51,14 @@ export default function SalespersonCustomersPage() {
     const loadData = async () => {
       setIsLoading(true);
       const [{ data: orderRows, error: orderError }, { data: userRows, error: userError }] = await Promise.all([
-        supabase.from('orders').select('*').eq('salespersonId', salespersonId),
-        supabase.from('users').select('*'),
+        supabase
+          .from('orders')
+          .select(
+            'id, created_at, user_id, vendor_id, product_id, quantity, salesperson_id, status, total, total_amount, order_date, shipping_address',
+          )
+          .eq('salesperson_id', salespersonId)
+          .order('created_at', { ascending: false }),
+        supabase.from('users').select('id, full_name, email, role'),
       ]);
 
       if (!isMounted) return;
@@ -79,7 +85,7 @@ export default function SalespersonCustomersPage() {
   }, [salespersonId, supabase, toast]);
 
   const customerIds = React.useMemo(
-    () => new Set(orders.filter((o) => o.salespersonId === salespersonId).map((o) => o.userId)),
+    () => new Set(orders.filter((o: any) => o.salesperson_id === salespersonId).map((o: any) => o.user_id)),
     [orders, salespersonId],
   );
 

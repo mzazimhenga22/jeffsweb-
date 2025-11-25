@@ -45,8 +45,14 @@ export default function SalespersonOrdersPage() {
     const fetchOrders = async () => {
       setIsLoading(true);
       const [{ data: orderRows, error: orderError }, { data: userRows, error: userError }] = await Promise.all([
-        supabase.from('orders').select('*').eq('salespersonId', salespersonId),
-        supabase.from('users').select('id, name, email'),
+        supabase
+          .from('orders')
+          .select(
+            'id, created_at, user_id, vendor_id, product_id, quantity, salesperson_id, status, total, total_amount, order_date, shipping_address',
+          )
+          .eq('salesperson_id', salespersonId)
+          .order('created_at', { ascending: false }),
+        supabase.from('users').select('id, full_name, email'),
       ]);
 
       if (!isMounted) return;
@@ -62,8 +68,8 @@ export default function SalespersonOrdersPage() {
 
       setOrders((orderRows as Order[]) ?? []);
       const usersMap: Record<string, { name: string; email: string }> = {};
-      (userRows ?? []).forEach((u) => {
-        usersMap[u.id] = { name: u.name ?? '', email: u.email ?? '' };
+      (userRows ?? []).forEach((u: any) => {
+        usersMap[u.id] = { name: u.full_name ?? '', email: u.email ?? '' };
       });
       setUsers(usersMap);
       setIsLoading(false);

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -36,10 +35,10 @@ export default function VendorOrdersPage() {
   const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const { supabase, user } = useAuth();
-  const [vendorId, setVendorId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
     if (!user?.id) {
       setIsLoading(false);
       return;
@@ -64,12 +63,17 @@ export default function VendorOrdersPage() {
         return;
       }
 
-      const currentVendorId = profile?.id ?? null;
-      setVendorId(currentVendorId);
+      const vendorIds = [profile?.id, user.id].filter(Boolean) as string[];
 
       const [{ data: orderRows, error: orderError }, { data: userRows, error: userError }] = await Promise.all([
-        supabase.from('orders').select('*').eq('vendor_id', currentVendorId ?? 'NONE'),
-        supabase.from('users').select('*'),
+        supabase
+          .from('orders')
+          .select(
+            'id, created_at, user_id, vendor_id, product_id, quantity, salesperson_id, status, total, total_amount, order_date, shipping_address',
+          )
+          .or(vendorIds.map((id) => `vendor_id.eq.${id}`).join(','))
+          .order('created_at', { ascending: false }),
+        supabase.from('users').select('id, full_name'),
       ]);
 
       if (!isMounted) return;
@@ -86,21 +90,32 @@ export default function VendorOrdersPage() {
       setOrders((orderRows as Order[]) ?? []);
       setUsers((userRows as User[]) ?? []);
       setIsLoading(false);
+
+      if (vendorIds.length > 0) {
+        const filter = vendorIds.map((id) => `vendor_id=eq.${id}`).join(',');
+        channel = supabase
+          .channel(`vendor-orders-${vendorIds.join('-')}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter }, fetchData)
+          .subscribe();
+      }
     };
 
     fetchData();
 
     return () => {
       isMounted = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [supabase, toast, user?.id]);
 
   const filteredOrders = orders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    users.find(u => u.id === order.userId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (users.find(u => u.id === order.user_id)?.full_name ?? '')
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -177,14 +192,14 @@ export default function VendorOrdersPage() {
           </TableHeader>
           <TableBody>
             {paginatedOrders.map((order) => {
-                const user = users.find(u => u.id === order.userId);
+                const user = users.find(u => u.id === order.user_id);
                 return (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{user?.name || 'Unknown User'}</TableCell>
+                <TableCell>{user?.full_name ?? 'Unknown User'}</TableCell>
                 <TableCell>
-                  {order.orderDate
-                    ? new Date(order.orderDate).toLocaleDateString()
+                  {order.order_date
+                    ? new Date(order.order_date).toLocaleDateString()
                     : order.created_at
                     ? new Date(order.created_at).toLocaleDateString()
                     : '—'}
@@ -193,13 +208,13 @@ export default function VendorOrdersPage() {
                 <TableCell>
                   <Badge
                     variant={
-                      order.status === 'Delivered'
+                      order.status === 'delivered'
                         ? 'default'
-                        : order.status === 'On Transit'
+                        : order.status === 'on transit'
                         ? 'secondary'
-                        : order.status === 'Processing'
+                        : order.status === 'processing'
                         ? 'secondary'
-                        : order.status === 'Pending'
+                        : order.status === 'pending'
                         ? 'outline'
                         : 'destructive'
                     }

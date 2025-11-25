@@ -42,7 +42,12 @@ type FormData = {
   email: string
 }
 
-export function SalespersonsTable({ salespersons: initialSalespersons }: { salespersons: User[] }) {
+type SalespersonRow = Pick<User, 'id' | 'email' | 'role' | 'createdAt' | 'avatar_url'> & {
+  name: string
+  avatarId?: string | null
+}
+
+export function SalespersonsTable({ salespersons: initialSalespersons }: { salespersons: SalespersonRow[] }) {
   const [users, setUsers] = React.useState(initialSalespersons)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [currentPage, setCurrentPage] = React.useState(1)
@@ -87,25 +92,43 @@ export function SalespersonsTable({ salespersons: initialSalespersons }: { sales
         setPendingActionId(selectedSalesperson.id)
         const { error } = await supabase
           .from('users')
-          .update({ name: data.name, email: data.email })
+          .update({ full_name: data.name, email: data.email })
           .eq('id', selectedSalesperson.id)
         if (error) throw error
-        setUsers((prev) => prev.map((user) => (user.id === selectedSalesperson.id ? { ...user, ...data } : user)))
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === selectedSalesperson.id ? { ...user, name: data.name, email: data.email } : user,
+          ),
+        )
         toast({ title: 'Salesperson Updated', description: `${data.name}'s information has been updated.` })
       } else {
-        const newUser: User = {
+        const newUser: SalespersonRow = {
           id: crypto.randomUUID(),
           name: data.name,
           email: data.email,
           role: 'salesperson',
-          avatarId: 'avatar-1',
+          avatarId: null,
           avatar_url: null,
-          createdAt: new Date().toISOString().split('T')[0],
-          phone: null,
+          createdAt: new Date().toISOString(),
         }
-        const { error } = await supabase.from('users').insert(newUser)
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            id: newUser.id,
+            full_name: data.name,
+            email: data.email,
+            role: 'salesperson',
+            avatar_url: null,
+            created_at: newUser.createdAt,
+          })
         if (error) throw error
-        setUsers((prev) => [newUser, ...prev])
+        setUsers((prev) => [
+          {
+            ...newUser,
+            avatarId: null,
+          },
+          ...prev,
+        ])
         toast({ title: 'Salesperson Added', description: `${data.name} has been added to the platform.` })
       }
     } catch (error) {
@@ -185,80 +208,99 @@ export function SalespersonsTable({ salespersons: initialSalespersons }: { sales
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedSalespersons.map((user) => {
+              {paginatedSalespersons.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-10">
+                    {users.length === 0
+                      ? 'No salespersons yet. Add your first teammate to start assigning accounts.'
+                      : 'No salespersons match your search.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedSalespersons.map((user) => {
                 const avatar = PlaceHolderImages.find((p) => p.id === user.avatarId)
                 return (
                   <TableRow key={user.id} className="cursor-pointer" onClick={() => router.push(`/admin/salespersons/${user.id}`)}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          {avatar && <AvatarImage src={avatar.imageUrl} data-ai-hint={avatar.imageHint} />}
+                          {user.avatar_url ? (
+                            <AvatarImage src={user.avatar_url} />
+                          ) : (
+                            avatar && <AvatarImage src={avatar.imageUrl} data-ai-hint={avatar.imageHint} />
+                          )}
                           <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{user.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.createdAt}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(event) => {
-                            event.stopPropagation()
-                          }}
-                        >
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/admin/salespersons/${user.id}`)}>
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
+                      <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            asChild
                             onClick={(event) => {
                               event.stopPropagation()
-                              handleEdit(user)
                             }}
                           >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              handleDelete(user)
-                            }}
-                            disabled={pendingActionId === user.id}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/admin/salespersons/${user.id}`)}>
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                handleEdit(user)
+                              }}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                handleDelete(user)
+                              }}
+                              disabled={pendingActionId === user.id}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
             </TableBody>
           </Table>
-          <div className="flex items-center justify-end space-x-2 py-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {paginatedSalespersons.length} of {filteredSalespersons.length} salespersons
+            </p>
+            <div className="flex items-center justify-end space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

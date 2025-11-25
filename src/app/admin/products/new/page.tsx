@@ -41,6 +41,8 @@ export default function AddProductPage() {
   const { supabase, session } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
+  const [newCategoryImage, setNewCategoryImage] = useState<File | null>(null);
+  const [newCategoryImagePreview, setNewCategoryImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,25 +68,43 @@ export default function AddProductPage() {
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
     const name = newCategory.trim();
-    const { data, error } = await supabase
-      .from('categories')
-      .insert([{ name }])
-      .select('*')
-      .maybeSingle();
+    let imageUrl: string | null = null;
+    try {
+      if (newCategoryImage) {
+        const { data: uploaded, error: uploadError } = await supabase.storage
+          .from('categories')
+          .upload(`${Date.now()}_${newCategoryImage.name}`, newCategoryImage, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+        if (uploadError || !uploaded) throw uploadError ?? new Error('Upload failed');
+        const { data: publicUrlData } = supabase.storage.from('categories').getPublicUrl(uploaded.path);
+        imageUrl = publicUrlData.publicUrl;
+      }
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([{ name, image_url: imageUrl }])
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      setNewCategory('');
+      setNewCategoryImage(null);
+      setNewCategoryImagePreview(null);
+      toast({ title: 'Category added' });
+    } catch (error) {
       console.error('Failed to add category', error);
       toast({
         title: 'Could not add category',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Please try again.',
         variant: 'destructive',
       });
-      return;
     }
-
-    setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
-    setNewCategory('');
-    toast({ title: 'Category added' });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +193,7 @@ export default function AddProductPage() {
           sizes: sizes.split(',').map((s) => s.trim()).filter(Boolean),
           colors: colors.split(',').map((c) => c.trim()).filter(Boolean),
           image_url: imageUrl,
+          vendor_id: session.user.id,
         },
       ]);
 
@@ -325,10 +346,10 @@ export default function AddProductPage() {
                     <div>
                       <Label htmlFor="category">Category</Label>
                       <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger id="category">
+                        <SelectTrigger id="category" className="bg-background">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-popover">
                           {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.name}>
                               {cat.name}
@@ -339,16 +360,49 @@ export default function AddProductPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="new-category">Add Category</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         <Input
                           id="new-category"
                           value={newCategory}
                           onChange={(e) => setNewCategory(e.target.value)}
                           placeholder="New category name"
                         />
-                        <Button type="button" variant="outline" onClick={handleAddCategory}>
-                          Add
-                        </Button>
+                        <label
+                          htmlFor="new-category-image"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary text-sm text-muted-foreground"
+                        >
+                          {newCategoryImagePreview ? (
+                            <img src={newCategoryImagePreview} alt="Category preview" className="h-full w-full object-cover rounded-lg" />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-4">
+                              <Upload className="w-5 h-5 mb-2" />
+                              <span>Upload category image (optional)</span>
+                            </div>
+                          )}
+                          <input
+                            id="new-category-image"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setNewCategoryImage(file);
+                                const reader = new FileReader();
+                                reader.onloadend = () => setNewCategoryImagePreview(reader.result as string);
+                                reader.readAsDataURL(file);
+                              } else {
+                                setNewCategoryImage(null);
+                                setNewCategoryImagePreview(null);
+                              }
+                            }}
+                          />
+                        </label>
+                        <div className="flex justify-end">
+                          <Button type="button" variant="outline" onClick={handleAddCategory}>
+                            Add
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <div>

@@ -30,6 +30,7 @@ export type User = Database['public']['Tables']['users']['Row']
 export type VendorProfile = Database['public']['Tables']['vendor_profiles']['Row']
 export type SalespersonProfile = Database['public']['Tables']['salesperson_profiles']['Row']
 export type VendorStaff = Database['public']['Tables']['vendor_staff']['Row']
+export type Banner = Database['public']['Tables']['banners']['Row']
 
 export type SalesDatum = {
   name: string

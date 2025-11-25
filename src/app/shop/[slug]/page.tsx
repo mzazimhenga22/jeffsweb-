@@ -4,6 +4,15 @@ import type { Product, ProductReview } from '@/lib/types'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { ProductDetailClient } from './product-detail-client'
 
+type ProductWithRatings = Product & { product_reviews?: { rating: number }[] }
+const mapRatings = (products: ProductWithRatings[]) =>
+  products.map((product) => {
+    const ratings = product.product_reviews?.map((r) => r.rating) ?? []
+    const reviewCount = ratings.length
+    const averageRating = reviewCount ? ratings.reduce((acc, rating) => acc + rating, 0) / reviewCount : 0
+    return { ...product, averageRating, reviewCount }
+  })
+
 async function getProduct(slug: string) {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
@@ -24,7 +33,7 @@ async function getRelatedProducts(category: string, currentProductId: string) {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_reviews(rating)')
     .eq('category', category)
     .not('id', 'eq', currentProductId)
     .limit(4)
@@ -34,7 +43,7 @@ async function getRelatedProducts(category: string, currentProductId: string) {
     return []
   }
 
-  return (data as Product[]) || []
+  return mapRatings((data as ProductWithRatings[]) ?? [])
 }
 
 async function getProductReviews(productId: string) {

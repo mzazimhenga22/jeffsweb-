@@ -1,6 +1,6 @@
-
 'use client';
 
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -31,7 +31,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Order, Product, User, VendorProfile } from '@/lib/types';
-import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,56 +41,47 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type Customer = Pick<User, 'id' | 'email'> & { full_name?: string | null; name?: string | null };
+
 export default function VendorDashboardPage() {
   const { supabase, user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = React.useState<Order[]>([]);
-  const [customers, setCustomers] = React.useState<User[]>([]);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [vendorProfile, setVendorProfile] = React.useState<VendorProfile | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    let isMounted = true;
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchData = async () => {
-      setIsLoading(true);
-
-      const { data: profile, error: profileError } = await supabase
-        .from('vendor_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Failed to load vendor profile', profileError);
-        toast({
-          title: 'Could not load vendor data',
-          description: 'Please refresh to try again.',
-          variant: 'destructive',
-        });
+  const fetchDashboardData = React.useCallback(
+    async (vendorIds: string[]) => {
+      if (vendorIds.length === 0) {
+        setOrders([]);
+        setProducts([]);
+        setCustomers([]);
         setIsLoading(false);
         return;
       }
 
-      const vendorId = profile?.id;
-      setVendorProfile(profile ?? null);
+      setIsLoading(true);
+      setLoadError(null);
 
       const [{ data: orderRows, error: orderError }, { data: productRows, error: productError }, { data: userRows, error: userError }] =
         await Promise.all([
-          supabase.from('orders').select('*').eq('vendor_id', vendorId ?? 'NONE'),
-          supabase.from('products').select('*').eq('vendor_id', vendorId ?? 'NONE'),
-          supabase.from('users').select('id, name, email'),
+          supabase
+            .from('orders')
+            .select(
+              'id, created_at, user_id, vendor_id, product_id, quantity, salesperson_id, status, total, total_amount, order_date, shipping_address',
+            )
+            .or(vendorIds.map((id) => `vendor_id.eq.${id}`).join(','))
+            .order('created_at', { ascending: false }),
+          supabase.from('products').select('*').or(vendorIds.map((id) => `vendor_id.eq.${id}`).join(',')),
+          supabase.from('users').select('id, full_name, email'),
         ]);
-
-      if (!isMounted) return;
 
       if (orderError || productError || userError) {
         console.error('Failed to load vendor dashboard data', { orderError, productError, userError });
+        setLoadError('Could not load vendor data');
         toast({
           title: 'Could not load vendor data',
           description: 'Please refresh to try again.',
@@ -101,29 +91,106 @@ export default function VendorDashboardPage() {
 
       setOrders((orderRows as Order[]) ?? []);
       setProducts((productRows as Product[]) ?? []);
-      setCustomers((userRows as User[]) ?? []);
+      setCustomers((userRows as Customer[]) ?? []);
       setIsLoading(false);
+    },
+    [supabase, toast],
+  );
+
+  React.useEffect(() => {
+    let isMounted = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadProfileAndData = async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from('vendor_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (profileError) {
+        console.error('Failed to load vendor profile', profileError);
+        setLoadError('Could not load vendor data');
+        toast({
+          title: 'Could not load vendor data',
+          description: 'Please refresh to try again.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      setVendorProfile(profile ?? null);
+      const vendorIds = [profile?.id, user.id].filter(Boolean) as string[];
+      await fetchDashboardData(vendorIds);
+
+      if (vendorIds.length > 0) {
+        const filter = vendorIds.map((id) => `vendor_id=eq.${id}`).join(',');
+        channel = supabase
+          .channel(`vendor-dashboard-${vendorIds.join('-')}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'orders', filter },
+            () => fetchDashboardData(vendorIds),
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'products', filter },
+            () => fetchDashboardData(vendorIds),
+          )
+          .subscribe();
+      }
     };
 
-    fetchData();
+    loadProfileAndData();
 
     return () => {
       isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [supabase, toast, user?.id]);
+  }, [fetchDashboardData, supabase, toast, user?.id]);
 
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.total ?? 0), 0);
+  const grossRevenue = orders.reduce((sum, order) => sum + (order.total ?? 0), 0);
+  const platformCommission = grossRevenue * 0.4;
+  const vendorNet = grossRevenue - platformCommission;
   const salesData = React.useMemo(() => {
     const buckets = new Map<string, number>();
     orders.forEach((order) => {
-      const date = order.orderDate || order.created_at;
+      const date = order.order_date || order.created_at;
       const monthKey = date ? new Date(date).toLocaleString('en-US', { month: 'short' }) : 'N/A';
       buckets.set(monthKey, (buckets.get(monthKey) ?? 0) + (order.total ?? 0));
     });
-    return Array.from(buckets.entries()).map(([name, sales]) => ({ name, sales }));
+    const entries = Array.from(buckets.entries()).map(([name, sales]) => ({ name, sales }));
+    return entries.length > 0 ? entries : [{ name: 'N/A', sales: 0 }];
   }, [orders]);
 
   const recentOrders = orders.slice(0, 5);
+  const profileMissing = !vendorProfile && !isLoading;
+  const formatStatus = (status: Order['status']) => {
+    const normalized = String(status ?? '').toLowerCase();
+    if (normalized === 'delivered') return 'Delivered';
+    if (normalized === 'on transit') return 'On Transit';
+    if (normalized === 'processing') return 'Processing';
+    if (normalized === 'pending') return 'Pending';
+    if (normalized === 'cancelled') return 'Cancelled';
+    return 'Unknown';
+  };
+  const statusToVariant = (status: Order['status']) => {
+    const normalized = String(status ?? '').toLowerCase();
+    if (normalized === 'delivered') return 'default' as const;
+    if (normalized === 'on transit' || normalized === 'processing') return 'secondary' as const;
+    if (normalized === 'pending') return 'outline' as const;
+    return 'destructive' as const;
+  };
 
   return (
     <div className="space-y-6">
@@ -135,6 +202,19 @@ export default function VendorDashboardPage() {
           </CardHeader>
         </Card>
       )}
+      {profileMissing && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create your vendor profile</CardTitle>
+            <CardDescription>We couldn&apos;t find a vendor profile yet. Complete onboarding to view metrics.</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+      {loadError && (
+        <Card>
+          <CardContent className="text-sm text-destructive">{loadError}</CardContent>
+        </Card>
+      )}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -143,9 +223,9 @@ export default function VendorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? '—' : `$${totalRevenue.toFixed(2)}`}
+              {isLoading ? '—' : `$${vendorNet.toFixed(2)}`}
             </div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month</p>
+            <p className="text-xs text-muted-foreground">After 40% platform commission</p>
           </CardContent>
         </Card>
         <Card>
@@ -192,14 +272,11 @@ export default function VendorDashboardPage() {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-72 w-full">
-              <BarChart data={salesData}  margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <BarChart data={salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000}k`}/>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${Math.round(Number(value) / 1000)}k`} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                 <Bar dataKey="sales" fill="var(--color-sales)" radius={8} />
               </BarChart>
             </ChartContainer>
@@ -217,47 +294,38 @@ export default function VendorDashboardPage() {
             ) : recentOrders.length === 0 ? (
               <p className="text-sm text-muted-foreground">No orders yet.</p>
             ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map((order) => {
-                  const customer = customers.find((u) => u.id === order.userId);
-                  return (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{customer?.name ?? 'Unknown'}</div>
-                      <div className="text-xs text-muted-foreground">{customer?.email}</div>
-                    </TableCell>
-                    <TableCell>${(order.total ?? 0).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          order.status === 'Delivered'
-                            ? 'default'
-                            : order.status === 'On Transit'
-                            ? 'secondary'
-                            : order.status === 'Processing'
-                            ? 'secondary'
-                            : order.status === 'Pending'
-                            ? 'outline'
-                            : 'destructive'
-                        }
-                      >
-                        {order.status}
-                      </Badge>
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                )})}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentOrders.map((order) => {
+                    const customer = customers.find((u) => u.id === order.user_id);
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell>
+                          <div className="font-medium">{customer?.full_name ?? customer?.name ?? 'Unknown'}</div>
+                          <div className="text-xs text-muted-foreground">{customer?.email}</div>
+                        </TableCell>
+                        <TableCell>${(order.total ?? 0).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={statusToVariant(order.status)}
+                          >
+                            {formatStatus(order.status)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

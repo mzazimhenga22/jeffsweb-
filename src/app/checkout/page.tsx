@@ -31,23 +31,36 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         const vendorIds = Array.from(new Set(cartItems.map((item) => item.vendor_id).filter(Boolean) as string[]));
-        if (vendorIds.length === 0) return;
+        if (vendorIds.length === 0) {
+          setVendorsById({});
+          return;
+        }
 
-        supabase
-          .from('users')
-          .select('id, name, full_name, email')
-          .in('id', vendorIds)
-          .then(({ data, error }) => {
-            if (error) {
-              console.error('Failed to load vendor names for checkout', error);
-              return;
-            }
-            const map: Record<string, string> = {};
-            (data ?? []).forEach((u) => {
-              map[u.id] = u.name ?? (u as any).full_name ?? u.email ?? 'Vendor';
-            });
-            setVendorsById(map);
+        const loadVendors = async () => {
+          const [{ data: profiles, error: profileError }, { data: users, error: userError }] =
+            await Promise.all([
+              supabase.from('vendor_profiles').select('id, user_id, store_name').in('id', vendorIds),
+              supabase.from('users').select('id, full_name, name, email').in('id', vendorIds),
+            ]);
+
+          if (profileError || userError) {
+            console.error('Failed to load vendor names for checkout', { profileError, userError });
+          }
+
+          const map: Record<string, string> = {};
+          (profiles ?? []).forEach((profile: any) => {
+            const label = profile.store_name ?? 'Vendor';
+            if (profile.id) map[profile.id] = label;
+            if (profile.user_id) map[profile.user_id] = label;
           });
+          (users ?? []).forEach((u: any) => {
+            const label = u.full_name ?? u.name ?? u.email ?? 'Vendor';
+            if (!map[u.id]) map[u.id] = label;
+          });
+          setVendorsById(map);
+        };
+
+        loadVendors();
     }, [cartItems, supabase]);
 
     const resolvedItems = useMemo(() => {
@@ -80,29 +93,29 @@ export default function CheckoutPage() {
         try {
             setIsPlacing(true);
             const orderDate = new Date().toISOString();
-            const baseOrderId = `order-${Date.now()}`;
-            const orderRows: Database['public']['Tables']['orders']['Insert'][] = cartItems.map((item, index) => ({
-                id: `${baseOrderId}-${index}`,
-                userId: customerId,
-                vendor_id: item.vendor_id,
-                productId: item.id,
-                salespersonId: null,
-                quantity: item.quantity,
-                total: item.price * item.quantity,
-                status: 'Pending',
-                orderDate,
-                created_at: orderDate,
-              }));
+
+            const orderRows: Database['public']['Tables']['orders']['Insert'][] = cartItems.map((item) => {
+                const lineTotal = item.price * item.quantity;
+                return {
+                    user_id: customerId,
+                    vendor_id: item.vendor_id ?? null,
+                    product_id: item.id,
+                    salesperson_id: null,
+                    quantity: item.quantity,
+                    total: lineTotal,
+                    status: 'pending',
+                    order_date: orderDate,
+                };
+            });
 
             const { data, error } = await supabase
                 .from('orders')
                 .insert(orderRows)
-                .select('id')
-                .order('created_at', { ascending: false });
+                .select('id');
 
             if (error) throw error;
 
-            const confirmationId = data?.[0]?.id ?? orderRows[0].id;
+            const orderIds = (data ?? []).map((row) => row.id).filter(Boolean);
 
             toast({
                 title: "Order Placed!",
@@ -110,7 +123,12 @@ export default function CheckoutPage() {
             });
             
             clearCart();
-            router.push(`/order-confirmation?orderId=${confirmationId}`);
+            if (orderIds.length > 0) {
+                const orderIdsParam = orderIds.join(',');
+                router.push(`/order-confirmation?orderIds=${orderIdsParam}`);
+            } else {
+                router.push('/order-confirmation');
+            }
         } catch (err) {
             console.error('Failed to place order', err);
             toast({
@@ -125,13 +143,15 @@ export default function CheckoutPage() {
     
     return (
         <MainLayout>
-            <div className="container mx-auto py-12 px-4 md:px-6">
+            <div className="relative">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-white/30 via-background/80 to-background backdrop-blur-3xl" />
+                <div className="container mx-auto py-12 px-4 md:px-6">
                 <h1 className="text-3xl font-bold tracking-tight font-headline mb-8 text-center">Checkout</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Shipping and Payment Info */}
                     <div className="space-y-8">
-                        <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
+                        <Card className='bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10'>
                             <CardHeader>
                                 <CardTitle>Shipping Information</CardTitle>
                             </CardHeader>
@@ -173,7 +193,7 @@ export default function CheckoutPage() {
                             </CardContent>
                         </Card>
 
-                        <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
+                        <Card className='bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10'>
                             <CardHeader>
                                 <CardTitle>Payment Details</CardTitle>
                             </CardHeader>
@@ -200,7 +220,7 @@ export default function CheckoutPage() {
 
                     {/* Order Summary */}
                     <div className="lg:sticky lg:top-28 self-start">
-                         <Card className='bg-card/60 backdrop-blur-xl border-border/20 rounded-3xl'>
+                         <Card className='bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-lg shadow-black/10'>
                             <CardHeader>
                                 <CardTitle>Order Summary</CardTitle>
                                 <CardDescription>{cartItems.length} items in your cart</CardDescription>
@@ -229,10 +249,10 @@ export default function CheckoutPage() {
                                                         </p>
                                                     )}
                                                 </div>
-                                                <p className='font-semibold'>${(item.price * item.quantity).toFixed(2)}</p>
-                                            </div>
-                                        )
-                                    })}
+                                    <p className='font-semibold'>Ksh {(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+                            )
+                        })}
                                 </div>
 
                                 <Separator className="my-6" />
@@ -240,20 +260,20 @@ export default function CheckoutPage() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Subtotal</span>
-                                        <span>${cartTotal.toFixed(2)}</span>
+                                        <span>Ksh {cartTotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Shipping</span>
-                                        <span>$0.00</span>
+                                        <span>Ksh 0.00</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Taxes</span>
-                                        <span>$0.00</span>
+                                        <span>Ksh 0.00</span>
                                     </div>
                                     <Separator />
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span>${cartTotal.toFixed(2)}</span>
+                                        <span>Ksh {cartTotal.toFixed(2)}</span>
                                     </div>
                                 </div>
 
@@ -265,6 +285,7 @@ export default function CheckoutPage() {
                         </Card>
                     </div>
                 </div>
+            </div>
             </div>
         </MainLayout>
     );
