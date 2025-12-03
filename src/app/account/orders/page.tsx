@@ -7,28 +7,21 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
-import type { Order, Product } from '@/lib/types'
+import type { Product } from '@/lib/types'
 import type { Database } from '@/lib/database.types'
 
 export const dynamic = 'force-dynamic'
 
 type OrdersRow = Database['public']['Tables']['orders']['Row']
 
-type OrderItem = {
-  id: string
-  quantity: number
-  products: Product
-}
-
-type OrderWithItems = Order & { order_items: OrderItem[] }
-
 export default async function OrdersPage() {
   const supabase = await createSupabaseServerClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (userError || !user) {
     return (
       <Card>
         <CardHeader>
@@ -38,21 +31,15 @@ export default async function OrdersPage() {
       </Card>
     )
   }
-
-  const userIdForQuery: OrdersRow['userId'] = session.user.id
+  
+  const userIdForQuery: OrdersRow['user_id'] = user.id
 
   const { data: orders, error } = await supabase
     .from('orders')
-    .select(`
-      *,
-      order_items:(
-        *,
-        products:(*)
-      )
-    `)
-    .filter('userId', 'eq', userIdForQuery)
+    .select('*')
+    .eq('user_id', userIdForQuery)
     .order('created_at', { ascending: false })
-    .returns<OrderWithItems[]>()
+    .returns<OrdersRow[]>()
 
   if (error) {
     console.error('Error fetching orders:', error)
@@ -77,6 +64,22 @@ export default async function OrdersPage() {
     )
   }
 
+  const productIds = Array.from(
+    new Set(orders.map((order) => order.product_id).filter(Boolean))
+  ) as string[]
+
+  const { data: products } = productIds.length
+    ? await supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds)
+        .returns<Product[]>()
+    : { data: null }
+
+  const productsById = new Map<string, Product>(
+    (products ?? []).map((product) => [product.id, product])
+  )
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Your Orders</h1>
@@ -89,20 +92,19 @@ export default async function OrdersPage() {
                 {new Date(order.created_at).toLocaleDateString()}
               </CardDescription>
             </div>
-            <Badge className={order.status === 'Pending' ? 'bg-yellow-500' : 'bg-green-500'}>
+            <Badge className={order.status === 'pending' ? 'bg-yellow-500' : 'bg-green-500'}>
               {order.status}
             </Badge>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {order.order_items?.map((item) => (
-                <div key={item.id} className="flex justify-between items-center">
-                  <span>
-                    {item.products.name} (x{item.quantity})
-                  </span>
-                  <span>${(item.products.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
+              <div className="flex justify-between items-center">
+                <span>
+                  {productsById.get(order.product_id ?? '')?.name ?? 'Product'} (x
+                  {order.quantity})
+                </span>
+                <span>${order.total.toFixed(2)}</span>
+              </div>
             </div>
             <div className="border-t mt-4 pt-4 flex justify-between font-bold">
               <span>Total</span>

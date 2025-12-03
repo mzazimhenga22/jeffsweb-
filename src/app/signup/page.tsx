@@ -41,7 +41,7 @@ export default function SignUpPage() {
           .from('users')
           .upsert({
             id: data.user.id,
-            name: fullName || data.user.email || '',
+            full_name: fullName || data.user.email || '',
             email,
             role: 'customer',
             createdAt: new Date().toISOString(),
