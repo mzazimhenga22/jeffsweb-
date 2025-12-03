@@ -20,6 +20,7 @@ import { PromoBannerSingle } from '@/components/promo-banner-single';
 import { HeroCarousel } from '@/components/hero-carousel';
 import { supabase } from '@/lib/supabase-client';
 import type { Banner } from '@/lib/types';
+import type { Database } from '@/lib/database.types';
 
 const isSupabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 type ProductWithRatings = Product & { product_reviews?: { rating: number }[] };
@@ -370,7 +371,7 @@ export default function HomePage() {
                 </h2>
                 <p className="text-muted-foreground text-lg whitespace-pre-line">
                   {storyBanner?.subtitle ??
-                    'Founded in 2024, Ethereal Commerce began with a simple idea: to bring together the most exquisite and finely crafted goods from around the world into one seamless shopping experience.'}
+                    'Founded in 2024, Jeff\'s concepts began with a simple idea: to bring together the most exquisite and finely crafted goods from around the world into one seamless shopping experience.'}
                 </p>
                 {storyBanner?.cta_url && (
                   <Button size="lg" asChild className="mt-2 text-lg w-fit">
@@ -474,14 +475,15 @@ export default function HomePage() {
 
                     try {
                       setIsSubmittingTestimonial(true);
+                      const payload: Database['public']['Tables']['testimonials']['Insert'] = {
+                        name: testimonialName.trim(),
+                        text: testimonialText.trim(),
+                        avatar_url: testimonialAvatar.trim() || null,
+                        rating: testimonialRating,
+                      };
                       const { data, error } = await supabase
                         .from('testimonials')
-                        .insert({
-                          name: testimonialName.trim(),
-                          text: testimonialText.trim(),
-                          avatar_url: testimonialAvatar.trim() || null,
-                          rating: testimonialRating,
-                        })
+                        .insert([payload] as Database['public']['Tables']['testimonials']['Insert'][] as any)
                         .select()
                         .single();
 

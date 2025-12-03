@@ -36,28 +36,40 @@ export default function CartPage() {
       return;
     }
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      setVendorsById({});
+      return;
+    }
+
     const loadVendors = async () => {
-      const [{ data: profiles, error: profileError }, { data: users, error: userError }] =
-        await Promise.all([
-          supabase.from('vendor_profiles').select('id, user_id, store_name').in('id', vendorIds),
-          supabase.from('users').select('id, full_name, name, email').in('id', vendorIds),
-        ]);
+      try {
+        const [{ data: profiles, error: profileError }, { data: users, error: userError }] =
+          await Promise.all([
+            supabase.from('vendor_profiles').select('id, user_id, store_name').in('id', vendorIds),
+            supabase.from('users').select('id, full_name, email').in('id', vendorIds),
+          ]);
 
-      if (profileError || userError) {
-        console.error('Failed to load vendor names for cart', { profileError, userError });
+        if (profileError || userError) {
+          console.error('Failed to load vendor names for cart', { profileError, userError });
+        }
+
+        const map: Record<string, string> = {};
+        (profiles ?? []).forEach((profile: any) => {
+          const label = profile.store_name ?? 'Vendor';
+          if (profile.id) map[profile.id] = label;
+          if (profile.user_id) map[profile.user_id] = label;
+        });
+        (users ?? []).forEach((u: any) => {
+          const label = u.full_name ?? u.name ?? u.email ?? 'Vendor';
+          if (!map[u.id]) map[u.id] = label;
+        });
+        setVendorsById(map);
+      } catch (err) {
+        console.error('Failed to load vendor names for cart', err);
+        setVendorsById({});
       }
-
-      const map: Record<string, string> = {};
-      (profiles ?? []).forEach((profile: any) => {
-        const label = profile.store_name ?? 'Vendor';
-        if (profile.id) map[profile.id] = label;
-        if (profile.user_id) map[profile.user_id] = label;
-      });
-      (users ?? []).forEach((u: any) => {
-        const label = u.full_name ?? u.name ?? u.email ?? 'Vendor';
-        if (!map[u.id]) map[u.id] = label;
-      });
-      setVendorsById(map);
     };
 
     loadVendors();

@@ -227,7 +227,7 @@ export function HeaderClient({
             <Package className="h-6 w-6 text-primary" />
             {/* Hide long text on very small screens */}
             <span className="hidden font-headline text-lg font-bold sm:inline-block">
-              Ethereal Commerce
+              jeff's concepts
             </span>
           </Link>
 
@@ -289,7 +289,7 @@ export function HeaderClient({
                 {/* Drawer header */}
                 <Link href="/" className="mb-6 flex items-center space-x-2">
                   <Package className="h-6 w-6 text-primary" />
-                  <span className="font-headline text-lg font-bold">Ethereal Commerce</span>
+                  <span className="font-headline text-lg font-bold">jeff's concepts</span>
                 </Link>
 
                 {/* Search inside drawer (nice for mobile) */}

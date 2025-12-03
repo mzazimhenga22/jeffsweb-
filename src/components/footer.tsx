@@ -11,7 +11,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center space-x-2">
               <Package className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold font-headline">Ethereal Commerce</span>
+              <span className="text-xl font-bold font-headline">jeff's concepts</span>
             </Link>
             <p className="mt-4 text-muted-foreground">
               The future of luxury shopping.
@@ -59,7 +59,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Ethereal Commerce. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} jeff's concepts. All rights reserved.</p>
         </div>
       </div>
     </footer>

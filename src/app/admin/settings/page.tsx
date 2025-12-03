@@ -33,11 +33,11 @@ export default function AdminSettingsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="platform-name">Platform Name</Label>
-                <Input id="platform-name" defaultValue="Ethereal Commerce" />
+                <Input id="platform-name" defaultValue="Jeff's Concepts" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="support-email">Support Email</Label>
-                <Input id="support-email" type="email" defaultValue="support@ethereal.com" />
+                <Input id="support-email" type="email" defaultValue="support@jeffsconcepts.com" />
               </div>
             </div>
             <div className="space-y-2">

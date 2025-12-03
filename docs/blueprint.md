@@ -1,4 +1,4 @@
-# **App Name**: Ethereal Commerce
+# **App Name**: Jeff's concepts
 
 ## Core Features:
 

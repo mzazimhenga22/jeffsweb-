@@ -55,7 +55,7 @@ export default function BecomeAVendorPage() {
         <Card className="bg-card/80 backdrop-blur-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold font-headline">
-              Sell on Ethereal Commerce
+              Sell on Jeff's Concepts
             </CardTitle>
             <CardDescription className="text-lg text-muted-foreground pt-2">
               Join our curated marketplace and reach a community of discerning shoppers.

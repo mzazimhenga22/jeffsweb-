@@ -18,7 +18,6 @@ import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/context/auth-context';
-import { Separator } from '@/components/ui/separator';
 
 export default function VendorPosPage() {
   const [cart, setCart] = React.useState<CartItem[]>([]);
