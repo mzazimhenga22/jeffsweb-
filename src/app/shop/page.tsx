@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MainLayout } from '@/components/main-layout';
 import { ProductCard } from '@/components/product-card';
 import {
@@ -32,10 +33,15 @@ export default function ShopPage() {
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') ?? '';
 
   React.useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*, product_reviews(rating)');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, product_reviews(rating)')
+        .or('is_deleted.is.null,is_deleted.eq.false');
       if (error) {
         console.error('Error fetching products:', error);
         setErrorMessage('We could not load products right now. Please try again shortly.');
@@ -73,6 +79,17 @@ export default function ShopPage() {
     setIsLoading(true);
     Promise.all([fetchCategories(), fetchProducts()]).finally(() => setIsLoading(false));
   }, []);
+
+  React.useEffect(() => {
+    if (!initialCategory) return;
+    // Normalize category name to match DB values (case-insensitive)
+    const match = categories.find(
+      (cat) => cat.name.toLowerCase() === initialCategory.toLowerCase(),
+    );
+    if (match) {
+      setSelectedCategories([match.name]);
+    }
+  }, [initialCategory, categories]);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategories((prev) =>

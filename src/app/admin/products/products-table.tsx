@@ -62,7 +62,10 @@ export function ProductsTable({ products: initialProducts }: { products: AdminPr
   const handleDelete = async (productId: string) => {
     try {
       setPendingDelete(productId)
-      const { error } = await supabase.from('products').delete().eq('id', productId)
+      const { error } = await supabase
+        .from('products')
+        .update({ is_deleted: true })
+        .eq('id', productId)
       if (error) throw error
       setProducts((prev) => prev.filter((product) => product.id !== productId))
       toast({

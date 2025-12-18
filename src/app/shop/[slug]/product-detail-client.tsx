@@ -39,6 +39,8 @@ interface ProductDetailClientProps {
   initialReviews: ProductReview[]
 }
 
+type ChatRole = 'user' | 'assistant'
+
 export function ProductDetailClient({
   product,
   relatedProducts,
@@ -59,7 +61,7 @@ export function ProductDetailClient({
   const { supabase, session } = useAuth()
   const router = useRouter()
   const [isChatOpen, setIsChatOpen] = React.useState(false)
-  const [chatMessages, setChatMessages] = React.useState<{ role: 'user' | 'assistant'; content: string }[]>([
+  const [chatMessages, setChatMessages] = React.useState<{ role: ChatRole; content: string }[]>([
     {
       role: 'assistant',
       content: 'Ask me anything about this product. I can help with materials, sizing, and fit.',
@@ -96,7 +98,10 @@ export function ProductDetailClient({
   const sendChatMessage = async () => {
     const trimmed = chatInput.trim()
     if (!trimmed || chatLoading) return
-    const nextMessages = [...chatMessages, { role: 'user', content: trimmed }]
+    const nextMessages: { role: ChatRole; content: string }[] = [
+      ...chatMessages,
+      { role: 'user', content: trimmed },
+    ]
     setChatMessages(nextMessages)
     setChatInput('')
     setChatLoading(true)
@@ -118,13 +123,13 @@ export function ProductDetailClient({
         throw new Error(`Chat request failed: ${response.status}`)
       }
       const { reply } = (await response.json()) as { reply: string }
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: reply }])
+      setChatMessages((prev) => [...prev, { role: 'assistant' as ChatRole, content: reply }])
     } catch (error) {
       console.error('Failed to fetch chat response', error)
       setChatMessages((prev) => [
         ...prev,
         {
-          role: 'assistant',
+          role: 'assistant' as ChatRole,
           content: 'Sorry, I could not reach chat right now. Please try again in a moment.',
         },
       ])
@@ -242,7 +247,7 @@ export function ProductDetailClient({
   const reviewCount = reviews.length
   const ratingOptions = [1, 2, 3, 4, 5] as const
   const infoHighlights = [
-    { icon: Truck, title: 'Free delivery', copy: 'Complimentary shipping over Ksh 50' },
+    { icon: Truck, title: 'Free delivery', copy: 'Complimentary shipping over Ksh 100,000' },
     { icon: ShieldCheck, title: 'Secure checkout', copy: '256-bit encrypted payments' },
     { icon: RefreshCcw, title: 'Easy returns', copy: 'Hassle-free 30 day returns' },
   ]
@@ -449,7 +454,7 @@ export function ProductDetailClient({
                 <AccordionItem value="shipping" className="border-b-0">
                   <AccordionTrigger className="text-lg font-medium">Shipping &amp; Returns</AccordionTrigger>
                   <AccordionContent className="text-base text-muted-foreground">
-                    Free shipping on orders over Ksh 50. Easy returns within 30 days.
+                    Free shipping on orders over Ksh 100,000. Easy returns within 30 days.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

@@ -63,6 +63,16 @@ export default function AdminOrdersPage() {
     fetchOrders();
   }, []);
 
+  const getSellerName = (order: Order) => {
+    if (order.salesperson_id && users[order.salesperson_id]) {
+      return users[order.salesperson_id].name;
+    }
+    if (order.vendor_id && users[order.vendor_id]) {
+      return users[order.vendor_id].name;
+    }
+    return 'Unassigned';
+  };
+
   const handleAction = (message: string, isDestructive: boolean = false) => {
     toast({
       title: message,
@@ -79,6 +89,36 @@ export default function AdminOrdersPage() {
         description: `Order ${orderId} has been updated to "${newStatus}".`
     })
   }
+
+  const handleDeleteOrder = async (orderId: string) => {
+    const password = window.prompt('Enter admin password to delete this order:');
+    if (!password) return;
+    if (password !== 'LOCKEDIN@2026') {
+      toast({
+        variant: 'destructive',
+        title: 'Incorrect password',
+        description: 'The order was not deleted.',
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('orders').delete().eq('id', orderId);
+    if (error) {
+      console.error('Failed to delete order', error);
+      toast({
+        variant: 'destructive',
+        title: 'Could not delete order',
+        description: error.message,
+      });
+      return;
+    }
+
+    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    toast({
+      title: 'Order deleted',
+      description: `Order ${orderId} has been permanently removed.`,
+    });
+  };
 
   return (
     <Card className="bg-card/70 backdrop-blur-sm">
@@ -97,7 +137,7 @@ export default function AdminOrdersPage() {
             <TableRow>
               <TableHead>Order ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Vendor</TableHead>
+                <TableHead>Sold By</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
@@ -110,7 +150,7 @@ export default function AdminOrdersPage() {
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
                 <TableCell>{users[order.user_id]?.name ?? 'Unknown User'}</TableCell>
-                <TableCell>{order.vendor_id ? users[order.vendor_id]?.name ?? 'Unknown Vendor' : 'Unassigned'}</TableCell>
+                <TableCell>{getSellerName(order)}</TableCell>
                 <TableCell>{new Date(order.created_at ?? order.order_date ?? '').toLocaleDateString()}</TableCell>
                 <TableCell>${Number(order.total ?? order.total_amount ?? 0).toFixed(2)}</TableCell>
                 <TableCell>
@@ -136,6 +176,9 @@ export default function AdminOrdersPage() {
                       <DropdownMenuItem className="text-destructive" onClick={() => handleStatusChange(order.id, 'Cancelled')}>
                         Cancel Order
                       </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteOrder(order.id)}>
+                        Delete Order
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setSelectedOrder(order)}>View Receipt</DropdownMenuItem>
                   </OrderStatusUpdater>
                 </TableCell>
@@ -157,14 +200,14 @@ export default function AdminOrdersPage() {
               <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(null)}>Close</Button>
             </div>
             <Separator className="my-3" />
-            <div className="grid gap-2 text-sm">
+              <div className="grid gap-2 text-sm">
               <div className="flex justify-between">
                 <span>Customer</span>
                 <span>{users[selectedOrder.user_id]?.name ?? 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
-                <span>Vendor</span>
-                <span>{selectedOrder.vendor_id ? users[selectedOrder.vendor_id]?.name ?? 'Unassigned' : 'Unassigned'}</span>
+                <span>Sold By</span>
+                <span>{getSellerName(selectedOrder)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Date</span>

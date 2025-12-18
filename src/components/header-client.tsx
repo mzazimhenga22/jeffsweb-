@@ -22,10 +22,10 @@ import { Input } from './ui/input';
 import type { Product } from '@/lib/types';
 
 const navLinks = [
-  { href: '/shop', label: 'Shoes' },
-  { href: '/shop', label: 'Watches' },
-  { href: '/shop', label: 'Clothing' },
-  { href: '/shop', label: 'Accessories' },
+  { href: '/shop', label: 'Bikes', category: 'bike' },
+  { href: '/shop', label: 'Watches', category: 'watch' },
+  { href: '/shop', label: 'Shoes', category: 'shoe' },
+  { href: '/shop', label: 'Accessories', category: 'accessories' },
 ];
 
 export function HeaderClient({
@@ -184,6 +184,8 @@ export function HeaderClient({
     const displayName =
       (profileUser as any)?.full_name ||
       profileUser?.name ||
+      (contextUser as any)?.full_name ||
+      (contextUser as any)?.name ||
       resolvedUser.user_metadata?.full_name ||
       resolvedUser.user_metadata?.name ||
       resolvedUser.email;
@@ -237,7 +239,7 @@ export function HeaderClient({
               {navLinks.map((link, index) => (
                 <Link
                   key={`${link.href}-${link.label}-${index}`}
-                  href={link.href}
+                  href={link.category ? `${link.href}?category=${encodeURIComponent(link.category)}` : link.href}
                   className="rounded-md px-3 py-1.5 text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
                 >
                   {link.label}
@@ -312,7 +314,7 @@ export function HeaderClient({
                   {navLinks.map((link, index) => (
                     <Link
                       key={`${link.href}-${link.label}-${index}`}
-                      href={link.href}
+                      href={link.category ? `${link.href}?category=${encodeURIComponent(link.category)}` : link.href}
                       className="text-base font-medium text-foreground/80 hover:text-foreground"
                     >
                       {link.label}

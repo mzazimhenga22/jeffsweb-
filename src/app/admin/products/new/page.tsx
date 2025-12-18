@@ -35,6 +35,8 @@ export default function AddProductPage() {
   const [colors, setColors] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,6 +121,18 @@ export default function AddProductPage() {
     }
   };
 
+  const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setThumbnailFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitting) return;
@@ -183,6 +197,20 @@ export default function AddProductPage() {
 
       const imageUrl = publicUrlData.publicUrl;
 
+      let thumbnailUrl: string | null = imageUrl;
+      if (thumbnailFile) {
+        const { data: thumbData, error: thumbError } = await supabase.storage
+          .from(storageBucket)
+          .upload(`${Date.now()}_thumb_${thumbnailFile.name}`, thumbnailFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+        if (!thumbError && thumbData) {
+          const { data: thumbPublic } = supabase.storage.from(storageBucket).getPublicUrl(thumbData.path);
+          thumbnailUrl = thumbPublic.publicUrl;
+        }
+      }
+
       const { error: productError } = await supabase.from('products').insert([
         {
           name: productName.trim(),
@@ -193,6 +221,7 @@ export default function AddProductPage() {
           sizes: sizes.split(',').map((s) => s.trim()).filter(Boolean),
           colors: colors.split(',').map((c) => c.trim()).filter(Boolean),
           image_url: imageUrl,
+          thumbnail_url: thumbnailUrl,
           vendor_id: session.user.id,
         },
       ]);
@@ -220,6 +249,8 @@ export default function AddProductPage() {
       setColors('');
       setImageFile(null);
       setImagePreview(null);
+      setThumbnailFile(null);
+      setThumbnailPreview(null);
       router.push('/admin/products');
       router.refresh();
     } finally {
@@ -270,40 +301,74 @@ export default function AddProductPage() {
                   <CardHeader>
                     <CardTitle className="text-lg">Media</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-center w-full">
-                      <label
-                        htmlFor="dropzone-file"
-                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary"
-                      >
-                        {imagePreview ? (
-                          <img
-                            src={imagePreview}
-                            alt="Product preview"
-                            className="h-full w-full object-cover rounded-lg"
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="mb-1 block">Main Image</Label>
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="dropzone-file"
+                          className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary"
+                        >
+                          {imagePreview ? (
+                            <img
+                              src={imagePreview}
+                              alt="Product preview"
+                              className="h-full w-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                              <p className="mb-2 text-sm text-muted-foreground">
+                                <span className="font-semibold">Click to upload</span> or drag and drop
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                SVG, PNG, JPG or GIF (MAX. 800x400px)
+                              </p>
+                            </div>
+                          )}
+                          <input
+                            id="dropzone-file"
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            accept="image/*"
                           />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground">
-                              <span className="font-semibold">
-                                Click to upload
-                              </span>{' '}
-                              or drag and drop
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              SVG, PNG, JPG or GIF (MAX. 800x400px)
-                            </p>
-                          </div>
-                        )}
-                        <input
-                          id="dropzone-file"
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileChange}
-                          accept="image/*"
-                        />
-                      </label>
+                        </label>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="mb-1 block">Thumbnail (optional)</Label>
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="thumbnail-file"
+                          className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/40 hover:bg-secondary"
+                        >
+                          {thumbnailPreview ? (
+                            <img
+                              src={thumbnailPreview}
+                              alt="Thumbnail preview"
+                              className="h-full w-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-4">
+                              <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
+                              <p className="mb-1 text-xs text-muted-foreground">
+                                Upload a smaller image for product cards
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Defaults to main image if not set
+                              </p>
+                            </div>
+                          )}
+                          <input
+                            id="thumbnail-file"
+                            type="file"
+                            className="hidden"
+                            onChange={handleThumbnailChange}
+                            accept="image/*"
+                          />
+                        </label>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

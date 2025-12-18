@@ -31,6 +31,8 @@ export type VendorProfile = Database['public']['Tables']['vendor_profiles']['Row
 export type SalespersonProfile = Database['public']['Tables']['salesperson_profiles']['Row']
 export type VendorStaff = Database['public']['Tables']['vendor_staff']['Row']
 export type Banner = Database['public']['Tables']['banners']['Row']
+export type PlatformFinance = Database['public']['Tables']['platform_finance']['Row']
+export type CheckoutEvent = Database['public']['Tables']['checkout_events']['Row']
 
 export type SalesDatum = {
   name: string

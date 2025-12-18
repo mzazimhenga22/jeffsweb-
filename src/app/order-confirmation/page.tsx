@@ -28,13 +28,22 @@ function OrderConfirmationContent() {
     const [productsById, setProductsById] = React.useState<Record<string, Product>>({});
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [salespeopleById, setSalespeopleById] = React.useState<Record<string, string>>({});
 
+    const vatRate = 0.16;
     const subtotal = React.useMemo(
+        () =>
+            confirmedOrders.reduce((sum, order) => {
+                const gross = order.total ?? 0;
+                return sum + gross / (1 + vatRate);
+            }, 0),
+        [confirmedOrders, vatRate],
+    );
+    const total = React.useMemo(
         () => confirmedOrders.reduce((sum, order) => sum + (order.total ?? 0), 0),
         [confirmedOrders],
     );
-    const taxes = subtotal * 0.08;
-    const total = subtotal + taxes;
+    const taxes = total - subtotal;
 
     React.useEffect(() => {
         if (!orderIds.length) return;
@@ -85,6 +94,33 @@ function OrderConfirmationContent() {
         fetchOrders();
     }, [orderIds, supabase]);
 
+    React.useEffect(() => {
+        const salespeopleIds = Array.from(
+            new Set(confirmedOrders.map((o) => o.salesperson_id).filter(Boolean) as string[]),
+        );
+        if (salespeopleIds.length === 0) return;
+
+        const loadSalespeople = async () => {
+            const { data, error } = await supabase
+                .from('users')
+                .select('id, full_name, name, email')
+                .in('id', salespeopleIds);
+
+            if (error) {
+                console.error('Failed to load salesperson details', error);
+                return;
+            }
+
+            const map: Record<string, string> = {};
+            (data ?? []).forEach((u) => {
+                map[u.id] = (u as any)?.full_name ?? (u as any)?.name ?? u.email ?? 'Salesperson';
+            });
+            setSalespeopleById(map);
+        };
+
+        loadSalespeople();
+    }, [confirmedOrders, supabase]);
+
     if (loading) {
         return (
             <MainLayout>
@@ -127,6 +163,11 @@ function OrderConfirmationContent() {
         (user as any)?.name ??
         (user as any)?.email ??
         'Valued customer';
+    const servedBy =
+        firstOrder?.salesperson_id && salespeopleById[firstOrder.salesperson_id]
+            ? salespeopleById[firstOrder.salesperson_id]
+            : 'Online checkout';
+    const handlePrint = () => window.print();
 
     return (
         <MainLayout>
@@ -153,7 +194,7 @@ function OrderConfirmationContent() {
                                 Date:{' '}
                                 {firstOrder?.order_date
                                     ? new Date(firstOrder.order_date).toLocaleDateString()
-                                    : '—'}
+                                    : 'N/A'}
                             </p>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -190,7 +231,7 @@ function OrderConfirmationContent() {
                                                 </p>
                                             </div>
                                             <p className="font-semibold">
-                                                ${(order.total ?? 0).toFixed(2)}
+                                                Ksh {(order.total ?? 0).toFixed(2)}
                                             </p>
                                         </div>
                                     );
@@ -210,7 +251,7 @@ function OrderConfirmationContent() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Taxes</span>
-                                    <span>Ksh {taxes.toFixed(2)}</span>
+                                    <span>Ksh {taxes.toFixed(2)} (16% VAT)</span>
                                 </div>
                                 <Separator />
                                 <div className="flex justify-between font-bold text-lg">
@@ -237,6 +278,12 @@ function OrderConfirmationContent() {
                                             : 'Email on file'}
                                     </p>
                                 </div>
+                                <div>
+                                    <h3 className="font-semibold mb-2">Served By</h3>
+                                    <p className="text-muted-foreground">
+                                        {servedBy}
+                                    </p>
+                                </div>
                             </div>
 
                         </CardContent>
@@ -249,6 +296,9 @@ function OrderConfirmationContent() {
                     </Button>
                     <Button asChild variant="outline" size="lg">
                         <Link href="/account/orders">View My Orders</Link>
+                    </Button>
+                    <Button variant="secondary" size="lg" onClick={handlePrint}>
+                        Print Receipt
                     </Button>
                 </div>
                 </div>

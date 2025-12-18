@@ -39,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { RoleGuard } from '@/lib/role-guard';
 
 const vendorNavItems = [
   { href: '/vendor', icon: LayoutDashboard, label: 'Dashboard' },
@@ -60,6 +61,7 @@ export default function VendorLayout({
   const avatar = PlaceHolderImages.find(p => p.id === 'avatar-2');
 
   return (
+    <RoleGuard allowed={['vendor', 'admin']}>
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
         <Sidebar collapsible="icon" className="border-r bg-secondary text-secondary-foreground">
@@ -132,5 +134,6 @@ export default function VendorLayout({
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </RoleGuard>
   );
 }

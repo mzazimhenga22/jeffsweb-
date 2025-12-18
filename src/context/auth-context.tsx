@@ -66,7 +66,8 @@ export const AuthProvider = ({
       console.error('Failed to load user profile', error);
       setProfile(null);
     } else {
-      setProfile((data as DbUser) ?? null);
+      const row = data as DbUser;
+      setProfile(row ?? null);
     }
     setLoadingProfile(false);
   }, [session?.user?.id, supabase]);

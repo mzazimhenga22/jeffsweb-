@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import type { Database } from '@/lib/database.types'
+
+type ProductId = Database['public']['Tables']['products']['Row']['id']
+type ProductChatPayload = {
+  productId?: ProductId
+  productName?: string
+  productDescription?: string
+  productPrice?: number
+  sizes?: string[]
+  colors?: string[]
+  message?: string
+}
 
 export async function POST(request: Request) {
   try {
     const { productId, productName, productDescription, productPrice, sizes, colors, message } =
-      (await request.json()) as {
-        productId?: string
-        productName?: string
-        productDescription?: string
-        productPrice?: number
-        sizes?: string[]
-        colors?: string[]
-        message?: string
-      }
+      (await request.json()) as ProductChatPayload
 
     if (!message) {
       return NextResponse.json({ error: 'Missing message' }, { status: 400 })
@@ -22,7 +26,11 @@ export async function POST(request: Request) {
 
     let product = null
     if (productId) {
-      const { data, error } = await supabase.from('products').select('*').eq('id', productId).maybeSingle()
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .match({ id: productId as ProductId })
+        .maybeSingle()
       if (!error) product = data
     }
 

@@ -28,6 +28,10 @@ export default function CheckoutPage() {
     const profileUser = (user as DbUser | null) ?? null;
     const [isPlacing, setIsPlacing] = React.useState(false);
     const [vendorsById, setVendorsById] = useState<Record<string, string>>({});
+    const [loggedCheckout, setLoggedCheckout] = useState(false);
+    const vatRate = 0.16;
+    const vatAmount = useMemo(() => cartTotal * vatRate, [cartTotal, vatRate]);
+    const grandTotal = useMemo(() => cartTotal + vatAmount, [cartTotal, vatAmount]);
 
     useEffect(() => {
         const vendorIds = Array.from(new Set(cartItems.map((item) => item.vendor_id).filter(Boolean) as string[]));
@@ -107,7 +111,9 @@ export default function CheckoutPage() {
             const orderDate = new Date().toISOString();
 
             const orderRows: Database['public']['Tables']['orders']['Insert'][] = cartItems.map((item) => {
-                const lineTotal = item.price * item.quantity;
+                const lineSubtotal = item.price * item.quantity;
+                const lineVat = lineSubtotal * vatRate;
+                const lineTotal = lineSubtotal + lineVat;
                 return {
                     user_id: customerId,
                     vendor_id: item.vendor_id ?? null,
@@ -152,6 +158,28 @@ export default function CheckoutPage() {
             setIsPlacing(false);
         }
     }
+
+    useEffect(() => {
+        if (!supabase || loggedCheckout) return;
+        if (cartItems.length === 0) return;
+
+        const recordCheckout = async () => {
+            try {
+                const customerId = profileUser?.id ?? session?.user?.id ?? null;
+                await supabase.from('checkout_events').insert({
+                    id: crypto.randomUUID(),
+                    user_id: customerId,
+                    cart_total: cartTotal,
+                    source: 'checkout',
+                });
+                setLoggedCheckout(true);
+            } catch (error) {
+                console.error('Failed to record checkout event', error);
+            }
+        };
+
+        recordCheckout();
+    }, [cartItems.length, cartTotal, loggedCheckout, profileUser?.id, session?.user?.id, supabase]);
     
     return (
         <MainLayout>
@@ -280,12 +308,12 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Taxes</span>
-                                        <span>Ksh 0.00</span>
+                                        <span>Ksh {vatAmount.toFixed(2)} (16% VAT)</span>
                                     </div>
                                     <Separator />
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span>Ksh {cartTotal.toFixed(2)}</span>
+                                        <span>Ksh {grandTotal.toFixed(2)}</span>
                                     </div>
                                 </div>
 

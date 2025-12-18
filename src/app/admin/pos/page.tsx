@@ -20,8 +20,10 @@ import { Minus, Plus, Trash2, Search, XCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/auth-context'
 
+type PosCartItem = CartItem & { entryPrice: number }
+
 export default function AdminPosPage() {
-  const [cart, setCart] = React.useState<CartItem[]>([])
+  const [cart, setCart] = React.useState<PosCartItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState('')
   const [products, setProducts] = React.useState<Product[]>([])
   const { toast } = useToast()
@@ -82,6 +84,8 @@ export default function AdminPosPage() {
           quantity: 1,
           size: product.sizes?.[0] || null,
           color: product.colors?.[0] || null,
+          // entryPrice is intentionally left for the user to fill manually
+          entryPrice: 0,
         },
       ]
     })
@@ -107,6 +111,14 @@ export default function AdminPosPage() {
     )
   }
 
+  const updateEntryPrice = (productId: string, newEntryPrice: number) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === productId ? { ...item, entryPrice: newEntryPrice } : item,
+      ),
+    )
+  }
+
   const removeFromCart = (productId: string) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== productId))
   }
@@ -115,12 +127,23 @@ export default function AdminPosPage() {
     setCart([])
   }
 
-  const cartSubtotal = React.useMemo(() => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  }, [cart])
-  
-  const tax = cartSubtotal * 0.08
-  const cartTotal = cartSubtotal + tax
+  const cartSubtotal = React.useMemo(
+    () => cart.reduce((total, item) => total + item.price * item.quantity, 0),
+    [cart],
+  )
+
+  const totalCost = React.useMemo(
+    () => cart.reduce((total, item) => total + item.entryPrice * item.quantity, 0),
+    [cart],
+  )
+
+  const grossProfit = cartSubtotal - totalCost
+
+  // VAT is 16% and already included in product prices.
+  // Extract the tax portion from the tax-inclusive subtotal.
+  const TAX_RATE = 0.16
+  const tax = cartSubtotal - cartSubtotal / (1 + TAX_RATE)
+  const cartTotal = cartSubtotal
 
   const handleCreateOrder = async () => {
     if(cart.length === 0) {
@@ -130,6 +153,17 @@ export default function AdminPosPage() {
             description: "Your cart is empty.",
         });
         return;
+    }
+
+    // Ensure cost price has been filled for every line
+    const hasMissingCost = cart.some((item) => !item.entryPrice || item.entryPrice <= 0)
+    if (hasMissingCost) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing cost price',
+        description: 'Please enter a cost price for all items before creating an order.',
+      })
+      return
     }
     if (!authUser?.id) {
       toast({
@@ -162,6 +196,32 @@ export default function AdminPosPage() {
 
       const { error } = await supabase.from('orders').insert(orderRows)
       if (error) throw error
+
+      // Update platform_finance:
+      // - products_in_value: total cost of goods (what it entered with)
+      // - products_out_value: total sale value (what it was sold at)
+      try {
+        const { data: financeRow } = await supabase
+          .from('platform_finance')
+          .select('*')
+          .eq('id', 'platform-finance')
+          .maybeSingle()
+
+        const currentOut = Number(financeRow?.products_out_value ?? 0)
+        const currentIn = Number(financeRow?.products_in_value ?? 0)
+        const currentStart = Number(financeRow?.starting_capital ?? 0)
+
+        await supabase.from('platform_finance').upsert({
+          id: 'platform-finance',
+          starting_capital: currentStart,
+          products_in_value: currentIn + totalCost,
+          products_out_value: currentOut + cartSubtotal,
+          created_at: financeRow?.created_at ?? orderDate,
+          updated_at: orderDate,
+        } as any)
+      } catch (financeError) {
+        console.error('Failed to update platform_finance from POS sale', financeError)
+      }
 
       toast({
           title: "Order Created!",
@@ -259,29 +319,63 @@ export default function AdminPosPage() {
                     <div className='divide-y'>
                     {cart.map((item) => (
                         <div key={item.id} className="flex items-start gap-4 p-4">
-                            <div className="flex-1 space-y-2">
-                                <p className="font-semibold">{item.name}</p>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                                        <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <span>{item.quantity}</span>
-                                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                                        <Plus className="h-3 w-3" />
-                                    </Button>
-                                </div>
+                          <div className="flex-1 space-y-2">
+                            <p className="font-semibold">{item.name}</p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span>{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
                             </div>
-                            <div className="text-right">
-                                <Input 
-                                    type="number" 
-                                    value={item.price.toFixed(2)}
-                                    onChange={(e) => updatePrice(item.id, parseFloat(e.target.value) || 0)}
-                                    className="w-24 h-8 text-right font-semibold"
-                                />
-                                <Button variant="ghost" size="icon" className="h-8 w-8 mt-1 text-muted-foreground" onClick={() => removeFromCart(item.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-[11px] text-muted-foreground">Cost price</span>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                value={item.entryPrice ? item.entryPrice.toFixed(2) : ''}
+                                onChange={(e) => {
+                                  const raw = e.target.value
+                                  const numeric = raw === '' ? 0 : parseFloat(raw)
+                                  updateEntryPrice(item.id, Number.isFinite(numeric) ? numeric : 0)
+                                }}
+                                className="w-24 h-8 text-right text-xs"
+                              />
                             </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-[11px] text-muted-foreground">Sale price</span>
+                              <Input
+                                type="number"
+                                value={item.price.toFixed(2)}
+                                onChange={(e) =>
+                                  updatePrice(item.id, parseFloat(e.target.value) || 0)
+                                }
+                                className="w-24 h-8 text-right font-semibold text-xs"
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 mt-1 text-muted-foreground"
+                              onClick={() => removeFromCart(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                     ))}
                     </div>
@@ -296,12 +390,20 @@ export default function AdminPosPage() {
             <div className="p-6 border-t mt-auto">
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>${cartSubtotal.toFixed(2)}</span>
+                      <span>Subtotal (incl. VAT)</span>
+                      <span>${cartSubtotal.toFixed(2)}</span>
                     </div>
-                     <div className="flex justify-between">
-                        <span>Tax (8%)</span>
-                        <span>${tax.toFixed(2)}</span>
+                    <div className="flex justify-between">
+                      <span>Tax (16% included)</span>
+                      <span>${tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cost of goods</span>
+                      <span>${totalCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Gross profit</span>
+                      <span>${grossProfit.toFixed(2)}</span>
                     </div>
                     <Separator />
                      <div className="flex justify-between font-bold text-base">

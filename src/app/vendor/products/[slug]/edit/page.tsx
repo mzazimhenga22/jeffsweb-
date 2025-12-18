@@ -24,8 +24,12 @@ import { Upload } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase-client';
 import type { Product, Category } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 export default function EditProductPage({ params }: { params: { slug: string } }) {
+  const resolvedParams = React.use(params)
+  const slug = resolvedParams.slug
+  const { session } = useAuth();
   const [product, setProduct] = React.useState<Product | null>(null);
   const [categories, setCategories] = React.useState<Category[]>([]);
 
@@ -34,14 +38,23 @@ export default function EditProductPage({ params }: { params: { slug: string } }
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('id', params.slug)
+        .eq('id', slug)
         .single();
-      
+
       if (error || !data) {
         console.error('Error fetching product:', error);
         notFound();
       } else {
-        setProduct(data as Product);
+        const row = data as Product;
+        const ownerId = row.vendor_id;
+        const currentUserId = session?.user?.id;
+
+        if (ownerId && currentUserId && ownerId !== currentUserId) {
+          notFound();
+          return;
+        }
+
+        setProduct(row);
       }
     };
 
@@ -56,7 +69,7 @@ export default function EditProductPage({ params }: { params: { slug: string } }
 
     fetchProduct();
     fetchCategories();
-  }, [params.slug]);
+  }, [slug, session?.user?.id]);
 
   if (!product) {
     return <div>Loading...</div>;

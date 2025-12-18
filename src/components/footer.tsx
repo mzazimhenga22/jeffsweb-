@@ -32,9 +32,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold tracking-wider uppercase">Shop</h3>
             <ul className="mt-4 space-y-2">
-              <li><Link href="/shop" className="text-muted-foreground hover:text-primary">Shoes</Link></li>
+              <li><Link href="/shop" className="text-muted-foreground hover:text-primary">Bikes</Link></li>
               <li><Link href="/shop" className="text-muted-foreground hover:text-primary">Watches</Link></li>
-              <li><Link href="/shop" className="text-muted-foreground hover:text-primary">Clothing</Link></li>
+              <li><Link href="/shop" className="text-muted-foreground hover:text-primary">shoes</Link></li>
               <li><Link href="/shop" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
             </ul>
           </div>

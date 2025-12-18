@@ -13,6 +13,7 @@ import type { Database } from '@/lib/database.types'
 export const dynamic = 'force-dynamic'
 
 type OrdersRow = Database['public']['Tables']['orders']['Row']
+type ProductRow = Database['public']['Tables']['products']['Row']
 
 export default async function OrdersPage() {
   const supabase = await createSupabaseServerClient()
@@ -31,15 +32,12 @@ export default async function OrdersPage() {
       </Card>
     )
   }
-  
-  const userIdForQuery: OrdersRow['user_id'] = user.id
 
-  const { data: orders, error } = await supabase
+  const { data: ordersData, error } = await supabase
     .from('orders')
     .select('*')
-    .eq('user_id', userIdForQuery)
+    .eq('user_id', user.id as any)
     .order('created_at', { ascending: false })
-    .returns<OrdersRow[]>()
 
   if (error) {
     console.error('Error fetching orders:', error)
@@ -53,7 +51,9 @@ export default async function OrdersPage() {
     )
   }
 
-  if (!orders || orders.length === 0) {
+  const orders = (ordersData ?? []) as unknown as OrdersRow[]
+
+  if (orders.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -64,21 +64,24 @@ export default async function OrdersPage() {
     )
   }
 
-  const productIds = Array.from(
-    new Set(orders.map((order) => order.product_id).filter(Boolean))
-  ) as string[]
+  const productIds: string[] = Array.from(
+    new Set(
+      orders
+        .map((order) => order.product_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  )
 
-  const { data: products } = productIds.length
+  const { data: productsData } = productIds.length
     ? await supabase
         .from('products')
         .select('*')
-        .in('id', productIds)
-        .returns<Product[]>()
-    : { data: null }
+        .in('id', productIds as any)
+    : { data: null as unknown }
 
-  const productsById = new Map<string, Product>(
-    (products ?? []).map((product) => [product.id, product])
-  )
+  const products = (productsData ?? []) as unknown as Product[]
+
+  const productsById = new Map<string, Product>(products.map((product) => [product.id, product]))
 
   return (
     <div className="space-y-4">

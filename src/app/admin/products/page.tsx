@@ -14,7 +14,12 @@ export default async function AdminProductsPage() {
     { data: userRows, error: usersError },
   ] =
     await Promise.all([
-      supabase.from('products').select('*').order('created_at', { ascending: false }).returns<Product[]>(),
+      supabase
+        .from('products')
+        .select('*')
+        .or('is_deleted.is.null,is_deleted.eq.false')
+        .order('created_at', { ascending: false })
+        .returns<Product[]>(),
       supabase
         .from('vendor_profiles')
         .select('id, store_name, user_id')

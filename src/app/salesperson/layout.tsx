@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { RoleGuard } from '@/lib/role-guard';
 
 const salespersonNavItems = [
   { href: '/salesperson', icon: LayoutDashboard, label: 'Dashboard' },
@@ -54,6 +55,7 @@ export default function SalespersonLayout({
   const avatar = PlaceHolderImages.find(p => p.id === 'avatar-1');
 
   return (
+    <RoleGuard allowed={['salesperson', 'admin']}>
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
         <Sidebar collapsible="icon" className="border-r">
@@ -127,5 +129,6 @@ export default function SalespersonLayout({
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </RoleGuard>
   );
 }

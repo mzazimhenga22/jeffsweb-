@@ -140,7 +140,7 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
     ? new Date(user.createdAt).toLocaleString()
     : user.createdAt ?? '';
 
-  const handlePromote = async (newRole: 'vendor' | 'salesperson') => {
+  const handlePromote = async (newRole: 'vendor' | 'salesperson' | 'admin') => {
     if (user.role === newRole) {
       toast({
         title: `User is already a ${newRole}`,
@@ -156,14 +156,14 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
         .from('users')
         .update({ role: newRole })
         .eq('id', user.id)
-        .select('id, full_name, email, role, created_at')
+        .select('id, full_name, email, role, createdAt')
         .maybeSingle();
 
       if (error) {
         console.error('Error promoting user:', error);
         toast({
           title: 'Promotion failed',
-          description: error.message,
+          description: error.message || 'Unable to update this user role.',
           variant: 'destructive',
         });
         return;
@@ -232,6 +232,8 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
         if (spError && spError.code !== '23505') {
           console.warn('Failed to create/update salesperson profile:', spError);
         }
+      } else if (newRole === 'admin') {
+        // Admin promotion needs no extra tables; ensure existing metadata is consistent if needed.
       }
 
       toast({
@@ -315,6 +317,14 @@ export default function AdminUserDetailPage({ params }: { params: { userId: stri
                   disabled={isPromoting}
                 >
                   Make Salesperson
+                </Button>
+                <Button
+                  size="sm"
+                  variant={user.role === 'admin' ? 'default' : 'outline'}
+                  onClick={() => handlePromote('admin')}
+                  disabled={isPromoting}
+                >
+                  Make Admin
                 </Button>
               </div>
             </CardContent>

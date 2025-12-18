@@ -10,6 +10,9 @@ import {
   Eye,
   PackageCheck,
   Star,
+  PiggyBank,
+  TrendingUp,
+  TrendingDown,
 } from 'lucide-react'
 import {
   Card,
@@ -34,6 +37,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { supabase } from '@/lib/supabase-client'
+import { useToast } from '@/hooks/use-toast'
+import type { Database } from '@/lib/database.types'
 import type { OrderStatus } from '@/lib/types'
 
 export type SalesDatum = {
@@ -66,27 +74,164 @@ interface DashboardContentProps {
     totalUsers: number
     totalVendors: number
     averageRating: string
+    startingCapital: number
+    productsInValue: number
+    productsOutValue: number
+    netBalance: number
+    financeUpdatedAt: string | null
+    reachedCheckout: number
   }
 }
 
 export function DashboardContent({ salesData, recentOrders, stats }: DashboardContentProps) {
+  const { toast } = useToast()
+  const [liveStats, setLiveStats] = React.useState(stats)
+  const [activeUsers, setActiveUsers] = React.useState(0)
+  const [startingCapital, setStartingCapital] = React.useState(stats.startingCapital ?? 0)
+  const [productsInValue, setProductsInValue] = React.useState(stats.productsInValue ?? 0)
+  const [productsOutValue, setProductsOutValue] = React.useState(stats.productsOutValue ?? 0)
+  const [savingFinance, setSavingFinance] = React.useState(false)
+
+  const formattedProductsIn = React.useMemo(
+    () =>
+      new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency: 'KES',
+        minimumFractionDigits: 2,
+      }).format(productsInValue),
+    [productsInValue],
+  )
+
+  const formattedProductsOut = React.useMemo(
+    () =>
+      new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency: 'KES',
+        minimumFractionDigits: 2,
+      }).format(productsOutValue),
+    [productsOutValue],
+  )
+
+  const formattedProductProfit = React.useMemo(
+    () =>
+      new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency: 'KES',
+        minimumFractionDigits: 2,
+      }).format(productsOutValue - productsInValue),
+    [productsInValue, productsOutValue],
+  )
+
   const formattedRevenue = React.useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'KES',
       minimumFractionDigits: 2,
-    }).format(stats.totalRevenue)
-  }, [stats.totalRevenue])
+    }).format(liveStats.totalRevenue)
+  }, [liveStats.totalRevenue])
 
   const formattedCommission = React.useMemo(() => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'KES',
       minimumFractionDigits: 2,
-    }).format(stats.commission)
-  }, [stats.commission])
+    }).format(liveStats.commission)
+  }, [liveStats.commission])
+
+  const formattedNetBalance = React.useMemo(() => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 2,
+    }).format(
+      startingCapital + productsInValue + liveStats.totalRevenue - productsOutValue,
+    )
+  }, [productsInValue, productsOutValue, startingCapital, liveStats.totalRevenue])
 
   const chartData = salesData.length > 0 ? salesData : [{ name: 'N/A', sales: 0 }]
+
+  React.useEffect(() => {
+    setLiveStats(stats)
+  }, [stats])
+
+  async function handleSaveFinance() {
+    setSavingFinance(true)
+    const financePayload = {
+      id: 'platform-finance',
+      starting_capital: startingCapital,
+      products_in_value: productsInValue,
+      products_out_value: productsOutValue,
+      created_at: stats.financeUpdatedAt ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from('platform_finance')
+      .upsert([financePayload] as Database['public']['Tables']['platform_finance']['Insert'][])
+
+    if (error) {
+      toast({
+        title: 'Unable to save finance data',
+        description: error.message,
+        variant: 'destructive',
+      })
+    } else {
+      toast({
+        title: 'Finance data updated',
+        description: 'Starting capital and product movements saved.',
+      })
+    }
+    setSavingFinance(false)
+  }
+
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('orders-stream')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          const inserted: any = payload.new
+          const addedTotal = Number(inserted?.total ?? 0)
+          setLiveStats((prev) => {
+            const newTotalRevenue = prev.totalRevenue + addedTotal
+            return {
+              ...prev,
+              totalRevenue: newTotalRevenue,
+              commission: newTotalRevenue * 0.4,
+              totalSales: prev.totalSales + 1,
+              netBalance: startingCapital + productsInValue + newTotalRevenue - productsOutValue,
+            }
+          })
+        },
+      )
+
+    const presenceKey =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `anon-${Math.random().toString(36).slice(2)}`
+
+    const presenceChannel = supabase.channel('active-users', {
+      config: { presence: { key: presenceKey } },
+    })
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState()
+        const total = Object.keys(state).length
+        setActiveUsers(total)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ status: 'online' })
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+      supabase.removeChannel(presenceChannel)
+    }
+  }, [productsInValue, startingCapital, supabase, productsOutValue])
 
   return (
     <div className="space-y-6">
@@ -109,7 +254,7 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{stats.totalSales}</div>
+            <div className="text-2xl font-bold">+{liveStats.totalSales}</div>
             <p className="text-xs text-muted-foreground">Orders recorded in Supabase</p>
           </CardContent>
         </Card>
@@ -127,12 +272,25 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
 
         <Card className="bg-card/70 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
+            <PiggyBank className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formattedNetBalance}</div>
+            <p className="text-xs text-muted-foreground">
+              Starting capital + sales + products in - products out
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reached Checkout</CardTitle>
             <PackageCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">21,345</div>
-            <p className="text-xs text-muted-foreground">+22% from last month</p>
+            <div className="text-2xl font-bold">{stats.reachedCheckout}</div>
+            <p className="text-xs text-muted-foreground">Recorded checkout visits</p>
           </CardContent>
         </Card>
 
@@ -144,6 +302,63 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
           <CardContent>
             <div className="text-2xl font-bold">{stats.averageRating}</div>
             <p className="text-xs text-muted-foreground">Across all published reviews</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Starting Capital</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat('en-KE', {
+                style: 'currency',
+                currency: 'KES',
+              }).format(startingCapital)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Last updated {stats.financeUpdatedAt ? new Date(stats.financeUpdatedAt).toLocaleString() : 'N/A'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Products In Value</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formattedProductsIn}
+            </div>
+            <p className="text-xs text-muted-foreground">Value added into inventory</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Products Out Value</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formattedProductsOut}
+            </div>
+            <p className="text-xs text-muted-foreground">Value moved out of inventory</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Product Profit</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formattedProductProfit}</div>
+            <p className="text-xs text-muted-foreground">
+              Products out (sales) minus products in (cost)
+            </p>
           </CardContent>
         </Card>
 
@@ -175,11 +390,54 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+21</div>
-            <p className="text-xs text-muted-foreground">Users on site</p>
+            <div className="text-2xl font-bold">+{activeUsers}</div>
+            <p className="text-xs text-muted-foreground">Live presence (site/POS)</p>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-card/70 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>Update Finance Snapshot</CardTitle>
+          <CardDescription>
+            Set the starting capital and inventory movement to keep the balance up to date.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Starting Capital</label>
+            <Input
+              type="number"
+              value={startingCapital}
+              onChange={(e) => setStartingCapital(Number(e.target.value || 0))}
+              min={0}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Products In Value</label>
+            <Input
+              type="number"
+              value={productsInValue}
+              onChange={(e) => setProductsInValue(Number(e.target.value || 0))}
+              min={0}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Products Out Value</label>
+            <Input
+              type="number"
+              value={productsOutValue}
+              onChange={(e) => setProductsOutValue(Number(e.target.value || 0))}
+              min={0}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button className="w-full" onClick={handleSaveFinance} disabled={savingFinance}>
+              {savingFinance ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Chart + Recent orders */}
       <div className="grid gap-6 lg:grid-cols-5 items-start">
@@ -200,7 +458,7 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${Math.round(Number(value) / 1000)}k`}
+                  tickFormatter={(value) => `KSh ${Math.round(Number(value) / 1000)}k`}
                 />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                 <Bar dataKey="sales" fill="var(--color-sales)" radius={8} />
@@ -244,17 +502,17 @@ export function DashboardContent({ salesData, recentOrders, stats }: DashboardCo
                             {order.customerEmail}
                           </div>
                         </TableCell>
-                        <TableCell>${order.total.toFixed(2)}</TableCell>
+                        <TableCell>Ksh {order.total.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
-                              order.status === 'Delivered'
+                              order.status === 'delivered'
                                 ? 'default'
-                                : order.status === 'On Transit'
+                                : order.status === 'on transit'
                                 ? 'secondary'
-                                : order.status === 'Processing'
+                                : order.status === 'processing'
                                 ? 'secondary'
-                                : order.status === 'Pending'
+                                : order.status === 'pending'
                                 ? 'outline'
                                 : 'destructive'
                             }

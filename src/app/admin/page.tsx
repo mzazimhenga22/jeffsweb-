@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import type { Order, User, VendorProfile } from '@/lib/types';
+import type { Order, PlatformFinance, User, VendorProfile } from '@/lib/types';
 import {
   DashboardContent,
   type RecentOrderSummary,
@@ -79,6 +79,8 @@ export default async function AdminDashboardPage() {
     { data: usersData, error: usersError },
     { data: reviewData, error: reviewsError },
     { data: vendorProfiles, error: vendorsError },
+    { data: financeData, error: financeError },
+    checkoutCountResult,
   ] = await Promise.all([
     supabase
       .from('orders')
@@ -88,6 +90,15 @@ export default async function AdminDashboardPage() {
     supabase.from('users').select('id, full_name, email, role').returns<User[]>(),
     supabase.from('product_reviews').select('rating').returns<ReviewRating[]>(),
     supabase.from('vendor_profiles').select('*').returns<VendorProfile[]>(),
+    supabase
+      .from('platform_finance')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .returns<PlatformFinance[]>(),
+    supabase
+      .from('checkout_events')
+      .select('id', { count: 'exact', head: true }),
   ]);
 
   if (ordersError) {
@@ -102,19 +113,34 @@ export default async function AdminDashboardPage() {
   if (vendorsError) {
     console.error('Error fetching vendors:', vendorsError);
   }
+  if (financeError) {
+    console.error('Error fetching finance data:', financeError);
+  }
 
   const orders = ordersData ?? [];
   const users = usersData ?? [];
   const reviews = reviewData ?? [];
   const vendors = vendorProfiles ?? [];
+  const financeRow = financeData?.[0];
+
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const startingCapital = financeRow?.starting_capital ?? 0;
+  const productsInValue = financeRow?.products_in_value ?? 0;
+  const productsOutValue = financeRow?.products_out_value ?? 0;
 
   const stats = {
-    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
+    totalRevenue,
     commission: orders.reduce((sum, order) => sum + order.total * 0.4, 0),
     totalSales: orders.length,
     totalUsers: users.length,
     totalVendors: vendors.length,
     averageRating: formatAverageRating(reviews as ReviewRating[]),
+    startingCapital,
+    productsInValue,
+    productsOutValue,
+    netBalance: startingCapital + productsInValue + totalRevenue - productsOutValue,
+    financeUpdatedAt: financeRow?.updated_at ?? financeRow?.created_at ?? null,
+    reachedCheckout: checkoutCountResult.count ?? 0,
   };
 
   const salesData = buildSalesData(orders);

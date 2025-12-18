@@ -19,6 +19,7 @@ async function getProduct(slug: string) {
     .from('products')
     .select('*')
     .eq('id', slug)
+    .or('is_deleted.is.null,is_deleted.eq.false')
     .single()
 
   if (error) {

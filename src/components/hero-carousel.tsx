@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/lib/types';
+import { useWishlist } from '@/context/wishlist-context';
 
 export function HeroCarousel({
   products,
@@ -26,6 +27,7 @@ export function HeroCarousel({
 }) {
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   React.useEffect(() => {
     if (!carouselApi || products.length === 0) return;
@@ -113,10 +115,18 @@ export function HeroCarousel({
                       </Button>
                       <Button
                         size="lg"
-                        variant="outline"
-                        className="border-white/40 bg-white/10 py-7 text-lg text-white hover:bg-white/20"
+                        variant={isInWishlist(product.id) ? 'secondary' : 'outline'}
+                        className={`border-white/40 bg-white/10 py-7 text-lg text-white hover:bg-white/20 ${
+                          isInWishlist(product.id) ? 'bg-white/25' : ''
+                        }`}
+                        onClick={() => toggleWishlist(product)}
                       >
-                        <Heart className="mr-2 h-5 w-5" /> Add to Wishlist
+                        <Heart
+                          className={`mr-2 h-5 w-5 ${
+                            isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''
+                          }`}
+                        />
+                        {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
                       </Button>
                     </div>
                   </div>
@@ -149,7 +159,7 @@ export function HeroCarousel({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2">
                           <p className="text-[11px] uppercase tracking-[0.12em] text-white/70">Shipping</p>
-                          <p className="text-sm font-semibold">Free over Ksh 50</p>
+                          <p className="text-sm font-semibold">Free over Ksh 100,000</p>
                         </div>
                         <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2">
                           <p className="text-[11px] uppercase tracking-[0.12em] text-white/70">Availability</p>

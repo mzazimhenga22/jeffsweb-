@@ -13,6 +13,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import type { Product, Category, Testimonial } from '@/lib/types';
 import { PromoBanners } from '@/components/promo-banners';
 import { PromoBannerTriple } from '@/components/promo-banner-triple';
@@ -38,12 +45,19 @@ async function getFeaturedProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
     .select('*, product_reviews(rating)')
-    .limit(8);
+    .or('is_deleted.is.null,is_deleted.eq.false')
+    .limit(25);
   if (error) {
     console.error('Error fetching featured products:', error);
     return [];
   }
-  return mapProductRatings((data as ProductWithRatings[]) ?? []);
+  const rows = mapProductRatings((data as ProductWithRatings[]) ?? []);
+  // Randomize and take up to 5 products for the hero banner
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+  }
+  return rows.slice(0, 5);
 }
 
 async function getNewArrivals(): Promise<Product[]> {
@@ -51,6 +65,7 @@ async function getNewArrivals(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
     .select('*, product_reviews(rating)')
+    .or('is_deleted.is.null,is_deleted.eq.false')
     .order('created_at', { ascending: false })
     .limit(4);
   if (error) {
@@ -65,9 +80,25 @@ async function getBestSellers(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
     .select('*, product_reviews(rating)')
+    .or('is_deleted.is.null,is_deleted.eq.false')
     .limit(4);
   if (error) {
     console.error('Error fetching bestsellers:', error);
+    return [];
+  }
+  return mapProductRatings((data as ProductWithRatings[]) ?? []);
+}
+
+async function getStaffPicks(): Promise<Product[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, product_reviews(rating)')
+    .or('is_deleted.is.null,is_deleted.eq.false')
+    .order('created_at', { ascending: true })
+    .limit(12);
+  if (error) {
+    console.error('Error fetching staff picks:', error);
     return [];
   }
   return mapProductRatings((data as ProductWithRatings[]) ?? []);
@@ -83,7 +114,7 @@ async function getCategories(): Promise<Category[]> {
     .from('categories')
     .select('*')
     .order('name', { ascending: true })
-    .limit(8);
+    .limit(25);
 
   if (error) {
     console.error('Error fetching categories:', {
@@ -94,7 +125,16 @@ async function getCategories(): Promise<Category[]> {
     });
     return [];
   }
-  return (data as Category[]) ?? [];
+
+  const rows = ((data as Category[]) ?? []).slice();
+
+  // Randomize and take up to 5 categories
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+  }
+
+  return rows.slice(0, 5);
 }
 
 async function getTestimonials(): Promise<Testimonial[]> {
@@ -126,6 +166,7 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = React.useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = React.useState<Product[]>([]);
   const [bestSellers, setBestSellers] = React.useState<Product[]>([]);
+  const [staffPicks, setStaffPicks] = React.useState<Product[]>([]);
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [testimonials, setTestimonials] = React.useState<Testimonial[]>([]);
   const [banners, setBanners] = React.useState<Banner[]>([]);
@@ -144,6 +185,7 @@ export default function HomePage() {
   );
 
   const ratingOptions = [1, 2, 3, 4, 5] as const;
+  const BANNERS_CACHE_KEY = 'homepage_banners_v1';
 
   React.useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -153,16 +195,35 @@ export default function HomePage() {
 
     const fetchHomepage = async () => {
       try {
-        const [featured, arrivals, best, cats, tests] = await Promise.all([
+        // Try cached banners first
+        if (typeof window !== 'undefined') {
+          const cached = window.localStorage.getItem(BANNERS_CACHE_KEY);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached) as Banner[];
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setBanners(parsed);
+                const storyCached = parsed.find((b) => (b.title ?? '').toLowerCase() === 'our story');
+                if (storyCached) setStoryBanner(storyCached);
+              }
+            } catch {
+              // ignore cache parse errors
+            }
+          }
+        }
+
+        const [featured, arrivals, best, staff, cats, tests] = await Promise.all([
           getFeaturedProducts(),
           getNewArrivals(),
           getBestSellers(),
+          getStaffPicks(),
           getCategories(),
           getTestimonials(),
         ]);
         setFeaturedProducts(featured);
         setNewArrivals(arrivals);
         setBestSellers(best);
+        setStaffPicks(staff);
         setCategories(cats);
         setTestimonials(tests);
 
@@ -171,7 +232,7 @@ export default function HomePage() {
           .select('*')
           .eq('active', true)
           .order('created_at', { ascending: false })
-          .limit(6);
+          .limit(25);
 
         if (error) {
           console.error('Error fetching banners:', {
@@ -181,10 +242,24 @@ export default function HomePage() {
             code: (error as any)?.code,
           });
         } else {
-          const rows = (data as Banner[]) ?? [];
-          setBanners(rows);
-          const story = rows.find((b) => (b.title ?? '').toLowerCase() === 'our story');
+          const rows = ((data as Banner[]) ?? []).slice();
+          // Randomize and take up to 5 banners for display
+          for (let i = rows.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [rows[i], rows[j]] = [rows[j], rows[i]];
+          }
+          const selected = rows.slice(0, 5);
+          setBanners(selected);
+          const story = selected.find((b) => (b.title ?? '').toLowerCase() === 'our story');
           if (story) setStoryBanner(story);
+
+          if (typeof window !== 'undefined') {
+            try {
+              window.localStorage.setItem(BANNERS_CACHE_KEY, JSON.stringify(selected));
+            } catch {
+              // ignore cache write errors
+            }
+          }
 
           if (!story) {
             const { data: storyRow, error: storyError } = await supabase
@@ -234,7 +309,7 @@ export default function HomePage() {
               <Truck className="h-10 w-10 text-primary" />
               <div>
                 <h3 className="font-semibold text-lg">Free Shipping</h3>
-                <p className="text-muted-foreground">On all orders over $50</p>
+                <p className="text-muted-foreground">On all orders over ksh 100,000</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -271,38 +346,51 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {isLoadingHome &&
-              Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={`cat-skeleton-${i}`} />)}
-            {!isLoadingHome && categories.length === 0 ? (
-              <div className="col-span-full rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
-                <p className="text-lg font-medium text-foreground">New collections are on the way.</p>
-                <p className="text-muted-foreground">Check back soon or browse all products.</p>
-              </div>
-            ) : (
-              categories.map((category) => (
-                <Link href="/shop" key={category.id} className="group">
-                  <div className="relative h-96 w-full overflow-hidden rounded-3xl transition-transform duration-300 group-hover:scale-105">
-                    <Image
-                      src={category.image_url?.trim() || '/placeholder.svg'}
-                      alt={category.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <h3 className="text-3xl font-bold text-white font-headline drop-shadow-lg dark:text-white text-foreground">
-                        {category.name}
-                      </h3>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
+          {isLoadingHome ? (
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductSkeleton key={`cat-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : !isLoadingHome && categories.length === 0 ? (
+            <div className="col-span-full rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
+              <p className="text-lg font-medium text-foreground">New collections are on the way.</p>
+              <p className="text-muted-foreground">Check back soon or browse all products.</p>
+            </div>
+          ) : (
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {categories.map((category) => (
+                  <CarouselItem
+                    key={category.id}
+                    className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                  >
+                    <Link href="/shop" className="group block h-full">
+                      <div className="relative h-72 w-full overflow-hidden rounded-3xl transition-transform duration-300 group-hover:scale-105">
+                        <Image
+                          src={category.image_url?.trim() || '/placeholder.svg'}
+                          alt={category.name}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <h3 className="text-2xl md:text-3xl font-bold text-white font-headline drop-shadow-lg">
+                            {category.name}
+                          </h3>
+                        </div>
+                      </div>
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-0" />
+              <CarouselNext className="right-0" />
+            </Carousel>
+          )}
         </section>
         
-        {/* New Arrivals Section */}
+        {/* New Arrivals Section (carousel) */}
         <section className="container mx-auto px-4 md:px-6 text-foreground dark:text-white">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <h2 className="text-4xl font-bold tracking-tight font-headline">
@@ -310,26 +398,80 @@ export default function HomePage() {
             </h2>
             <div className="text-sm text-muted-foreground">Fresh drops from our favorite makers.</div>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {isLoadingHome &&
-              Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={`new-skeleton-${i}`} />)}
-            {!isLoadingHome && newArrivals.length === 0 ? (
-              <div className="col-span-full rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
-                <p className="text-lg font-medium text-foreground">No arrivals yet.</p>
-                <p className="text-muted-foreground">We&apos;ll update this space as soon as new products land.</p>
-              </div>
-            ) : (
-              newArrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
+          {isLoadingHome ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductSkeleton key={`new-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : newArrivals.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
+              <p className="text-lg font-medium text-foreground">No arrivals yet.</p>
+              <p className="text-muted-foreground">We&apos;ll update this space as soon as new products land.</p>
+            </div>
+          ) : (
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {newArrivals.map((product) => (
+                  <CarouselItem
+                    key={product.id}
+                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4 xl:basis-1/5"
+                  >
+                    <div className="h-full">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-0" />
+              <CarouselNext className="right-0" />
+            </Carousel>
+          )}
         </section>
 
         {/* Promotional Banners */}
         <PromoBanners banners={banners.slice(0, 2)} />
 
-        {/* Best Sellers Section */}
+        {/* Staff Picks Section (carousel) */}
+        <section className="container mx-auto px-4 md:px-6 text-foreground dark:text-white">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <h2 className="text-4xl font-bold tracking-tight font-headline">
+              Staff Picks
+            </h2>
+            <p className="text-muted-foreground">Handpicked pieces we&apos;re excited about.</p>
+          </div>
+          {isLoadingHome ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductSkeleton key={`staff-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : staffPicks.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
+              <p className="text-lg font-medium text-foreground">We&apos;re still curating staff picks.</p>
+              <p className="text-muted-foreground">Check back soon for our favorites.</p>
+            </div>
+          ) : (
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {staffPicks.map((product) => (
+                  <CarouselItem
+                    key={product.id}
+                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4 xl:basis-1/5"
+                  >
+                    <div className="h-full">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-0" />
+              <CarouselNext className="right-0" />
+            </Carousel>
+          )}
+        </section>
+
+        {/* Best Sellers Section (carousel) */}
         <section className="container mx-auto px-4 md:px-6 text-foreground dark:text-white">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <h2 className="text-4xl font-bold tracking-tight font-headline">
@@ -337,20 +479,35 @@ export default function HomePage() {
             </h2>
             <p className="text-muted-foreground">Loved by our community right now.</p>
           </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {isLoadingHome &&
-              Array.from({ length: 4 }).map((_, i) => <ProductSkeleton key={`best-skeleton-${i}`} />)}
-            {!isLoadingHome && bestSellers.length === 0 ? (
-              <div className="col-span-full rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
-                <p className="text-lg font-medium text-foreground">We&apos;re curating this list.</p>
-                <p className="text-muted-foreground">Check back for community favorites.</p>
-              </div>
-            ) : (
-              bestSellers.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
+          {isLoadingHome ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductSkeleton key={`best-skeleton-${i}`} />
+              ))}
+            </div>
+          ) : bestSellers.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border/60 bg-muted/40 p-10 text-center">
+              <p className="text-lg font-medium text-foreground">We&apos;re curating this list.</p>
+              <p className="text-muted-foreground">Check back for community favorites.</p>
+            </div>
+          ) : (
+            <Carousel opts={{ align: 'start' }} className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {bestSellers.map((product) => (
+                  <CarouselItem
+                    key={product.id}
+                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4 xl:basis-1/5"
+                  >
+                    <div className="h-full">
+                      <ProductCard product={product} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-0" />
+              <CarouselNext className="right-0" />
+            </Carousel>
+          )}
         </section>
 
         <PromoBannerTriple banners={banners.slice(2, 5)} />

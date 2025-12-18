@@ -29,6 +29,7 @@ export interface Database {
           stock: number
           image_url: string | null
           vendor_id: string | null
+          is_deleted: boolean | null
         }
         Insert: Partial<Database['public']['Tables']['products']['Row']>
         Update: Partial<Database['public']['Tables']['products']['Row']>
@@ -78,18 +79,47 @@ export interface Database {
           product_id: string | null
           quantity: number
           total: number
+          total_amount: number
           status: OrderStatus
           order_date: string
           created_at: string
+          shipping_address: Json | null
         }
-        Insert: Partial<Database['public']['Tables']['orders']['Row']>
-        Update: Partial<Database['public']['Tables']['orders']['Row']>
+        Insert: {
+          id?: string
+          user_id?: string
+          vendor_id?: string | null
+          salesperson_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          total?: number
+          total_amount?: number
+          status?: OrderStatus
+          order_date?: string
+          created_at?: string
+          shipping_address?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          vendor_id?: string | null
+          salesperson_id?: string | null
+          product_id?: string | null
+          quantity?: number
+          total?: number
+          total_amount?: number
+          status?: OrderStatus
+          order_date?: string
+          created_at?: string
+          shipping_address?: Json | null
+        }
         Relationships: []
       }
       users: {
         Row: {
           id: string
           name: string
+          full_name: string | null
           email: string
           role: 'customer' | 'vendor' | 'admin' | 'salesperson'
           avatarId: string | null
@@ -174,6 +204,31 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['banners']['Row']>
         Update: Partial<Database['public']['Tables']['banners']['Row']>
+        Relationships: []
+      }
+      platform_finance: {
+        Row: {
+          id: string
+          starting_capital: number
+          products_in_value: number
+          products_out_value: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['platform_finance']['Row']>
+        Update: Partial<Database['public']['Tables']['platform_finance']['Row']>
+        Relationships: []
+      }
+      checkout_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          cart_total: number | null
+          source: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['checkout_events']['Row']>
+        Update: Partial<Database['public']['Tables']['checkout_events']['Row']>
         Relationships: []
       }
     }
